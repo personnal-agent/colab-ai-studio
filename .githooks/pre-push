@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# Git Hook: pre-push
+# Barrière avant synchronisation vers origin pour Colab AI Studio :
+#   1. Exécution des tests unitaires (timeout 5 min)
+#   2. Quality Gate complète sur le dépôt entier : QUALITY_GATE_SCOPE=full .githooks/pre-commit
+# Bloque le push à la première étape en échec.
+
+set -e
+
+HOOK_SOURCE="${BASH_SOURCE[0]}"
+while [ -L "$HOOK_SOURCE" ]; do
+    HOOK_TARGET="$(readlink "$HOOK_SOURCE")"
+    case "$HOOK_TARGET" in
+        /*) HOOK_SOURCE="$HOOK_TARGET" ;;
+        *) HOOK_SOURCE="$(dirname "$HOOK_SOURCE")/$HOOK_TARGET" ;;
+    esac
+done
+HOOK_DIR="$(cd "$(dirname "$HOOK_SOURCE")" && pwd)"
+SCRIPTS_DIR="$HOOK_DIR/_common"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}🚀 PRE-PUSH — Validation Globale & Tests Unitaires${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+# Étape 1 : Exécution des tests unitaires
+echo ""
+echo -e "${BLUE}[1/2] Tests unitaires (timeout : 5 minutes)...${NC}"
+if [ -f "$SCRIPTS_DIR/run-tests.sh" ]; then
+    bash "$SCRIPTS_DIR/run-tests.sh" || {
+        echo -e "${RED}❌ Push interrompu : des tests unitaires échouent.${NC}"
+        exit 1
+    }
+else
+    echo -e "${RED}❌ Le script $SCRIPTS_DIR/run-tests.sh est introuvable.${NC}"
+    exit 1
+fi
+
+# Étape 2 : Quality Gate complète sur l'ensemble du dépôt
+echo ""
+echo -e "${BLUE}[2/2] Quality Gate intégrale (dépôt entier)...${NC}"
+if [ ! -x "$HOOK_DIR/pre-commit" ]; then
+    echo -e "${RED}❌ Le hook .githooks/pre-commit est introuvable ou non exécutable.${NC}"
+    exit 1
+fi
+
+QUALITY_GATE_SCOPE=full "$HOOK_DIR/pre-commit" || {
+    echo -e "${RED}❌ Push interrompu : la Quality Gate globale a échoué.${NC}"
+    exit 1
+}
+
+echo ""
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}✅ Pré-push validé. Envoi vers origin autorisé.${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+exit 0

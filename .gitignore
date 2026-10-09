@@ -33,3 +33,12 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# --- Coding-Stuff AI & Security Rules ---
+.claude/
+.agents/
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
