@@ -22,7 +22,7 @@ templates and policy documents are linked, never duplicated.
 
 <constraint id="runtime">Backend : Python 3.10+ (FastAPI, uvicorn, pydantic v2). Frontend : Node.js v20+, TypeScript 5+, React 18+, Vite 5+, Tailwind CSS v3, Radix UI.</constraint>
 <constraint id="filesystem">Rapatriement automatique et stockage local des créations dans `outputs/YYYY-MM-DD/`. Persistance documentaire atomique et légère en JSON dans `data/` (`generations.json`, `brand_kits.json`, `projects.json`, `config.json`). Ne jamais écraser silencieusement de données utilisateur.</constraint>
-<constraint id="host">Hôte à ressources limitées (Intel Core i5-4300U, 8 Go RAM). Exécution strictement séquentielle des commandes shell. Vérification préalable de la mémoire disponible (`free -m`) avant toute opération lourde (tests, build). Empreinte mémoire cible : Backend &lt; 80 Mo RAM, Frontend &lt; 50 Mo RAM.</constraint>
+<constraint id="host">Architecture optimisée pour fonctionner sur tout ordinateur personnel standard (y compris sans carte graphique dédiée). Empreinte mémoire cible : Backend &lt; 80 Mo RAM, Frontend &lt; 50 Mo RAM.</constraint>
 <constraint id="sensitive_files">Ne jamais lire, écrire, committer ni divulguer : `.env*`, `ngrok.token`, `*.pem`, `*.key`, `secrets/`, `.claude/`, `.agents/`, `.cursor/`.</constraint>
 
 <validation_commands>

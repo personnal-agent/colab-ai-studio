@@ -122,6 +122,6 @@ colab-ai-studio/
 
 ## 4. Contraintes Matérielles & Garde-fous d'Exécution
 
-- **Machine Hôte** : Intel Core i5-4300U, 8 Go RAM.
-- **Budget Mémoire** : Backend FastAPI < 80 Mo RAM, Frontend statique servi par FastAPI < 50 Mo RAM.
-- **Sobriété de calcul** : Exécution strictement séquentielle des commandes, aucune boucle d'attente active (*polling*), arrêt immédiat des processus d'arrière-plan dès la fin des vérifications.
+- **Machine Hôte** : Tout ordinateur personnel standard (PC / Mac / Linux), sans carte graphique dédiée requise.
+- **Budget Mémoire Cible** : Backend FastAPI < 80 Mo RAM, Frontend statique servi par FastAPI < 50 Mo RAM.
+- **Sobriété d'Exécution** : Optimisation des traitements légers en local, déport de toute l'inférence lourde sur le worker Colab.
