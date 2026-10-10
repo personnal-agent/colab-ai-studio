@@ -92,10 +92,10 @@ ${scope_content}"
           jules_payload=$(jq -n \
             --arg prompt "$combined_prompt" \
             --arg repo "${GITHUB_REPOSITORY}" \
-            '{prompt: $prompt, sourceRepository: $repo}')
+            '{prompt: $prompt, sourceContext: {source: "sources/github", githubRepoContext: {repo: $repo, startingBranch: "main"}}}')
           response=$(curl -sS --max-time 1200 \
             -H "Content-Type: application/json" \
-            -H "API-KEY: ${ANTIBUG_AGENT_API_KEY}" \
+            -H "X-Goog-Api-Key: ${ANTIBUG_AGENT_API_KEY}" \
             -d "$jules_payload" \
             "https://jules.googleapis.com/v1alpha/sessions")
           session_name=$(printf '%s' "$response" | jq -r '.name // empty')
@@ -107,7 +107,7 @@ ${scope_content}"
           for i in $(seq 1 60); do
             sleep 30
             state=$(curl -sS --max-time 60 \
-              -H "API-KEY: ${ANTIBUG_AGENT_API_KEY}" \
+              -H "X-Goog-Api-Key: ${ANTIBUG_AGENT_API_KEY}" \
               "https://jules.googleapis.com/v1alpha/${session_name}" | jq -r '.state // "UNKNOWN"')
             case "$state" in
               COMPLETED|FAILED|CANCELLED) break ;;

@@ -66,11 +66,7 @@ jobs:
           done < "$CHANGED_FILES_FILE"
           echo "total=$total" >> "$GITHUB_OUTPUT"
           echo "protected=$protected" >> "$GITHUB_OUTPUT"
-          is_initial_governance=false
-          if printf '%s\n' "$PR_TITLE" | grep -Eq 'chore\(governance\)'; then
-            is_initial_governance=true
-          fi
-          if (( total > 1000 )) && [ "$is_initial_governance" != "true" ]; then
+          if (( total > 1000 )); then
             echo 'status=fail' >> "$GITHUB_OUTPUT"
             echo "Pull request too large: $total changed lines (maximum 1000)." >&2
             exit 1

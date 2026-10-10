@@ -16,7 +16,7 @@ from pathlib import Path
 
 SHA = re.compile(r"^[0-9a-f]{40}$")
 USES = re.compile(r"^\s*(?:-\s*)?uses:\s*([^@\s]+)@([^\s#]+)(?:\s+#\s*(.+))?\s*$")
-PERSIST_CREDENTIALS_TRUE = re.compile(r"^\s*persist-credentials:\s*true\b(?:\s*#.*)?$")
+PERSIST_CREDENTIALS_TRUE = re.compile(r"^\s*persist-credentials:\s*([\"']?)true\1\s*(?:#.*)?$", re.IGNORECASE)
 TOP_KEY = re.compile(r"^([^:\s][^:]*):\s*(.*)$")
 ANCHOR_DEF = re.compile(r"(?:^|\s)&([A-Za-z0-9_-]+)(?:\s+(.*))?$")
 
@@ -272,12 +272,26 @@ def check_workflow(path: Path) -> int:
 
     # 2. Permissions: mandatory top-level block, write-all prohibited.
     has_permissions = False
+    allowed_write_scopes = {"issues", "pull-requests", "contents"}
     for number, key, value in top_level_entries(lines):
         if key == "permissions":
             has_permissions = True
             if re.match(r"^(write-all|write)\b", value):
                 fail(f"{path}:{number}: permissions '{value}' prohibited (least privilege required).")
                 errors += 1
+            elif not value:
+                for child in child_lines(lines, number - 1):
+                    pair = child.strip()
+                    if ":" in pair:
+                        scope, perm = [p.strip() for p in pair.split(":", 1)]
+                        scope = yaml_key(scope)
+                        perm_clean = perm.strip("\"'# ").split()[0] if perm.strip() else ""
+                        if perm_clean == "write" and scope not in allowed_write_scopes:
+                            fail(f"{path}:{number}: permission scope '{scope}: write' prohibited.")
+                            errors += 1
+                        elif perm_clean in ("write-all", "all"):
+                            fail(f"{path}:{number}: permissions '{perm_clean}' prohibited.")
+                            errors += 1
     if not has_permissions:
         fail(f"{path}: missing top-level permissions block.")
         errors += 1

@@ -2,7 +2,7 @@
 
 ## Scope and Boundary
 
-This policy is the default choice for a developer working with an AI coding assistant in their IDE or terminal. The agent can explore the repository, edit files within the workspace, and execute permitted validation commands. Operations that modify Git history or open Pull Requests (as required by the strict review protocol) require **explicit human approval (`ask`)**, while irreversible actions (merging, publishing, modifying governance guardrails) remain strictly prohibited.
+This policy is the default choice for a developer working with an AI coding assistant in their IDE or terminal. The agent can explore the repository, edit files within the workspace, and execute permitted validation commands. Operations that modify Git history or open Pull Requests (as required by the strict review protocol) require **explicit human approval (`ask`)**, while irreversible actions (merging, publishing, modifying governance guardrails without explicit maintainer approval) remain strictly prohibited.
 
 ---
 

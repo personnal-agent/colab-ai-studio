@@ -46,15 +46,18 @@ jobs:
             }
 
             const text = `${issue.title || ''}\n${issue.body || ''}`.toLowerCase();
-            const labels = new Set(['needs-triage']);
-            if (/\b(bug|error|crash|regression|broken)\b/.test(text)) labels.add('bug');
-            if (/\b(feature|enhancement|proposal|request)\b/.test(text)) labels.add('enhancement');
-            if (/\b(doc|documentation|readme|guide)\b/.test(text)) labels.add('documentation');
-            if (/\b(question|how do i|help)\b/.test(text)) labels.add('question');
-            if (/\b(security|vulnerability|cve|exploit)\b/.test(text)) labels.add('security');
-            if (/\b(critical|urgent|blocking)\b/.test(text)) labels.add('priority-high');
+            const prioritySecurity = [];
+            if (/\b(security|vulnerability|cve|exploit)\b/.test(text)) prioritySecurity.push('security');
+            if (/\b(critical|urgent|blocking)\b/.test(text)) prioritySecurity.push('priority-high');
 
-            const boundedLabels = [...labels].slice(0, 4);
+            const categoryLabels = ['needs-triage'];
+            if (/\b(bug|error|crash|regression|broken)\b/.test(text)) categoryLabels.push('bug');
+            if (/\b(feature|enhancement|proposal|request)\b/.test(text)) categoryLabels.push('enhancement');
+            if (/\b(doc|documentation|readme|guide)\b/.test(text)) categoryLabels.push('documentation');
+            if (/\b(question|how do i|help)\b/.test(text)) categoryLabels.push('question');
+
+            const combined = [...prioritySecurity, ...categoryLabels];
+            const boundedLabels = [...new Set(combined)].slice(0, 4);
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
