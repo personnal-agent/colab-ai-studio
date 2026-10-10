@@ -6,6 +6,7 @@
 /.github/CODEOWNERS @YOUR_ORG/maintainers
 /AGENTS.md @YOUR_ORG/maintainers
 /.gouvernance/ @YOUR_ORG/maintainers
+/.GCC/PROTOCOL.md @YOUR_ORG/maintainers
 /AUTONOMY.md @YOUR_ORG/maintainers
 /agent-control-plane/ @YOUR_ORG/maintainers
 /.claude/ @YOUR_ORG/maintainers
@@ -13,6 +14,6 @@
 /.agents/ @YOUR_ORG/maintainers
 /.devin/ @YOUR_ORG/maintainers
 /.windsurf/ @YOUR_ORG/maintainers
-/githooks/ @YOUR_ORG/maintainers
+/.githooks/ @YOUR_ORG/maintainers
 /setup.sh @YOUR_ORG/maintainers
 /setup.ps1 @YOUR_ORG/maintainers

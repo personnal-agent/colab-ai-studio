@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Git Hook: commit-msg
 # Valide le format Conventional Commits pour Colab AI Studio
-# Format requis : type(scope): description
+# Format requis : type(scope): description ou type(scope)!: description
 # Types autorisés : feat, fix, chore, docs, refactor, test, ci, perf, build, style, revert
 
 set -e
@@ -28,13 +28,13 @@ if [ -z "$FIRST_LINE" ]; then
     exit 1
 fi
 
-# Accepte les commits automatiques de fusion, revert ou tag
-if [[ "$FIRST_LINE" =~ ^(Merge|Revert\ |Initial\ commit) ]]; then
+# Accepte les commits automatiques de fusion, revert ou init
+if [[ "$FIRST_LINE" =~ ^(Merge|Revert\ |Initial\ commit|Skip) ]]; then
     exit 0
 fi
 
-# Expression régulière Conventional Commits : type(scope): description (au moins 3 caractères)
-PATTERN='^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-zA-Z0-9_.-]+\))?: .{3,}'
+# Expression régulière Conventional Commits harmonisée avec CI (governance.yml) :
+PATTERN='^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-zA-Z0-9_./-]+\))?!?: .{3,}'
 
 if ! echo "$FIRST_LINE" | grep -E "$PATTERN" > /dev/null 2>&1; then
     echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -46,6 +46,7 @@ if ! echo "$FIRST_LINE" | grep -E "$PATTERN" > /dev/null 2>&1; then
     echo ""
     echo -e "${YELLOW}Format attendu :${NC}"
     echo "  type(scope): description"
+    echo "  type(scope)!: description (en cas de rupture de compatibilité)"
     echo ""
     echo -e "${YELLOW}Types autorisés :${NC}"
     echo "  feat      - Nouvelle fonctionnalité (ex: studio, dock, proxy)"
@@ -62,6 +63,7 @@ if ! echo "$FIRST_LINE" | grep -E "$PATTERN" > /dev/null 2>&1; then
     echo ""
     echo -e "${YELLOW}Exemples valides :${NC}"
     echo "  feat(dock): ajouter la sélection de ratio pour les modèles vidéo"
+    echo "  feat(api)!: restructurer les paramètres du payload de génération"
     echo "  fix(vram): vider le cache cuda lors de l'éviction d'un modèle"
     echo "  docs(spec): documenter le schéma JSON de generations.json"
     echo "  chore(governance): initialiser les hooks Git et les règles d'agents"

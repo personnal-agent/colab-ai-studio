@@ -41,6 +41,7 @@
       "write_file(.github/CODEOWNERS)",
       "write_file(.GCC/PROTOCOL.md)",
       "write_file(.githooks/)",
+      "write_file(.gouvernance/)",
       "write_file(review-policy.md)",
       "write_file(agent-policy.md)"
     ]

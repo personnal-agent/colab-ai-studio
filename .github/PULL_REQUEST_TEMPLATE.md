@@ -11,7 +11,7 @@ Describe the problem resolved and the functional changes introduced.
 
 ## Automation Impact
 
-- [ ] This pull request does not modify `.github/workflows`, `.github/scripts`, `githooks`, `setup.sh`, or `setup.ps1`.
+- [ ] This pull request does not modify `.github/workflows`, `.github/scripts`, `.githooks`, `.GCC/PROTOCOL.md`, `setup.sh`, or `setup.ps1`.
 - [ ] If it modifies these paths, permission/secret implications are documented below and Code Owner review is required.
 
 ## 🤖 AI Code Review Summary

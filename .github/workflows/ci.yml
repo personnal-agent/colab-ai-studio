@@ -42,15 +42,17 @@ jobs:
 
       - name: Syntax & Lint Check
         run: |
-          if find . -maxdepth 3 -name "*.py" -not -path "*/.*" | grep -q .; then
-            ruff check . || python -m py_compile $(find . -maxdepth 3 -name "*.py" -not -path "*/.*")
+          mapfile -d '' python_files < <(find . -type f -name "*.py" -not -path "*/.[!.]*/*" -print0)
+          if (( ${#python_files[@]} > 0 )); then
+            ruff check .
+            python -m py_compile "${python_files[@]}"
           else
             echo "No Python files present yet."
           fi
 
       - name: Run Backend Tests
         run: |
-          if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print -quit | grep -q .; then
+          if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -not -path "*/.[!.]*/*" -print -quit | grep -q .; then
             pytest -q
           else
             echo "No Python test suite detected."

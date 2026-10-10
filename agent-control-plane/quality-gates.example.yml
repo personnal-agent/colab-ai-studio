@@ -1,0 +1,63 @@
+schema: coding-stuff.control-plane/v1
+purpose: >
+  Maintainer-owned declaration of the validation evidence expected for one autonomous
+  execution issue. This file is guidance until matching hooks, CI jobs and GitHub
+  branch-protection checks are configured as real enforcement.
+owner: "@GOVERNANCE_OWNER"
+
+preflight:
+  requireCleanWorktree: true
+  requireIsolatedRunner: true
+  requireNoProductionSecrets: true
+  requireExecutionIssueMarker: true
+  requireAgentReadyLabel: true
+  requireAgentExecutionLabel: true
+  requireBranchPattern: "agent/<issue>-<slug>"
+  requireBranchContainsBaseHead: true
+
+localCommands:
+  - id: targeted
+    status: not-configured
+    command: null
+    evidence: "Replace with a focused command observed in this repository."
+  - id: full
+    status: not-configured
+    command: null
+    evidence: "Replace with the complete pre-delivery command observed in CI or docs."
+
+additionalChecks:
+  dependencyReview:
+    status: not-configured
+    appliesWhen: "runtime dependencies change"
+    enforcement: "CI or an independent human review"
+  secretScan:
+    status: not-configured
+    enforcement: "hook, CI or secret-scanning service"
+  independentReview:
+    status: required
+    enforcement: "independent CODEOWNER and protected branch"
+  changedUserPathVerification:
+    status: required
+    enforcement: "post-merge CI, scheduled workflow or maintainer"
+
+github:
+  requiredChecks:
+    - "ci"
+    - "security"
+    - "governance"
+    - "workflow-hygiene"
+    - "autonomous-agent-guard"
+  branchProtectionRequired: true
+  independentCodeOwnerRequired: true
+
+stopConditions:
+  - "A required check fails."
+  - "A command is not configured or cannot run in the isolated environment."
+  - "The change needs a protected path, a secret, a new permission or a product decision."
+  - "The same code failure occurs for the third time without new diagnosis evidence."
+
+reporting:
+  success: "Link the Issue, PR, executed commands, GitHub checks, changed user path and post-merge evidence."
+  waiting: "Use failure-report-template.md; do not count network/CI queues as code failures."
+  blocked: "Use failure-report-template.md and release the lease."
+  failed: "Use failure-report-template.md, preserve evidence and release the lease."

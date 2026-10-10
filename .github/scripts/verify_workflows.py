@@ -265,7 +265,8 @@ def check_workflow(path: Path) -> int:
     text = "\n".join(strip_comment(line) for line in lines)
 
     # 1. Untrusted triggers: pull_request_target exposes secrets to PR code.
-    if re.search(r"^\s*pull_request_target\s*:", text, flags=re.MULTILINE):
+    triggers = parse_triggers(lines)
+    if "pull_request_target" in triggers:
         fail(f"{path}: pull_request_target is strictly prohibited in this starter kit.")
         errors += 1
 
@@ -282,7 +283,6 @@ def check_workflow(path: Path) -> int:
         errors += 1
 
     # 3. Concurrency: mandatory group for PR/push triggers.
-    triggers = parse_triggers(lines)
     if triggers.intersection({"pull_request", "push"}) and not has_concurrency_group(lines):
         fail(f"{path}: top-level concurrency block with 'group:' required for triggers "
              f"{', '.join(sorted(triggers.intersection({'pull_request', 'push'})))}.")
@@ -304,11 +304,29 @@ def check_workflow(path: Path) -> int:
         action, ref, comment = match.groups()
         if action.startswith("./") or action.startswith("docker://"):
             continue
+        action = action.strip("\"'")
+        ref = ref.strip("\"'")
         if not SHA.fullmatch(ref):
             fail(f"{path}:{number}: {action}@{ref} must be pinned to a 40-character SHA.")
             errors += 1
         elif not comment or not comment.startswith("v"):
             print(f"WARNING: {path}:{number}: add a version comment, e.g., '# v4.0.0'.")
+        if action == "actions/checkout" or action.endswith("/checkout"):
+            found_persist_false = False
+            base_indent = len(line) - len(line.lstrip(" "))
+            for next_line in lines[number:number + 15]:
+                next_indent = len(next_line) - len(next_line.lstrip(" "))
+                stripped = next_line.strip()
+                if not stripped or stripped.startswith("#"):
+                    continue
+                if stripped.startswith("- ") or (next_indent <= base_indent and not stripped.startswith("with:")):
+                    break
+                if re.match(r"^persist-credentials:\s*false\b", stripped):
+                    found_persist_false = True
+                    break
+            if not found_persist_false:
+                fail(f"{path}:{number}: actions/checkout must explicitly specify 'persist-credentials: false'.")
+                errors += 1
     return errors
 
 

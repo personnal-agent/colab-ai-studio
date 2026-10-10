@@ -59,7 +59,7 @@ jobs:
           protected=false
           while IFS= read -r -d '' path; do
             case "$path" in
-              .github/workflows/*|.github/scripts/*|.github/CODEOWNERS|AGENTS.md|.gouvernance/*|AUTONOMY.md|agent-control-plane/*|.claude/*|.cursor/*|.agents/*|.devin/*|.windsurf/*|githooks/*|setup.sh|setup.ps1)
+              .github/workflows/*|.github/scripts/*|.github/CODEOWNERS|AGENTS.md|.gouvernance/*|.GCC/PROTOCOL.md|AUTONOMY.md|agent-control-plane/*|.claude/*|.cursor/*|.agents/*|.devin/*|.windsurf/*|.githooks/*|setup.sh|setup.ps1)
                 protected=true
                 ;;
             esac
@@ -104,7 +104,7 @@ jobs:
           echo 'status=pass' >> "$GITHUB_OUTPUT"
 
       - name: Upsert governance summary
-        if: always()
+        if: always() && github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           TITLE_STATUS: ${{ steps.title.outputs.status || 'fail' }}

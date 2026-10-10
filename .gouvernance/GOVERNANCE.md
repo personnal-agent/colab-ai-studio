@@ -10,11 +10,11 @@ Ce document régit les règles d'automatisation, le cycle de vie des signalement
 |---|---|---|---|
 | **Intégration Continue (CI)** | `.github/workflows/ci.yml` | `pull_request`, `push` sur `main`, `workflow_dispatch` | Vérification des 3 volets : qualité backend Python (syntaxe, ruff, tests pytest), qualité frontend Node.js (lint, tests, build) et intégrité des workflows GitHub. |
 | **Gouvernance des PR** | `.github/workflows/governance.yml` | Événements `pull_request` | Contrôle du format Conventional Commits du titre et des commits, respect du budget de taille (alerte > 500 lignes, rejet strict > 1000 lignes) et publication du commentaire d'audit. |
-| **Sécurité & Secrets** | `.github/workflows/security.yml` | `pull_request`, `push` sur `main`, hebdo | Analyse de sécurité statique, détection d'exposition de secrets et intégrité des dépendances. |
+| **Revue des Dépendances** | `.github/workflows/security.yml` | `pull_request` | Revue des dépendances ajoutées ou modifiées sur PR (gravité élevée, filtrage des licences AGPL/GPL). |
 | **Hygiène des Workflows** | `.github/workflows/workflow-hygiene.yml` | `pull_request`, `push` sur `main`, hebdo | Vérifie le verrouillage par hash SHA complet (40 caractères) de toutes les actions tierces et le principe de moindre privilège des jetons. |
-| **Triage des Issues** | `.github/workflows/issue-triage.yml` | `issues` (opened, labeled) | Qualification, étiquetage automatique selon le domaine (frontend, backend, colab) et acheminement vers les mainteneurs. |
+| **Triage des Issues** | `.github/workflows/issue-triage.yml` | `issues` (opened, reopened, edited), `workflow_dispatch` | Qualification et étiquetage initial des signalements selon les formulaires d'issues. |
 | **Détection d'Anomalies** | `.github/workflows/issue-detection.yml` | Planifié / manuel | Analyse de santé du dépôt et signalement d'incohérences structurelles. |
-| **Publication de Version** | `.github/workflows/release.yml` | `push` sur tags `v*` ou manuel | Génération du journal des modifications (*changelog*), publication de release GitHub et archivage des livrables. |
+| **Publication de Version** | `.github/workflows/release.yml` | `push` sur `main`, `workflow_dispatch` | Release sémantique automatique, génération du journal des modifications (*changelog*) et publication GitHub. |
 
 ---
 

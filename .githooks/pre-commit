@@ -37,25 +37,22 @@ if [ -n "$STAGED_SENSITIVE" ]; then
     exit 1
 fi
 
-# B. Détection de motifs de secrets dans le contenu indexé (en ignorant les templates de hooks)
-STAGED_SECRETS=$(git diff --cached -S "PRIVATE KEY" -S "AKIA" -S "sk-" --name-only 2>/dev/null | grep -v '^\.githooks/' || true)
-if [ -n "$STAGED_SECRETS" ]; then
-    # Double vérification regex pour éviter les faux positifs sur du texte générique
-    SECRET_PATTERN='(sk-[a-zA-Z0-9]{32,}|ghp_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)'
-    REAL_LEAKS=$(git diff --cached --diff-filter=ACMR -- $STAGED_SECRETS | grep -E "$SECRET_PATTERN" || true)
-    if [ -n "$REAL_LEAKS" ]; then
-        echo -e "${RED}❌ Motif de clé privée ou jeton d'accès détecté dans :${NC}"
-        echo -e "${YELLOW}$STAGED_SECRETS${NC}"
-        echo -e "${YELLOW}👉 Supprimez le secret du code et utilisez les variables d'environnement.${NC}"
-        exit 1
-    fi
+# B. Détection de motifs de secrets dans les lignes AJOUTÉES de l'index (hors .githooks/)
+SECRET_PATTERN='(sk-[a-zA-Z0-9]{32,}|ghp_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)'
+ADDED_SECRETS=$(git diff --cached --diff-filter=ACMR -U0 -- ':(exclude).githooks' | grep -E '^\+[^+]' | grep -E "$SECRET_PATTERN" || true)
+if [ -n "$ADDED_SECRETS" ]; then
+    echo -e "${RED}❌ Motif de clé privée ou jeton d'accès détecté dans les lignes ajoutées :${NC}"
+    echo -e "${YELLOW}$ADDED_SECRETS${NC}"
+    echo -e "${YELLOW}👉 Supprimez le secret du code et utilisez les variables d'environnement.${NC}"
+    exit 1
 fi
 
-# C. Commentaires de masquage de linter interdits (à corriger à la source, hors .githooks/)
-STAGED_SUPPRESSIONS=$(git diff --cached -S "# noqa" -S "# type: ignore" -S "# pylint: disable" -S "// @ts-ignore" --name-only 2>/dev/null | grep -v '^\.githooks/' || true)
-if [ -n "$STAGED_SUPPRESSIONS" ]; then
-    echo -e "${RED}❌ Commentaires d'inhibition détectés (# noqa, # type: ignore, // @ts-ignore) dans :${NC}"
-    echo -e "${YELLOW}$STAGED_SUPPRESSIONS${NC}"
+# C. Commentaires de masquage de linter interdits dans les lignes AJOUTÉES (hors .githooks/)
+SUPPRESSION_PATTERN='(#\s*(noqa|type:\s*ignore|pylint:\s*disable)|\/\/\s*@ts-ignore)'
+ADDED_SUPPRESSIONS=$(git diff --cached --diff-filter=ACMR -U0 -- ':(exclude).githooks' | grep -E '^\+[^+]' | grep -E "$SUPPRESSION_PATTERN" || true)
+if [ -n "$ADDED_SUPPRESSIONS" ]; then
+    echo -e "${RED}❌ Commentaires d'inhibition détectés dans les lignes ajoutées (# noqa, # type: ignore, // @ts-ignore) :${NC}"
+    echo -e "${YELLOW}$ADDED_SUPPRESSIONS${NC}"
     echo -e "${YELLOW}👉 Corrigez l'erreur de typage ou de linter à la source au lieu de masquer le contrôle.${NC}"
     exit 1
 fi
@@ -78,22 +75,50 @@ echo -e "${BLUE}[2/4] Validation Backend Python...${NC}"
 if [ -n "$PY_FILES" ]; then
     echo "  Fichiers Python ciblés :"
     echo "$PY_FILES" | sed 's/^/   • /'
-    
-    for f in $PY_FILES; do
-        if [ -f "$f" ]; then
-            python3 -m py_compile "$f" 2>&1 || {
-                echo -e "${RED}❌ Erreur de syntaxe Python dans le fichier : $f${NC}"
+
+    if [ "$SCOPE" = "staged" ]; then
+        # Extraire la version indexée dans un répertoire temporaire pour valider ce qui sera réellement committé
+        TMP_STAGED=$(mktemp -d)
+        trap 'rm -rf "$TMP_STAGED"' EXIT
+        git checkout-index --prefix="$TMP_STAGED/" $PY_FILES
+
+        for f in $PY_FILES; do
+            if [ -f "$TMP_STAGED/$f" ]; then
+                python3 -m py_compile "$TMP_STAGED/$f" 2>&1 || {
+                    echo -e "${RED}❌ Erreur de syntaxe Python dans la version indexée : $f${NC}"
+                    rm -rf "$TMP_STAGED"
+                    exit 1
+                }
+            fi
+        done
+
+        if command -v ruff >/dev/null 2>&1; then
+            echo "  Exécution de Ruff sur la version indexée..."
+            (cd "$TMP_STAGED" && ruff check $PY_FILES) || {
+                echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la version indexée.${NC}"
+                rm -rf "$TMP_STAGED"
                 exit 1
             }
         fi
-    done
+        rm -rf "$TMP_STAGED"
+        trap - EXIT
+    else
+        for f in $PY_FILES; do
+            if [ -f "$f" ]; then
+                python3 -m py_compile "$f" 2>&1 || {
+                    echo -e "${RED}❌ Erreur de syntaxe Python dans le fichier : $f${NC}"
+                    exit 1
+                }
+            fi
+        done
 
-    if command -v ruff >/dev/null 2>&1; then
-        echo "  Exécution de Ruff..."
-        ruff check $PY_FILES || {
-            echo -e "${RED}❌ Erreurs de linter Ruff détectées.${NC}"
-            exit 1
-        }
+        if command -v ruff >/dev/null 2>&1; then
+            echo "  Exécution de Ruff..."
+            ruff check $PY_FILES || {
+                echo -e "${RED}❌ Erreurs de linter Ruff détectées.${NC}"
+                exit 1
+            }
+        fi
     fi
     echo -e "${GREEN}  ✓ Contrôles Python validés.${NC}"
 else
@@ -109,12 +134,15 @@ if [ -n "$JS_FILES" ]; then
     echo "$JS_FILES" | sed 's/^/   • /'
 
     if [ -f "frontend/package.json" ]; then
-        if [ -d "frontend/node_modules" ]; then
-            (cd frontend && npm run lint --if-present) || {
-                echo -e "${RED}❌ Erreurs de linting frontend détectées.${NC}"
-                exit 1
-            }
+        if [ ! -d "frontend/node_modules" ]; then
+            echo -e "${RED}❌ Dépendances frontend manquantes dans frontend/node_modules.${NC}"
+            echo -e "${YELLOW}👉 Exécutez 'cd frontend && npm install' avant de committer des fichiers frontend.${NC}"
+            exit 1
         fi
+        (cd frontend && npm run lint --if-present) || {
+            echo -e "${RED}❌ Erreurs de linting frontend détectées.${NC}"
+            exit 1
+        }
     fi
     echo -e "${GREEN}  ✓ Contrôles Frontend validés.${NC}"
 else

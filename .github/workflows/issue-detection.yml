@@ -30,9 +30,10 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Resolve audit scope from previous marker
         id: scope
@@ -43,12 +44,15 @@ jobs:
           set -euo pipefail
           base_sha=""
           if [ "${FORCE_FULL}" != "true" ]; then
-            marker_comment=$(gh api \
-              "repos/${GITHUB_REPOSITORY}/issues/comments" \
-              -F per_page=1 \
-              --jq '.[0].body // ""' 2>/dev/null || true)
-            if printf '%s' "$marker_comment" | grep -q 'ANTIBUG-LAST-AUDIT-SHA:'; then
-              base_sha=$(printf '%s' "$marker_comment" | sed -n 's/.*ANTIBUG-LAST-AUDIT-SHA: \([0-9a-f]\{40\}\).*/\1/p')
+            issue_num=$(gh issue list --label "antibug-state" --state all --json number --jq '.[0].number' 2>/dev/null || true)
+            if [ -n "$issue_num" ]; then
+              marker_comment=$(gh api --method GET \
+                "repos/${GITHUB_REPOSITORY}/issues/${issue_num}/comments" \
+                -F per_page=50 \
+                --jq '[.[] | select(.body | contains("ANTIBUG-LAST-AUDIT-SHA:"))] | last | .body // ""' 2>/dev/null || true)
+              if [ -n "$marker_comment" ]; then
+                base_sha=$(printf '%s' "$marker_comment" | sed -n 's/.*ANTIBUG-LAST-AUDIT-SHA: \([0-9a-f]\{40\}\).*/\1/p')
+              fi
             fi
           fi
           if [ -n "$base_sha" ] && git cat-file -e "$base_sha" 2>/dev/null; then
@@ -71,19 +75,22 @@ jobs:
         run: |
           set -euo pipefail
           if [ ! -f "$ANTIBUG_PROMPT_FILE" ]; then
-            core_export_fail() { echo "::error::Missing .github/antibug-prompt.md — copy issue-detection/antibug-prompt.md into .github/ first." >&2; exit 1; }
-            core_export_fail
+            echo "::error::Missing .github/antibug-prompt.md." >&2
+            exit 1
           fi
           if [ -z "$ANTIBUG_AGENT_API_KEY" ]; then
             echo "::error::Secret ANTIBUG_AGENT_API_KEY is not configured. The audit cannot call the agent backend." >&2
             exit 1
           fi
           # --- Backend adapter: Google Jules ---
-          # To plug in another backend (headless Claude Code, cloud Codex...),
-          # replace this block: input = prompt file + scope list,
-          # output = return after issue creation by the agent.
+          scope_content=$(cat /tmp/antibug-scope.txt)
+          combined_prompt="$(cat "$ANTIBUG_PROMPT_FILE")
+
+### Audit Scope Files:
+${scope_content}"
+
           jules_payload=$(jq -n \
-            --arg prompt "$(cat "$ANTIBUG_PROMPT_FILE")" \
+            --arg prompt "$combined_prompt" \
             --arg repo "${GITHUB_REPOSITORY}" \
             '{prompt: $prompt, sourceRepository: $repo}')
           response=$(curl -sS --max-time 1200 \
@@ -118,8 +125,15 @@ jobs:
           set -euo pipefail
           sha=$(git rev-parse HEAD)
           body="<!-- coding-stuff:antibug:v1 ANTIBUG-LAST-AUDIT-SHA: ${sha} -->"
-          gh api "repos/${GITHUB_REPOSITORY}/issues/comments" \
-            -X POST -f body="$body" >/dev/null
+          issue_num=$(gh issue list --label "antibug-state" --state all --json number --jq '.[0].number' 2>/dev/null || true)
+          if [ -z "$issue_num" ]; then
+            issue_url=$(gh issue create --title "ANTIBUG State Tracking" --body "Automated audit state tracking for ANTIBUG." --label "antibug-state" 2>/dev/null || true)
+            issue_num=$(echo "$issue_url" | grep -o '[0-9]*$' || true)
+          fi
+          if [ -n "$issue_num" ]; then
+            gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_num}/comments" \
+              -X POST -f body="$body" >/dev/null || true
+          fi
           echo "Recorded audit marker at ${sha}."
 
       - name: Report run outcome

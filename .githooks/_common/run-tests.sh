@@ -16,8 +16,8 @@ echo -e "${BLUE}🧪 Recherche et exécution des suites de tests unitaires...${N
 
 TESTS_FOUND=0
 
-# 1. Tests Python (FastAPI / services)
-if find . -maxdepth 3 -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print -quit | grep -q .; then
+# 1. Tests Python (FastAPI / services) - recherche récursive complète sans limitation de profondeur
+if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -not -path '*/.[!.]*/*' -print -quit | grep -q .; then
     TESTS_FOUND=1
     echo -e "${BLUE}  Exécution des tests Python (pytest)...${NC}"
     if command -v pytest >/dev/null 2>&1; then
@@ -26,17 +26,21 @@ if find . -maxdepth 3 -type f \( -name 'test_*.py' -o -name '*_test.py' \) -prin
             exit 1
         }
     else
-        timeout $TEST_TIMEOUT python3 -m unittest discover -s tests -p "test_*.py" 2>/dev/null || {
-            echo -e "${RED}❌ Échec des tests unitaires Python.${NC}"
-            exit 1
-        }
+        echo -e "${RED}❌ pytest est requis pour exécuter la suite de tests Python.${NC}"
+        echo -e "${YELLOW}👉 Installez pytest ('pip install pytest') avant de lancer les tests.${NC}"
+        exit 1
     fi
     echo -e "${GREEN}  ✓ Tests Python validés.${NC}"
 fi
 
 # 2. Tests Frontend (React)
-if [ -f "frontend/package.json" ] && [ -d "frontend/node_modules" ]; then
+if [ -f "frontend/package.json" ]; then
     if grep -q '"test"' frontend/package.json; then
+        if [ ! -d "frontend/node_modules" ]; then
+            echo -e "${RED}❌ Dépendances frontend manquantes dans frontend/node_modules pour exécuter les tests.${NC}"
+            echo -e "${YELLOW}👉 Exécutez 'cd frontend && npm install' avant de tester.${NC}"
+            exit 1
+        fi
         TESTS_FOUND=1
         echo -e "${BLUE}  Exécution des tests Frontend (npm test)...${NC}"
         (cd frontend && timeout $TEST_TIMEOUT npm test -- --run) || {
