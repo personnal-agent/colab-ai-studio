@@ -13,7 +13,7 @@ L'interface de **Colab AI Studio** est un studio de création visuelle et multim
   2. 🎬 **Vidéo** : Génération cinématique avec contrôle temporel (images clés début/fin, références de mouvement et audio).
   3. 🗣️ **Lip Sync** : Animation et synchronisation labiale (visage source et piste vocale).
   4. 🔍 **Upscaling** : Pôle autonome de rehaussement de résolution (image et vidéo jusqu'à 4K).
-- **Interface Pilotée par Schéma Dynamique (*Schema-Driven*)** : Les intitulés `MODEL-NAME` et descriptions sont alimentés dynamiquement par le catalogue de modèles disponibles sur le backend. L'interface adapte instantanément ses contrôles aux capacités du modèle actif.
+- **Modularité Atomique & Interface Pilotée par Schéma (*Schema-Driven*)** : Zéro écran ou page codé en dur par modèle. Chaque bouton et contrôle de paramètre est une entité composant isolée (1 fichier = 1 responsabilité). Les modèles exposent un profil déclaratif de capacités (`capabilities`). Les paramètres passe-partout universels (lot `⚏ 1`–`4`, prompt, seed) sont automatiquement injectés dans tous les groupes ; les contrôles spécifiques ne s'affichent que si le modèle expose la capacité correspondante.
 - **Zéro Décalage de Mise en Page (*Zero Layout Shift*)** : Hauteurs et espacements calibrés pour éviter toute secousse visuelle lors de la bascule de mode.
 
 ---
@@ -125,24 +125,35 @@ La galerie présente les créations générées sous forme de cartes standardis�
   - *Sélection* : Insère un **chip atomique unique `[@NomDuKit]`** dans le prompt (remplace le précédent). Suppression d'un bloc par `Retour arrière`.
   - *Déclenchement* : Aucun écran intermédiaire ; clic sur `↑` compile directement via `BrandContextCompiler`.
 
-### 6.2. Plateau de Conditionnement Multimodal (Fentes de Référence)
-- **Mode Vidéo (5 fentes)** : `Start frame` (cadrage initial), `End frame` (atterrissage caméra), `Image refs` (style/sujet), `Video refs` (mouvement/angle), `Audio refs` (tempo sonore).
-- **Mode Image (1 fente)** : `Image refs` (guidage stylistique).
-- **Mode Lip Sync (2 fentes)** : Fente visage source (portrait) et fente audio vocal (`.mp3`, `.wav`). *(Maquette réservée : `ui-spec_lip-sync_reference-inputs.png`, voir §9.2)*.
-- **Mode Upscaling (1 fente)** : Fente média source (image ou vidéo à réhausser).
+### 6.2. Conditionnement Vidéo : Deux Modes Fondamentaux & Combinaisons
+Les modèles vidéo modernes s'articulent autour de deux modes fondamentaux de conditionnement :
+1. **Mode Ingrédients (*Ingredient Mode*)** : Maintien de l'identité sémantique sans figer la posture de départ. Injection de références issues de la *Dataset Bible* (fiches personnages/turnarounds, décors, accessoires/armes, familiers, effets visuels complexes comme cercles magiques ou auras) ou du clip vidéo précédent $N-1$ (*Video-as-Ingredient* pour continuité fluide). Jusqu'à 9 références.
+2. **Mode Interpolation Temporelle (*Frame Chaining*)** : Cadrage physique et interpolation plan à plan via première image (`Start frame` / *First Frame*) et/ou dernière image (`End frame` / *Last Frame*).
+- **Combinaisons de modes & Règle de subsomption** :
+  - *Disponibilité unitaire* : Ingrédients seuls, First Frame seul, Last Frame seul, ou Frame Chaining complet (First + Last Frame).
+  - *Modes partiels* : First Frame + Ingrédients OU Last Frame + Ingrédients.
+  - *Mode complet* : First Frame + Last Frame + Ingrédients.
+  - *Règle de subsomption obligatoire* : Tout modèle supportant le mode complet (First + Last + Ingrédients) supporte obligatoirement l'ensemble des modes partiels.
+- **Autres pôles de conditionnement** : Image (`Image refs`), Lip Sync (visage source portrait + audio vocal `.mp3`/`.wav`), Upscaling (média source image/vidéo).
 
 ### 6.3. Zone de Saisie de Prompt
 - **Placeholder contextuel** : `Describe your video or reference by using @...` (vidéo) ou `Describe your image or reference by using @...` (image/lip sync).
-- **Déclencheur `@`** : Ouvre un popover d'autocomplétion proposant d'invoquer un actif de marque ou un personnage cohérent.
+- **Déclencheur `@`** : Popover d'autocomplétion (Brand Kit, personnage cohérent ou référence).
 
-### 6.4. Pilules de Contrôle Inférieures (Dynamiques)
-- **Sélecteur de Modèle (`MODEL-NAME`)** (*Captures :* `ui-spec_lip-sync_model-selector-clean.jpeg`, `ui-spec-page.jpg`) : Ouvre le catalogue avec recherche, onglets (`Image`, `Video`, `Lip sync`, `Upscaling`), tags de filtres et cartes descriptives. Reconfigure instantanément les pilules adjacentes.
-- **Format & Ratio (`16:9`)** : Image (`8:1` à `2:3`), Lip sync (`16:9`, `9:16`, `1:1`), Vidéo (`16:9`, `9:16`, `1:1`, `21:9`, `4:3`). *(Maquette réservée : `ui-spec_video_aspect-ratio.png`, voir §9.2)*.
-- **Définition & Résolution (`720p`, `1K`, `1080p`)** : Image (`1K`, `2K`, `4K`), Vidéo (`720p`, `1080p`, `4K`), Lip sync (`720p`, `1080p`). *(Maquettes réservées : `ui-spec_video_resolution.png`, `ui-spec_lip-sync_resolution.png`, voir §9.2)*.
-- **Durée Temporelle (`5s`) & Commutateur Audio (`🔊 On`)** : Paliers vidéo (`3s`, `5s`, `10s`) et toggle audio synchronisé. *(Maquettes réservées : `ui-spec_video_duration.png`, `ui-spec_video_audio.png`, voir §9.2)*.
-- **Tirages Parallèles (`⚏ 1` à `⚏ 4`)** : Génération de 1 à 4 déclinaisons simultanées sur la même consigne.
-- **Amélioration de Prompt (`🪄 On`)** : Enrichissement automatique par vocabulaire photographique/cinématique.
-- **Style d'Élocution (`Stable` / `Expressive` en Lip Sync)** : `Stable` (tête fixe, lèvres nettes) vs `Expressive` (micro-mouvements naturels).
+### 6.4. Pilules de Contrôle Inférieures (Architecture Modulaire & Dynamique)
+Chaque bouton/contrôle de paramètre est une **entité composant isolée (1 fichier = 1 responsabilité)**. Zéro page codée en dur.
+- **Contrôles Passe-Partout Universels (automatiquement présents dans tous les groupes)** :
+  - **Tirages Parallèles (`⚏ 1` à `⚏ 4`)** : Génération de 1 à 4 déclinaisons simultanées sur la même consigne.
+  - **Zone de Prompt & Amélioration (`🪄 On`)** : Enrichissement automatique par vocabulaire photographique/cinématique.
+- **Contrôles Spécifiques Conditionnés par les Capacités du Modèle (`capabilities`)** :
+  - **Sélecteur de Modèle (`MODEL-NAME`)** : Ouvre le catalogue avec recherche et filtres ; reconfigure instantanément le dock selon les capacités exposées.
+  - **Gestion Modulaire de la Durée (`⏱ Durée`)** : S'adapte au schéma déclaré par le modèle :
+    - *Intervalle continu (`range`)* : sélecteur avec bornes minimale et maximale (ex. curseur continu de 4 à 30 secondes).
+    - *Paliers discrets fixes (`discrete`)* : sélecteur de pilules avec valeurs autorisées prédéfinies (ex. `5s`, `10s`, `15s`, `20s`, `25s`, `30s`).
+  - **Format & Ratio (`16:9`)** : Image (`8:1` à `2:3`), Lip sync (`16:9`, `9:16`, `1:1`), Vidéo (`16:9`, `9:16`, `1:1`, `21:9`, `4:3`).
+  - **Définition & Résolution (`720p`, `1K`, `1080p`, `4K`)** : Image (`1K` à `4K`), Vidéo (`720p`, `1080p`, `4K`), Lip sync (`720p`, `1080p`).
+  - **Commutateur Audio / SFX Natif (`🔊 On` / `Off`)** : Activé si le modèle vidéo génère l'audio physique synchronisé.
+  - **Style d'Élocution (`Stable` / `Expressive` en Lip Sync)** : Stabilité faciale vs expressivité naturelle.
 
 ### 6.5. Bouton d'Action Circulaire (`↑`) & Suivi de Tâche
 - Bouton noir circulaire avec flèche `↑`. Clic : envoi asynchrone au worker, état de chargement léger, carte de suivi instantanée en haut de la galerie (pourcentage, étape, bouton d'annulation).

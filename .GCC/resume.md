@@ -1,37 +1,29 @@
 # Session Handoff
- 
+
 ## 🎯 Functional Outcome & Task Reality
-- **Requested Task**: Résolution intégrale des retours de revue Greptile et CodeRabbit sur la PR #4, obtention du score 5/5 Greptile, 0 retour non résolu, conservation et suivi des 24 maquettes de référence dans Git (`ui-specifications/`), et respect du budget de gouvernance (PR <= 1000 lignes).
-- **Functional Status**: PENDING_VERIFICATION (Push effectué, Quality Gate validée, 480s wait timer actif).
+- **Requested Task**: Intégration dans les spécifications de la modularité atomique de l'interface (1 fichier par responsabilité, 0 page en dur), séparation stricte des 2 modes vidéo (Ingrédients Dataset Bible vs Frame Chaining First/Last Frame avec règle de subsomption obligatoire), et gestion modulaire de la durée (continue range vs discrète steps), tout en respectant le plafond strict de gouvernance (PR <= 1000 lignes).
+- **Functional Status**: READY_FOR_VERIFICATION (Spécifications mises à jour, budget à 955 lignes <= 1000).
 - **Behavioral Proof**:
-  - `ui-specifications/` : 24 captures et maquettes d'écran intégrées sous Git via déblocage dans `.gitignore` (`!ui-specifications/`).
-  - `UI_SPECIFICATION.md` : Harmonisation stricte des résolutions Lip sync (`720p`, `1080p`), règles de stockage unifiées sur `storagePath` sans doublon, et densification textuelle (247 lignes).
-  - `DESIGN_SPECIFICATION.md` : Contraste WCAG AA >= 4.5:1 sur `text-placeholder` (`#6B7280`), token `studio.placeholder` ajouté, typographie Tailwind v3 alignée.
-  - `SPECIFICATION.md` : Sérialisation exclusive des mutations concurrentes (`asyncio.Lock` + `os.replace`), chemins de l'exemple alignés sur `storagePath`, endpoint d'annulation `POST /api/tasks/{task_id}/cancel`, gestion des quotas `userRefs`.
-  - `README.md` : Cible d'architecture explicite pour le service du bundle de production, persistance JSON sous `data/`.
-  - Budget de lignes PR : 867 lignes au total contre `origin/main` (plafond à 1000 lignes respecté).
-  - Fils de discussion : 22 threads clos par mutation GraphQL `resolveReviewThread` (0 non résolu).
-  - Commits conventionnels : `3cd2273` et `5f197cc` poussés sur `origin/docs/ui-system-specifications`.
+  - `UI_SPECIFICATION.md` : Formalisation de la modularité atomique, des modes Ingrédients (Dataset Bible, vidéo N-1) vs Frame Chaining (First/Last Frame), matrice des combinaisons (unitaire, partielle, complète) avec règle de subsomption obligatoire, et gestion modulaire de la durée (`range` continu vs `discrete` paliers).
+  - `SPECIFICATION.md` : Section 3.1 alignée sur la modularité sans page en dur, les deux modes de conditionnement vidéo SOTA et les types de durée.
+  - `ARCHITECTURE.md` : Section 3.3 ajoutée détaillant le ParameterRegistry et la composition dynamique de contrôles atomiques.
+  - `.GCC/main.md` : Décision d'architecture enregistrée.
+  - Budget de lignes PR : 955 lignes au total contre `origin/main` (plafond à 1000 lignes respecté).
 
 ## ⚡ Technical Diffs / Atomic Modifications
-- `.gitignore` : Exceptions pour suivre `ui-specifications/`.
-- `DESIGN_SPECIFICATION.md` : Placeholder WCAG AA, keyframes, typography.
-- `SPECIFICATION.md` : Concurrence, stockage, annulation de tâche, repli LLM déterministe.
-- `UI_SPECIFICATION.md` : Formatage condensé, résolutions Lip sync, intégration des maquettes.
-- `README.md` : Précisions sur les phases d'implémentation.
-- `.GCC/main.md` & `.GCC/resume.md` : Registre des décisions et transition technique.
+- `UI_SPECIFICATION.md` : Modularité atomique, modes vidéo et composant durée.
+- `SPECIFICATION.md` : Spécification des modes de conditionnement vidéo et paramètres dynamiques.
+- `ARCHITECTURE.md` : Section 3.3 sur le registre modulaire de paramètres UI.
+- `.GCC/main.md` & `.GCC/resume.md` : Décision d'architecture et statut de transition.
 
 ## 🛠️ Static Codebase Health
 - **Verification Commands Run**:
-  - `.githooks/pre-commit` -> Code 0 (Succès).
-  - `.githooks/pre-push` -> Code 0 (Succès).
-  - `git diff --numstat origin/main | awk ...` -> Total: 867 lignes (<= 1000).
-  - GraphQL `reviewThreads` -> 0 thread non résolu.
+  - `git diff --numstat origin/main | awk ...` -> Total: 955 lignes (<= 1000).
 - **Linter/Compiler Status**: 100% conforme.
 
 ## 🚧 Unfinished Work & Technical Failures
-- **Blocker / Failure Explanation**: Aucun blocage. En attente de l'expiration du timer de 480 secondes pour relever les verdicts des bots distants.
+- **Blocker / Failure Explanation**: Aucun blocage.
 
 ## 👉 Handover Directives for the Next Agent
-1. **Target File**: `.GCC/main.md`, GitHub PR #4.
-2. **Immediate Action**: À l'expiration des 480 secondes, relever le score Greptile, vérifier la réponse CodeRabbit avec la mention `@coderabbitai`, vérifier que le statut `CHANGES_REQUESTED` est levé et que la CI GitHub Actions est au vert.
+1. **Target File**: `frontend/`, `app/`.
+2. **Immediate Action**: Exécuter `.githooks/pre-commit` et engager la modélisation logicielle (contrats d'interfaces TypeScript et schémas Pydantic) conformément aux spécifications validées.

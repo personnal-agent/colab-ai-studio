@@ -54,30 +54,28 @@ Le système se compose de trois éléments majeurs :
 
 L'interface bascule dynamiquement selon la nature du modèle actif sélectionné dans la barre d'outils.
 
-### 3.1. Mode Studio Vidéo & Image
+### 3.1. Mode Studio Vidéo & Image : Modularité & Conditionnement SOTA
 
-Inspiré des plateformes professionnelles de génération générative (type Wan 2.5 / CogVideoX / Runway) :
+L'interface repose sur une modularité stricte : **aucun écran ou page n'est codé en dur par modèle**. Chaque bouton ou contrôle de paramètre constitue une entité composant isolée (**un fichier par responsabilité**). Les modèles exposent un schéma déclaratif de capacités (`capabilities`) liant les paramètres disponibles.
 
-* **Barre d'outils supérieure d'actions rapides** :
-  * `Start frame` : Téléversement d'une image de début pour l'interpolation.
-  * `End frame` : Téléversement d'une image de fin pour guider la trajectoire vidéo.
-  * `Image refs` : Injection d'une ou plusieurs images de référence (IP-Adapter / conditionnement visuel).
-  * `Video refs` : Référence de mouvement ou style vidéo.
-  * `Audio refs` : Piste audio de synchronisation si applicable.
-* **Zone de saisie principale** :
-  * Zone de texte riche pour la description du prompt avec autocomplétion des déclencheurs (`@...`).
-* **Barre de réglages inférieurs (Pill Controls)** :
-  * **Sélecteur de modèle** : Badge dynamique (ex. `Wan 2.5 Image`, `Wan 2.1 Video`, `CogVideoX-2B`, `SDXL-Turbo`).
-  * **Aspect Ratio** : Menu déroulant rapide (`16:9`, `9:16`, `1:1`, `4:3`, `21:9`).
-  * **Résolution** : Choix rapide (`720p`, `1080p`).
-  * **Durée** : Sélection de la temporalité (`3s`, `5s`, `10s`).
-  * **Audio** : Commutateur `On` / `Off`.
-  * **Batch** : Nombre d'itérations simultanées.
-  * **Enhancement** : Activer/désactiver l'optimisation automatique du prompt.
-  * **Bouton d'envoi** : Déclencheur avec état actif/inactif selon la connexion au worker.
-* **Suivi de génération & Galerie** :
-  * Barre de progression en temps réel (pourcentage, étape en cours, temps estimé restant).
-  * Galerie locale intégrant un lecteur vidéo HTML5 avec prévisualisation immédiate et téléchargement en un clic.
+* **Paramètres Universels ("Passe-Partout")** :
+  * Automatiquement présents dans tous les groupes : invite textuelle principale, enrichissement de prompt (`🪄 On`), tirages parallèles en lot (`⚏ 1` à `4`), graine aléatoire (`seed`).
+* **Deux Modes Fondamentaux de Conditionnement Vidéo & Combinaisons** :
+  1. **Mode Ingrédients (*Ingredient Mode*)** : Maintien de l'identité sémantique (Dataset Bible : feuilles de personnages/turnarounds, décors/environnements, armes/props, familiers, effets visuels complexes comme cercles magiques ou auras) ou clip vidéo précédent $N-1$ (*Video-as-Ingredient* pour continuité fluide). Jusqu'à 9 références.
+  2. **Mode Temporel (*Frame Chaining*)** : Cadrage spatial et interpolation via première image (`Start frame` / *First Frame*) et/ou dernière image (`End frame` / *Last Frame*).
+  * **Matrice des combinaisons & Règle de subsomption** :
+    * *Unitaire* : Ingrédients seuls, First Frame seul, Last Frame seul, ou First + Last (Frame Chaining complet).
+    * *Partiel* : First Frame + Ingrédients, Last Frame + Ingrédients.
+    * *Complet* : First Frame + Last Frame + Ingrédients.
+    * *Règle de subsomption obligatoire* : Tout modèle supportant le mode complet supporte obligatoirement l'ensemble des modes partiels.
+* **Gestion Modulaire de la Durée** :
+  * Déclarée par le modèle selon deux typologies :
+    * *Intervalle continu (`range`)* : bornes minimale et maximale avec curseur (ex. 4s à 30s).
+    * *Paliers discrets fixes (`discrete`)* : sélection par pilules (ex. 5s, 10s, 15s, 20s, 25s, 30s).
+* **Autres Paramètres Conditionnels** :
+  * Ratio d'aspect (`16:9`, `9:16`, `1:1`, `4:3`, `21:9`), Définition (`720p`, `1080p`, `4K`), Commutateur audio/SFX natif (`🔊 On`/`Off`).
+* **Suivi de Génération & Galerie** :
+  * Suivi temps réel par Server-Sent Events (SSE), lecteur vidéo HTML5 avec prévisualisation et téléchargement direct.
 
 ### 3.2. Mode Chat LLM & Passerelle API
 

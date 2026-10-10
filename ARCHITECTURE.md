@@ -86,7 +86,7 @@ colab-ai-studio/
 ├── frontend/                      # [À initialiser] Application React SPA
 │   ├── package.json               # Dépendances Vite, React, Radix UI, Lucide, Tailwind
 │   ├── tailwind.config.js         # Configuration des tokens selon DESIGN_SPECIFICATION.md
-│   └── src/                       # Composants (Dock, Grille, Popovers), hooks et types
+│   └── src/                       # Composants atomiques (Dock, ParameterRegistry, boutons isolés), hooks et types
 │
 ├── data/                          # Données applicatives locales (JSON légers)
 │   ├── generations.json           # Journal exhaustif des créations (métadonnées complètes)
@@ -117,6 +117,11 @@ colab-ai-studio/
 1. L'endpoint local FastAPI reçoit les requêtes compatibles avec l'API OpenAI standard.
 2. La requête est streamée vers le worker Colab.
 3. Les tokens sont retransmis en streaming mot à mot vers l'outil client externe (Cursor, Continue, scripts).
+
+### 3.3. Modularité Atomique UI & Registre de Paramètres
+1. Zéro page ou écran codé en dur : chaque bouton/contrôle de paramètre est une entité composant isolée (1 fichier = 1 responsabilité).
+2. Paramètres universels (tirages `⚏ 1`–`4`, prompt) injectés automatiquement dans tous les groupes.
+3. Contrôles spécifiques montés dynamiquement selon les capacités (`capabilities`) du modèle actif : Mode Ingrédients (Dataset Bible, vidéo précédente), Frame Chaining (First/Last Frame avec règle de subsomption), durée (intervalle continu ou paliers discrets), résolutions et audio natif.
 
 ---
 

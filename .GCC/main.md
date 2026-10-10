@@ -18,15 +18,15 @@ Modéliser le code et l'architecture logicielle de Colab AI Studio (contrats d'i
 - **2026-10-10** : Sérialisation exclusive des écritures JSON (`data/generations.json`) via `asyncio.Lock` applicatif et renommage atomique POSIX `os.replace`.
 - **2026-10-10** : Contrat d'annulation de tâche asynchrone (`POST /api/tasks/{task_id}/cancel`) avec arrêt worker et état terminal `cancelled`.
 - **2026-10-10** : Conformité WCAG AA (contraste placeholder `#6B7280`), tokens typographiques Tailwind v3 et gestion du quota utilisateur `userRefs`.
-- **2026-10-10** : Densification des spécifications garantissant le respect du budget strict de gouvernance de PR (867 lignes changées <= 1000).
+- **2026-10-10** : Spécification de la modularité atomique UI (1 fichier par responsabilité, zéro page en dur), séparation stricte des modes vidéo (Ingrédients Dataset Bible / Video-as-Ingredient vs Frame Chaining First/Last Frame avec règle de subsomption obligatoire pour tout mode complet), et gestion modulaire de la durée (intervalle continu range vs paliers discrets).
 
 ## 🌿 Active Branches / Plans
 - [`docs/ui-system-specifications`](https://github.com/personnal-agent/colab-ai-studio/pull/4) : Consolidation des spécifications UI/système, design tokens, suivi des maquettes et revue Greptile / CodeRabbit (PR #4 ouverte).
 
 ## 📈 Current Status
-- ✅ Terminé : 100% des constats Greptile (10 threads) et CodeRabbit (11 threads) résolus, maquettes suivies dans Git, 22 threads clos par mutation GraphQL, Quality Gate locale passée, commits conventionnels poussés sur `docs/ui-system-specifications`.
-- 🔄 En cours : Temporisation réglementaire post-push de 480 secondes avant relevé final du Confidence Score Greptile 5/5 et levée formelle des requêtes de changement CodeRabbit.
+- ✅ Terminé : Spécifications UI/système/architecture mises à jour avec la modularité atomique des paramètres, les 2 modes vidéo (Ingrédients vs Frame Chaining, subsomption) et la durée configurable (range vs discrete).
+- 🔄 En cours : Validation locale de la Quality Gate et vérification du respect du budget strict de PR (<= 1000 lignes).
 - ⏳ À venir : Modélisation logicielle (contrats TypeScript, schémas Pydantic, composants React).
 
 ## 👉 Next Session Direction
-Vérifier le verdict Greptile 5/5 et CodeRabbit suite au timer de 480s, obtenir l'approbation formelle des bots, puis poursuivre la modélisation du code.
+Valider le Quality Gate local, vérifier le budget de gouvernance de la PR, committer conventionnellement les spécifications et engager la modélisation du code.
