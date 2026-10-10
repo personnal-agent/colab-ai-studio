@@ -82,38 +82,46 @@ if [ -n "$PY_FILES" ]; then
         trap 'rm -rf "$TMP_STAGED"' EXIT
         git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*' | git checkout-index --prefix="$TMP_STAGED/" -z --stdin
 
+        STAGED_PY_FILES=()
         while IFS= read -r -d '' f; do
             if [ -f "$TMP_STAGED/$f" ]; then
                 python3 -m py_compile "$TMP_STAGED/$f" 2>&1 || {
                     echo -e "${RED}❌ Erreur de syntaxe Python dans la version indexée : $f${NC}"
                     exit 1
                 }
+                STAGED_PY_FILES+=("$f")
             fi
         done < <(git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*')
 
         if command -v ruff >/dev/null 2>&1; then
-            echo "  Exécution de Ruff sur la version indexée..."
-            (cd "$TMP_STAGED" && git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*' | xargs -0 ruff check) || {
-                echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la version indexée.${NC}"
-                exit 1
-            }
+            if [ ${#STAGED_PY_FILES[@]} -gt 0 ]; then
+                echo "  Exécution de Ruff sur la version indexée..."
+                (cd "$TMP_STAGED" && ruff check "${STAGED_PY_FILES[@]}") || {
+                    echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la version indexée.${NC}"
+                    exit 1
+                }
+            fi
         fi
     else
+        FULL_PY_FILES=()
         while IFS= read -r f; do
-            if [ -f "$f" ]; then
+            if [ -n "$f" ] && [ -f "$f" ]; then
                 python3 -m py_compile "$f" 2>&1 || {
                     echo -e "${RED}❌ Erreur de syntaxe Python dans le fichier : $f${NC}"
                     exit 1
                 }
+                FULL_PY_FILES+=("$f")
             fi
         done <<< "$PY_FILES"
 
         if command -v ruff >/dev/null 2>&1; then
-            echo "  Exécution de Ruff..."
-            echo "$PY_FILES" | tr '\n' '\0' | xargs -0 ruff check || {
-                echo -e "${RED}❌ Erreurs de linter Ruff détectées.${NC}"
-                exit 1
-            }
+            if [ ${#FULL_PY_FILES[@]} -gt 0 ]; then
+                echo "  Exécution de Ruff..."
+                ruff check "${FULL_PY_FILES[@]}" || {
+                    echo -e "${RED}❌ Erreurs de linter Ruff détectées.${NC}"
+                    exit 1
+                }
+            fi
         fi
     fi
     echo -e "${GREEN}  ✓ Contrôles Python validés.${NC}"
