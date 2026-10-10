@@ -305,9 +305,11 @@ sequenceDiagram
 1. **Composition du Brief par LLM & Repli Déterministe (*Graceful Fallback*)** :
    - Le compilateur s'appuie sur la configuration `compilerLlm` de `data/config.json` (ou la variable d'environnement `COMPILER_LLM_API_KEY`).
    - Lorsqu'une clé API valide est présente, le LLM reformule l'Overview, les couleurs (noms et codes hexadécimaux), les directives Do/Don't et les polices dans un brief cinématique/photographique fluide, **rédigé en anglais** pour le modèle récepteur. Les interdictions ("Don't") sont orientées vers le `negative_prompt`.
-   - **Politique de Repli Déterministe (Sans IA)** : Si aucune clé API n'est configurée, si le quota est dépassé ou en cas de timeout réseau, le compilateur bascule immédiatement et de façon transparente sur un **gabarit déterministe pré-formaté** :  
-     `"[Brand Identity: {name}] Style: {overview}. Palette: {hex_colors}. Typography: {fonts}. Guidelines: {dos}."`  
-     Ce mécanisme garantit qu'une défaillance ou absence de clé LLM ne bloque jamais la génération de l'utilisateur.
+   - **Politique de Repli Déterministe (Sans IA)** : Si aucune clé API n'est configurée, si la clé est invalide ou révoquée, en cas d'erreur serveur du fournisseur (HTTP 5xx), de quota dépassé ou de timeout réseau, le compilateur bascule immédiatement et de façon transparente sur un **gabarit déterministe pré-formaté en anglais** :  
+     - *Prompt enrichi* : `"[Brand Identity: {name}] Style: {overview_en}. Palette: {hex_colors}. Typography: {fonts}. Guidelines: {dos_en}."`  
+     - *Negative Prompt* : `"{donts_en}, brand inconsistency, distorted logo, unapproved color palette"`  
+     - *Exigence linguistique* : Les champs `overview` et `guidelines` du kit sont traduits ou stockés en anglais (avec fallback automatique direct sur les libellés sources) afin de garantir la cohérence d'inférence des modèles anglophones.  
+     Ce mécanisme garantit qu'aucune défaillance de clé ou d'API LLM ne bloque la génération de l'utilisateur.
 2. **Priorité d'Attribution des Fentes d'Images de Référence** :
    - Lorsque le modèle impose un quota d'images de référence :
      - **Priorité 1** : Références manuelles déposées par l'utilisateur (sanctuarisées, jamais écrasées).

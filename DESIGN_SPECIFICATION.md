@@ -46,6 +46,8 @@ L'intégralité des teintes a été calibrée à partir des 17 captures fournies
 ### 2.2. Configuration `tailwind.config.js`
 
 ```javascript
+import animate from 'tailwindcss-animate';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -94,7 +96,7 @@ export default {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [animate],
 };
 ```
 

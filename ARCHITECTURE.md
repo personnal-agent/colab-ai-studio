@@ -111,7 +111,7 @@ colab-ai-studio/
 4. Le backend local relaie la requête au worker GPU Colab via le tunnel chiffré.
 5. Le worker Colab exécute l'inférence asynchrone (avec bascule dynamique de VRAM si un autre modèle était chargé) et renvoie un `task_id`.
 6. L'interface locale suit l'avancement en direct via Server-Sent Events (SSE).
-7. Dès l'achèvement, le backend local télécharge automatiquement le fichier média dans `outputs/YYYY-MM-DD/` et enregistre ses métadonnées dans `data/generations.json`.
+7. Dès l'achèvement, le backend local télécharge automatiquement le fichier média dans son dossier de destination résolu (le répertoire dédié `storagePath` si le projet en définit un, le sous-dossier standard `outputs/projects/<id>/` par défaut, ou `outputs/YYYY-MM-DD/` hors projet) et enregistre ses métadonnées dans `data/generations.json`.
 
 ### 3.2. Passerelle LLM Locale (`/v1/chat/completions`)
 1. L'endpoint local FastAPI reçoit les requêtes compatibles avec l'API OpenAI standard.
