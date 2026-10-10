@@ -26,6 +26,10 @@ cache/
 *.sqlite3
 *.db
 
+# Maquettes et captures de référence d'interface utilisateur (préservées sous Git)
+!ui-specifications/
+!ui-specifications/**
+
 # OS / Editor
 .DS_Store
 Thumbs.db
