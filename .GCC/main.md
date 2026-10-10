@@ -4,7 +4,7 @@
 - **2026-10-09** : Déploiement complet du socle de gouvernance et qualité des 6 piliers (`coding-stuff` v3.0).
 
 ## 🎯 Objective
-Mise en place de l'environnement de gouvernance, des règles d'agents (`AGENTS.md`), de la persistance de session (`.GCC/`), des garde-fous Git locaux (`.githooks/`), des workflows GitHub Actions (`.github/`) et de l'architecture blueprint (`ARCHITECTURE.md`) pour Colab AI Studio.
+Modéliser le code et l'architecture logicielle de Colab AI Studio (contrats d'interfaces TypeScript, schémas Pydantic, machine à états du dock flottant adaptatif, pipeline BrandContextCompiler, orchestrateur asynchrone FastAPI et gestionnaire dynamique VRAM Colab ModelSwapper) et consolider les spécifications complètes avant la phase de codage.
 
 ## 🧠 Decisions Made
 - **2026-10-09** : Adoption du socle de gouvernance à 6 piliers avec agent cible Antigravity 2.0 / IDE.
@@ -13,14 +13,15 @@ Mise en place de l'environnement de gouvernance, des règles d'agents (`AGENTS.m
 - **2026-10-09** : Application du principe de moindre privilège avec interdiction stricte de modification sur `.githooks/**`, `.gouvernance/**`, `.GCC/PROTOCOL.md`, `.env*`.
 - **2026-10-10** : Architecture bi-modale (Colab vs Local) fixée à l'installation dans `data/config.json`. Avatar interactif en Colab (crédits, VRAM/RAM, serveur) et grisé inactif en local (bascule dynamique différée à une issue ultérieure).
 - **2026-10-10** : Isolation physique de stockage pour les projets (`projects.json` via `storagePath`) : si un chemin sur mesure est renseigné, les médias générés y sont stockés exclusivement sans duplication dans `outputs/`.
+- **2026-10-10** : Création de l'issue GitHub [#2](https://github.com/personnal-agent/colab-ai-studio/issues/2) cadrant la bascule dynamique à chaud entre le mode Local et le mode Google Colab.
 
 ## 🌿 Active Branches / Plans
-- `chore/governance-coding-stuff-baseline` : Initialisation du socle de gouvernance et des garde-fous de qualité.
+- `docs/specifications-and-modeling` : Consolidation des spécifications UI/système, design tokens et modélisation logicielle.
 
 ## 📈 Current Status
-- ✅ Terminé : Socle des 6 piliers installé et PR #1 validée avec score 5/5 Greptile, approbation (APPROVED), 0 thread non résolu et 100% CI verte.
-- 🔄 En cours : Prêt pour fusion par le mainteneur.
-- ⏳ À venir : Phase 2 du projet (initialisation du backend FastAPI et du frontend React SPA).
+- ✅ Terminé : PR #1 fusionnée dans `main`. Spécifications UI/UX exhaustives (`UI_SPECIFICATION.md`, 24 captures analysées), Design tokens (`DESIGN_SPECIFICATION.md`), architecture système et stockage JSON (`SPECIFICATION.md`), Issue #2 créée.
+- 🔄 En cours : Modélisation du code (contrats d'API, schémas de données, hiérarchie de composants) et publication de la branche de spécifications.
+- ⏳ À venir : Implémentation du backend FastAPI (`app/`) et du frontend React SPA (`frontend/`).
 
 ## 👉 Next Session Direction
-Initier le développement du backend local FastAPI (`app/`) et de l'application frontend React SPA (`frontend/`) selon les spécifications de `SPECIFICATION.md` et `UI_SPECIFICATION.md`.
+Finaliser la modélisation logicielle (architecture des composants React et services FastAPI) puis amorcer l'implémentation modulaire guidée par tests.
