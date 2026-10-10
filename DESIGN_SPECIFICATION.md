@@ -76,9 +76,24 @@ export default {
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
+      animation: {
+        'in': 'fade-in 150ms ease-out, zoom-in-95 150ms ease-out',
+        'out': 'fade-out 150ms ease-in, zoom-out-95 150ms ease-in',
+        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+      },
+      keyframes: {
+        'fade-in': { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        'fade-out': { '0%': { opacity: '1' }, '100%': { opacity: '0' } },
+        'zoom-in-95': { '0%': { transform: 'scale(0.95)' }, '100%': { transform: 'scale(1)' } },
+        'zoom-out-95': { '0%': { transform: 'scale(1)' }, '100%': { transform: 'scale(0.95)' } },
+        'pulse-glow': {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.6', transform: 'scale(0.98)' },
+        },
+      },
     },
   },
-  plugins: [],
+  plugins: [require('tailwindcss-animate')],
 };
 ```
 
@@ -90,14 +105,14 @@ export default {
 
 | Niveau Typographique | Classe Tailwind | Taille / Hauteur | Graisse | Rôle Ergonomique |
 | :--- | :--- | :--- | :--- | :--- |
-| **Page Title** | `text-2xl font-semibold` | `24px` / `32px` | Semibold (`600`) | Titre principal ("Image & Video"). |
-| **Section Title** | `text-base font-semibold`| `16px` / `24px` | Semibold (`600`) | Titre des cartes d'en-tête ("Avatars", "Brand kit"). |
-| **Prompt Body** | `text-sm font-normal` | `14px` / `22px` | Regular (`400`) | Texte saisi dans la zone de prompt. |
-| **Menu Section Header**| `text-xs font-medium` | `13px` / `18px` | Medium (`500`) | En-têtes ("Aspect ratio", "Editing", "Frame rate"). |
-| **Model Card Title** | `text-sm font-semibold` | `14px` / `20px` | Semibold (`600`) | Nom du modèle dans le sélecteur. |
-| **Model Description**| `text-xs font-normal` | `12px` / `16px` | Regular (`400`) | Explication succincte du modèle. |
-| **Pill Value** | `text-xs font-medium` | `12px` / `16px` | Medium (`500`) | Texte d'une pilule de réglage ("16:9", "1K", "2x"). |
-| **Micro Badge** | `text-[10px] font-semibold`| `10px` / `14px` | Semibold (`600`) | Badges de statut ("Beta", "! Slower than usual"). |
+| **Page Title** | `text-2xl leading-8 font-semibold` | `24px` / `32px` | Semibold (`600`) | Titre principal ("Image & Video"). |
+| **Section Title** | `text-base leading-6 font-semibold`| `16px` / `24px` | Semibold (`600`) | Titre des cartes d'en-tête ("Avatars", "Brand kit"). |
+| **Prompt Body** | `text-sm leading-[22px] font-normal` | `14px` / `22px` | Regular (`400`) | Texte saisi dans la zone de prompt. |
+| **Menu Section Header**| `text-[13px] leading-[18px] font-medium` | `13px` / `18px` | Medium (`500`) | En-têtes ("Aspect ratio", "Editing", "Frame rate"). |
+| **Model Card Title** | `text-sm leading-5 font-semibold` | `14px` / `20px` | Semibold (`600`) | Nom du modèle dans le sélecteur. |
+| **Model Description**| `text-xs leading-4 font-normal` | `12px` / `16px` | Regular (`400`) | Explication succincte du modèle. |
+| **Pill Value** | `text-xs leading-4 font-medium` | `12px` / `16px` | Medium (`500`) | Texte d'une pilule de réglage ("16:9", "1K", "2x"). |
+| **Micro Badge** | `text-[10px] leading-[14px] font-semibold`| `10px` / `14px` | Semibold (`600`) | Badges de statut ("Beta", "! Slower than usual"). |
 
 ---
 
@@ -164,7 +179,7 @@ L'assemblage des composants interactifs s'appuie sur la suite Radix UI :
 - **Désactivé (`disabled`)** : `opacity-40 cursor-not-allowed`
 
 ### 6.2. Transitions & Fluidité
-- **Ouverture des Popovers / Menus** :
+- **Ouverture des Popovers / Menus (via `tailwindcss-animate`)** :
   ```css
   data-[state=open]:animate-in data-[state=closed]:animate-out
   data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0

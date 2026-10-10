@@ -104,8 +104,9 @@ Le backend est conçu pour être minimaliste, asynchrone et résistant aux coupu
 1. **Orchestration des requêtes** : Faire l'interface entre l'application locale et l'URL du tunnel ngrok/Cloudflare du Colab distant.
 2. **Surveillance de la connexion** : Ping périodique du serveur distant pour vérifier la disponibilité de la session GPU et remonter la latence et la VRAM libre.
 3. **Persistance & Rapatriement automatique (Base de Données JSON)** :
-   * Dès qu'une vidéo ou image est générée sur Colab, le backend local télécharge immédiatement le binaire dans le dossier local `outputs/`.
+   * Dès qu'une vidéo ou image est générée sur Colab, le backend local télécharge immédiatement le binaire dans le dossier de destination résolu (le répertoire dédié `storagePath` si le projet en définit un, ou le sous-dossier standard `outputs/projects/<id>/` par défaut, ou `outputs/YYYY-MM-DD/` hors projet).
    * Enregistrement systématique des métadonnées dans une **base de données orientée documents JSON** (`data/`), garantissant une sauvegarde atomique, légère et inspectable sans moteur de SGBD lourd.
+   * **Gestion de la Concurrence & Verrou Asynchrone** : Pour prémunir les fichiers JSON contre toute corruption ou écrasement lors de générations parallèles simultanées (jusqu'à 4 tirages en parallèle), toutes les opérations de lecture-modification-écriture sont strictement sérialisées par un **verrou asynchrone applicatif (`asyncio.Lock`)** par ressource dans le backend, combiné à une écriture sur fichier temporaire et renommage atomique POSIX (`os.replace`).
    * Prévient toute perte de données en cas de déconnexion inopinée de Colab.
 4. **Proxy API LLM** : Exposition de la route `/v1/chat/completions` (standard OpenAI) pour exploiter le GPU Colab dans des outils tiers.
 
@@ -122,11 +123,12 @@ colab-ai-studio/
 │   ├── config.json          # Paramètres du studio et URL du tunnel actif
 │   └── assets/              # Fichiers sources importés (logos, visages, audios)
 └── outputs/                 # Fichiers binaires générés (.png, .mp4, .wav)
-    └── YYYY-MM-DD/          # Partitionnement chronologique automatique
+    ├── YYYY-MM-DD/          # Partitionnement chronologique hors projet
+    └── projects/<id>/       # Partitionnement par projet par défaut
 ```
 
 #### 4.2.1. Schéma de `data/generations.json`
-Toute génération produite est conservée avec son contexte intégral :
+Toute génération produite est conservée avec son contexte intégral et reproductible (support natif du *Remix*) :
 ```json
 [
   {
@@ -134,8 +136,9 @@ Toute génération produite est conservée avec son contexte intégral :
     "mediaType": "video",
     "prompt": "Un plan aérien cinématique d'une forêt embrumée au lever du soleil...",
     "negativePrompt": "flou, déformé, basse résolution",
-    "filePath": "outputs/2026-10-09/gen_20261009_143022_a8f9.mp4",
-    "thumbnailPath": "outputs/2026-10-09/thumbnails/gen_20261009_143022_a8f9.jpg",
+    "compiledPrompt": "A cinematic aerial drone shot of a misty forest at sunrise, sharp focus, volumetric lighting, Apple brand coherence: minimal, generous whitespace.",
+    "filePath": "outputs/projects/proj_court_metrage_01/gen_20261009_143022_a8f9.mp4",
+    "thumbnailPath": "outputs/projects/proj_court_metrage_01/thumbnails/gen_20261009_143022_a8f9.jpg",
     "modelId": "seedance-2.5-pro",
     "modelName": "Seedance 2.5",
     "parameters": {
@@ -151,7 +154,19 @@ Toute génération produite est conservée avec son contexte intégral :
       "startFrame": "data/assets/start_frame_01.png",
       "endFrame": null,
       "imageRefs": [],
+      "videoRefs": [],
+      "audioRefs": [],
+      "upscaleSource": null,
       "brandKitId": "bk_apple_visuals"
+    },
+    "brandKitSnapshot": {
+      "id": "bk_apple_visuals",
+      "name": "Apple Style",
+      "overview": "Esthétique minimaliste, arrière-plans neutres et éclairage studio feutré.",
+      "colors": ["#000000", "#FFFFFF"],
+      "logos": ["data/assets/logos/apple_white.png"],
+      "fonts": ["SF Pro Display"],
+      "guidelines": ["Toujours privilégier la lumière naturelle et les surfaces épurées."]
     },
     "isFavorite": true,
     "projectId": "proj_court_metrage_01",
@@ -231,6 +246,12 @@ Configuration générale de l'environnement, du mode d'exécution et des liaison
     "device": "cpu",
     "threads": 4
   },
+  "compilerLlm": {
+    "provider": "gemini",
+    "model": "gemini-1.5-flash",
+    "apiKeyEnv": "COMPILER_LLM_API_KEY",
+    "apiKey": null
+  },
   "defaultStoragePath": "outputs/",
   "llmProxy": {
     "enabled": true,
@@ -238,11 +259,10 @@ Configuration générale de l'environnement, du mode d'exécution et des liaison
   }
 }
 ```
-* **Règle du Mode d'Exécution (`executionMode`)** :
+* **Règle du Mode d'Exécution (`executionMode`) & Parcours Local** :
   * Valeurs possibles : `"colab"` (déportation des inférences sur Google Colab via tunnel) ou `"local"` (inférence sur les ressources de la machine hôte).
-  * Ce paramètre est figé lors de l'installation initiale du système.
-  * *En mode `"colab"`* : L'avatar de profil affiche le statut du compte Google/Colab et son clic ouvre la modale de suivi des unités de calcul, de la VRAM GPU et de la santé du serveur.
-  * *En mode `"local"`* : L'avatar apparaît grisé de manière inerte (clic désactivé). La possibilité de commuter à chaud entre les deux modes fait l'objet d'une évolution future (suivi dans l'issue [#2](https://github.com/personnal-agent/colab-ai-studio/issues/2)).
+  * **Comportement actif (MVP / Phase 1 & 2)** : Le studio fonctionne activement par défaut via son worker déporté Google Colab (`"colab"`). L'ensemble des routes (`/api/models`, `/api/models/switch`, `/api/generate/media`) s'adressent au worker Colab.
+  * **Réservation du Mode Local** : Le runner local sur machine hôte fait l'objet d'un chantier dédié (suivi dans l'issue [#2](https://github.com/personnal-agent/colab-ai-studio/issues/2)). Si `executionMode: "local"` est forcé dans `config.json` avant l'implémentation complète de ce runner, l'indicateur d'avatar reste grisé inerte (`#9CA3AF`) et les routes d'inférence renvoient un statut HTTP explicite `501 Not Implemented` (`{"detail": "Runner local en cours de développement (voir Issue #2)"}`), évitant toute promesse d'exécution locale non implémentée.
 
 ### 4.3. Endpoints Locaux Principaux
 * `GET /api/health` : État du backend et diagnostic de liaison Colab (latence, VRAM disponible).
@@ -275,15 +295,18 @@ sequenceDiagram
     U->>UI: Saisie texte + chip @Marque + Références utilisateur
     UI->>C: compile(prompt, kitId, userRefs, modelCaps)
     C->>K: Lecture palette, polices, logo, images, règles Do/Don't
-    C->>C: Synthèse du brief en anglais par LLM (clé API configurée)
+    C->>C: Synthèse du brief en anglais (LLM ou gabarit de repli déterministe)
     C->>C: Attribution des slots : 1) Réfs utilisateur 2) Réfs kit 3) Logo
     C->>M: Envoi immédiat { prompt_enrichi, negative_prompt, images[], params }
     M-->>UI: Lancement de l'inférence asynchrone (retour immédiat)
 ```
 
-1. **Composition du Brief par LLM (Clé API locale/externe configurée)** :
-   - Un modèle de langage (exploitant une clé API configurée dans l'application) reformule et intègre harmonieusement l'Overview, les couleurs (noms et codes hexadécimaux), les directives Do/Don't et les polices dans un brief cinématique/photographique fluide, **rédigé en anglais** pour le modèle récepteur.
-   - Les directives d'interdiction ("Don't") sont orientées vers le `negative_prompt` si le modèle le supporte, ou fondues dans les instructions négatives du prompt principal.
+1. **Composition du Brief par LLM & Repli Déterministe (*Graceful Fallback*)** :
+   - Le compilateur s'appuie sur la configuration `compilerLlm` de `data/config.json` (ou la variable d'environnement `COMPILER_LLM_API_KEY`).
+   - Lorsqu'une clé API valide est présente, le LLM reformule l'Overview, les couleurs (noms et codes hexadécimaux), les directives Do/Don't et les polices dans un brief cinématique/photographique fluide, **rédigé en anglais** pour le modèle récepteur. Les interdictions ("Don't") sont orientées vers le `negative_prompt`.
+   - **Politique de Repli Déterministe (Sans IA)** : Si aucune clé API n'est configurée, si le quota est dépassé ou en cas de timeout réseau, le compilateur bascule immédiatement et de façon transparente sur un **gabarit déterministe pré-formaté** :  
+     `"[Brand Identity: {name}] Style: {overview}. Palette: {hex_colors}. Typography: {fonts}. Guidelines: {dos}."`  
+     Ce mécanisme garantit qu'une défaillance ou absence de clé LLM ne bloque jamais la génération de l'utilisateur.
 2. **Priorité d'Attribution des Fentes d'Images de Référence** :
    - Lorsque le modèle impose un quota d'images de référence :
      - **Priorité 1** : Références manuelles déposées par l'utilisateur (sanctuarisées, jamais écrasées).
@@ -331,14 +354,15 @@ Comme le GPU Colab gratuit (Nvidia T4 - 15-16 Go VRAM) ne peut pas héberger sim
 
 ## 6. Plan d'Implémentation & Jalons
 
-* **Phase 1 : Socle & Spécifications**
-  * Architecture, README, spécifications, initialisation Git & publication GitHub.
-* **Phase 2 : Backend Local & IHM Réactive**
-  * Serveur FastAPI local avec stockage SQLite.
-  * Interface HTML/Tailwind dynamique (bascule automatique Studio Vidéo vs Chat LLM).
-* **Phase 3 : Worker Colab & Gestionnaire VRAM**
-  * Script / Notebook Colab prêt à l'emploi.
-  * Serveur d'inférence avec swapper VRAM et tunnel ngrok.
-* **Phase 4 : Intégration de Bout en Bout & Tests**
-  * Validation des générations d'images/vidéos avec rapatriement local.
-  * Validation du streaming LLM et de la passerelle d'API locale.
+* **Phase 1 : Socle & Spécifications (Actif)**
+  * Architecture, README, spécifications exhaustives UI/UX et système, persistance documentaire JSON, publication GitHub.
+* **Phase 2 : Backend Local & Persistance Documentaire JSON**
+  * Serveur FastAPI local avec persistance atomique documentaire dans `data/` (`generations.json`, `projects.json`, `brand_kits.json`, `config.json`).
+  * Orchestrateur de tâches asynchrones avec verrou de concurrence `asyncio.Lock` et flux SSE.
+* **Phase 3 : Application Monopage React (SPA)**
+  * Interface React (Vite, Tailwind CSS v3, Radix UI) avec poste de commande unifié (*Floating Prompt Dock*).
+  * Sélecteur de modèles dynamique et gestionnaire de projets avec arborescence physique.
+* **Phase 4 : Worker Colab & Gestionnaire VRAM**
+  * Notebook Colab optimisé T4 avec Model Swapper dynamique et tunnel public chiffré.
+* **Phase 5 : Intégration de Bout en Bout & Tests**
+  * Validation du cycle complet de génération, rapatriement local et streaming LLM.

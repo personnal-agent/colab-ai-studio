@@ -68,9 +68,12 @@ Le projet dispose d'une documentation technique et ergonomique complète :
 
 ## 🚀 Démarrage Rapide
 
-### 1. Sur la Machine Locale (PC)
+> [!NOTE]  
+> **État du projet** : Le dépôt est actuellement en phase de cadrage et de modélisation (Phase 1). Les commandes ci-dessous documentent le protocole de déploiement et de lancement prévu pour les phases d'implémentation du code (Phases 2 et 3).
 
-#### A. Backend FastAPI
+### 1. Sur la Machine Locale (PC) — *(Prévu en Phase 2 & 3)*
+
+#### A. Backend FastAPI *(Phase 2)*
 ```bash
 # 1. Cloner le dépôt
 git clone https://github.com/personnal-agent/colab-ai-studio.git
@@ -84,7 +87,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### B. Frontend React (Build de Production)
+#### B. Frontend React (Build de Production) *(Phase 3)*
 ```bash
 # 4. Installer les dépendances et compiler l'interface React
 cd frontend
@@ -95,7 +98,7 @@ cd ..
 # 5. Lancer le studio local
 uvicorn app.main:app --reload --port 8000
 ```
-L'interface est accessible immédiatement sur `http://localhost:8000`.
+L'interface sera accessible sur `http://localhost:8000`.
 
 *(En développement frontend avec rechargement à chaud HMR, exécutez `npm run dev` dans le dossier `frontend` pour accéder à l'interface sur `http://localhost:5173`).*
 
@@ -121,8 +124,9 @@ colab-ai-studio/
 ├── DESIGN_SPECIFICATION.md    # Tokens graphiques, typographie, couleurs & configuration Tailwind
 ├── requirements.txt           # Dépendances Python locales légères (FastAPI, uvicorn, requests)
 ├── colab_worker.ipynb         # Notebook de calcul GPU à exécuter sur Google Colab
-├── ui-specifications/         # Dossier des captures d'écran et maquettes de référence
-├── frontend/                  # Application Monopage (SPA) React + Vite
+├── ui-specifications/         # Dossier des 24 captures et maquettes de référence
+├── data/                      # Base documentaire JSON (generations, brand_kits, projects, config)
+├── frontend/                  # Application Monopage (SPA) React + Vite (Phase 3)
 │   ├── src/
 │   │   ├── components/        # Composants (FloatingPromptDock, MediaGrid, Popovers)
 │   │   ├── hooks/             # Abonnements SSE (useTaskProgress) et statut Colab
@@ -130,9 +134,9 @@ colab-ai-studio/
 │   │   └── types/api.ts       # Contrat d'interface TypeScript (/api/models, Tasks)
 │   ├── package.json           # Dépendances React, Vite, Radix UI, Lucide
 │   └── tailwind.config.js     # Thème personnalisé et tokens de design
-├── app/                       # Orchestrateur local FastAPI
+├── app/                       # Orchestrateur local FastAPI (Phase 2)
 │   ├── main.py                # Point d'entrée de l'API locale et distribution statique
-│   ├── config.py              # Configuration du tunnel et persistance SQLite
+│   ├── config.py              # Configuration du tunnel et gestionnaire de persistance JSON
 │   ├── api/                   # Endpoints (/api/models, /api/generate, /v1/chat)
 │   └── services/              # Client asynchrone Colab & rapatriement automatique
 └── outputs/                   # Dossier de sauvegarde locale sécurisée des médias générés
