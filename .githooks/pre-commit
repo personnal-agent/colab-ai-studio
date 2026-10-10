@@ -61,11 +61,11 @@ fi
 # 2. Collecte des Fichiers Selon le Périmètre (Python & JS/TS)
 # ==============================================================================
 if [ "$SCOPE" = "full" ]; then
-    PY_FILES=$(git ls-files -- '*.py' ':(exclude).githooks/*' || true)
-    JS_FILES=$(git ls-files -- '*.ts' '*.tsx' '*.js' '*.jsx' ':(exclude).githooks/*' || true)
+    PY_FILES=$(git -c core.quotePath=false ls-files -- '*.py' ':(exclude).githooks/*' || true)
+    JS_FILES=$(git -c core.quotePath=false ls-files -- '*.ts' '*.tsx' '*.js' '*.jsx' ':(exclude).githooks/*' || true)
 else
-    PY_FILES=$(git diff --cached --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*' || true)
-    JS_FILES=$(git diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' ':(exclude).githooks/*' || true)
+    PY_FILES=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*' || true)
+    JS_FILES=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' ':(exclude).githooks/*' || true)
 fi
 
 # ==============================================================================
@@ -84,15 +84,27 @@ if [ -n "$PY_FILES" ]; then
 
         STAGED_PY_FILES=()
         while IFS= read -r -d '' f; do
-            if [ ! -f "$TMP_STAGED/$f" ]; then
+            if [ -f "$TMP_STAGED/$f" ]; then
+                python3 -m py_compile "$TMP_STAGED/$f" 2>&1 || {
+                    echo -e "${RED}❌ Erreur de syntaxe Python dans la version indexée : $f${NC}"
+                    exit 1
+                }
+                STAGED_PY_FILES+=("$f")
+            elif [ -L "$TMP_STAGED/$f" ]; then
+                # Lien symbolique dont la cible est inchangée ou hors du dossier temporaire
+                if [ -f "$f" ]; then
+                    python3 -m py_compile "$f" 2>&1 || {
+                        echo -e "${RED}❌ Erreur de syntaxe Python dans la cible du lien symbolique : $f${NC}"
+                        exit 1
+                    }
+                else
+                    echo -e "${RED}❌ Lien symbolique Python rompu (cible introuvable) : $f${NC}"
+                    exit 1
+                fi
+            else
                 echo -e "${RED}❌ Fichier Python indexé introuvable dans la version extraite : $f${NC}"
                 exit 1
             fi
-            python3 -m py_compile "$TMP_STAGED/$f" 2>&1 || {
-                echo -e "${RED}❌ Erreur de syntaxe Python dans la version indexée : $f${NC}"
-                exit 1
-            }
-            STAGED_PY_FILES+=("$f")
         done < <(git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*')
 
         if command -v ruff >/dev/null 2>&1; then
@@ -106,20 +118,25 @@ if [ -n "$PY_FILES" ]; then
         fi
     else
         FULL_PY_FILES=()
-        while IFS= read -r f; do
+        while IFS= read -r -d '' f; do
             if [ -n "$f" ]; then
-                if [ ! -f "$f" ]; then
+                if [ ! -f "$f" ] && [ ! -L "$f" ]; then
                     echo -e "${RED}❌ Fichier Python suivi introuvable sur le disque : $f${NC}"
                     echo -e "${YELLOW}👉 Si le fichier a été supprimé, indexez sa suppression avec 'git rm $f' avant de valider.${NC}"
                     exit 1
                 fi
-                python3 -m py_compile "$f" 2>&1 || {
-                    echo -e "${RED}❌ Erreur de syntaxe Python dans le fichier : $f${NC}"
+                if [ -f "$f" ]; then
+                    python3 -m py_compile "$f" 2>&1 || {
+                        echo -e "${RED}❌ Erreur de syntaxe Python dans le fichier : $f${NC}"
+                        exit 1
+                    }
+                    FULL_PY_FILES+=("$f")
+                elif [ -L "$f" ]; then
+                    echo -e "${RED}❌ Lien symbolique Python rompu (cible introuvable) : $f${NC}"
                     exit 1
-                }
-                FULL_PY_FILES+=("$f")
+                fi
             fi
-        done <<< "$PY_FILES"
+        done < <(git ls-files -z -- '*.py' ':(exclude).githooks/*')
 
         if command -v ruff >/dev/null 2>&1; then
             if [ ${#FULL_PY_FILES[@]} -gt 0 ]; then
