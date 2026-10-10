@@ -98,8 +98,6 @@ if [ -n "$PY_FILES" ]; then
                 exit 1
             }
         fi
-        rm -rf "$TMP_STAGED"
-        trap - EXIT
     else
         while IFS= read -r f; do
             if [ -f "$f" ]; then

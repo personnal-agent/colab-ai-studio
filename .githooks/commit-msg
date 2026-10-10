@@ -28,9 +28,12 @@ if [ -z "$FIRST_LINE" ]; then
     exit 1
 fi
 
-# Accepte uniquement les commits automatiques générés par Git
-if [[ "$FIRST_LINE" =~ ^(Merge (branch|pull request|remote-tracking branch)|Revert \") ]]; then
-    exit 0
+# Accepte uniquement les fusions et annulations automatiques générées par l'état Git actif
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || true)"
+if [ -n "$GIT_DIR" ] && { [ -f "$GIT_DIR/MERGE_HEAD" ] || [ -f "$GIT_DIR/REVERT_HEAD" ]; }; then
+    if [[ "$FIRST_LINE" =~ ^(Merge (branch|pull request|remote-tracking branch)|Revert \") ]]; then
+        exit 0
+    fi
 fi
 
 # Expression régulière Conventional Commits harmonisée avec CI (governance.yml) :
