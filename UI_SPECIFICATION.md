@@ -138,7 +138,7 @@ La galerie présente les créations générées sous forme de cartes standardis�
 ### 6.4. Pilules de Contrôle Inférieures (Dynamiques)
 - **Sélecteur de Modèle (`MODEL-NAME`)** (*Captures :* `ui-spec_lip-sync_model-selector-clean.jpeg`, `ui-spec-page.jpg`) : Ouvre le catalogue avec recherche, onglets (`Image`, `Video`, `Lip sync`, `Upscaling`), tags de filtres et cartes descriptives. Reconfigure instantanément les pilules adjacentes.
 - **Format & Ratio (`16:9`)** : Image (`8:1` à `2:3`), Lip sync (`16:9`, `9:16`, `1:1`), Vidéo (`16:9`, `9:16`, `1:1`, `21:9`, `4:3`). *(Maquette réservée : `ui-spec_video_aspect-ratio.png`, voir §9.2)*.
-- **Définition & Résolution (`720p`, `1K`, `1080p`)** : Image (`1K`, `2K`, `4K`), Vidéo / Lip sync (`720p`, `1080p`, `4K`). *(Maquettes réservées : `ui-spec_video_resolution.png`, `ui-spec_lip-sync_resolution.png`, voir §9.2)*.
+- **Définition & Résolution (`720p`, `1K`, `1080p`)** : Image (`1K`, `2K`, `4K`), Vidéo (`720p`, `1080p`, `4K`), Lip sync (`720p`, `1080p`). *(Maquettes réservées : `ui-spec_video_resolution.png`, `ui-spec_lip-sync_resolution.png`, voir §9.2)*.
 - **Durée Temporelle (`5s`) & Commutateur Audio (`🔊 On`)** : Paliers vidéo (`3s`, `5s`, `10s`) et toggle audio synchronisé. *(Maquettes réservées : `ui-spec_video_duration.png`, `ui-spec_video_audio.png`, voir §9.2)*.
 - **Tirages Parallèles (`⚏ 1` à `⚏ 4`)** : Génération de 1 à 4 déclinaisons simultanées sur la même consigne.
 - **Amélioration de Prompt (`🪄 On`)** : Enrichissement automatique par vocabulaire photographique/cinématique.

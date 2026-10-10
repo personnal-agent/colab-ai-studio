@@ -29,7 +29,7 @@ L'intégralité des teintes a été calibrée à partir des 17 captures fournies
 | `text-primary` | `#111827` | `text-gray-900` | Noms de modèles, titres principaux, valeurs actives. |
 | `text-secondary` | `#4B5563` | `text-gray-600` | Descriptions de modèles, onglets inactifs. |
 | `text-muted` | `#6B7280` | `text-gray-500` | En-têtes de colonnes et sous-titres de menus. |
-| `text-placeholder` | `#9CA3AF` | `text-gray-400` | Placeholder du prompt et champ de recherche. |
+| `text-placeholder` | `#6B7280` | `text-gray-500` | Placeholder du prompt et champ de recherche (contraste WCAG AA >= 4.5:1 sur surface subtile). |
 | `text-inverted` | `#FFFFFF` | `text-white` | Icônes et textes sur éléments sombres (`↑`). |
 | `action-primary` | `#111827` | `bg-gray-900` | Bouton circulaire d'envoi (`↑`). |
 | `badge-beta-bg` | `#F3F4F6` | `bg-gray-100` | Fond du badge `Beta`. |
@@ -57,6 +57,7 @@ export default {
           card: '#FFFFFF',
           subtle: '#F3F4F6',
           active: '#E5E7EB',
+          placeholder: '#6B7280',
           border: '#E5E7EB',
           divider: '#F3F4F6',
         },

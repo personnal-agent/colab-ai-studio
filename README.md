@@ -17,7 +17,7 @@
 * **Application Locale Réactive & Moderne (React + Vite + Tailwind CSS)** :
   * Développée sous forme de SPA ultra-légère avec primitives accessibles sans style (**Radix UI**) et icônes **Lucide React**.
   * Consommation mémoire minimale (< 50 Mo de RAM en production) taillée sur mesure pour rester fluide même sur un processeur double-cœur et 8 Go de RAM.
-  * Aucun serveur Node.js requis en production : le bundle statique optimisé est directement distribué par le serveur FastAPI local.
+  * Aucun serveur Node.js requis en production (cible d'architecture des Phases 2 et 3) : le bundle statique optimisé sera directement distribué par le serveur FastAPI local.
 
 * **Interface Pilotée par les Schémas d'API (*Schema-Driven UI*)** :
   * **Aucun modèle n'est codé en dur** : Les modèles présentés dans les captures de spécification sont des illustrations de référence. L'interface interroge dynamiquement l'endpoint `/api/models` et s'adapte en temps réel aux capacités déclarées par le worker Colab.

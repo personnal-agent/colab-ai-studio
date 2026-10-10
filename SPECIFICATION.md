@@ -106,7 +106,7 @@ Le backend est conçu pour être minimaliste, asynchrone et résistant aux coupu
 3. **Persistance & Rapatriement automatique (Base de Données JSON)** :
    * Dès qu'une vidéo ou image est générée sur Colab, le backend local télécharge immédiatement le binaire dans le dossier de destination résolu (le répertoire dédié `storagePath` si le projet en définit un, ou le sous-dossier standard `outputs/projects/<id>/` par défaut, ou `outputs/YYYY-MM-DD/` hors projet).
    * Enregistrement systématique des métadonnées dans une **base de données orientée documents JSON** (`data/`), garantissant une sauvegarde atomique, légère et inspectable sans moteur de SGBD lourd.
-   * **Gestion de la Concurrence & Verrou Asynchrone** : Pour prémunir les fichiers JSON contre toute corruption ou écrasement lors de générations parallèles simultanées (jusqu'à 4 tirages en parallèle), toutes les opérations de lecture-modification-écriture sont strictement sérialisées par un **verrou asynchrone applicatif (`asyncio.Lock`)** par ressource dans le backend, combiné à une écriture sur fichier temporaire et renommage atomique POSIX (`os.replace`).
+   * **Gestion de la Concurrence & Verrou Asynchrone** : Pour prémunir les fichiers JSON contre toute corruption ou écrasement lors de mutations concurrentes (jusqu'à 4 tirages en parallèle, marquage de favoris via PATCH ou suppressions via DELETE), toutes les opérations de lecture-modification-écriture sont strictement sérialisées par un **verrou asynchrone applicatif (`asyncio.Lock`)** par ressource dans le backend, combiné à une écriture sur fichier temporaire et renommage atomique POSIX (`os.replace`). Aucune mise à jour n'est perdue même si une génération asynchrone se termine simultanément à une suppression.
    * Prévient toute perte de données en cas de déconnexion inopinée de Colab.
 4. **Proxy API LLM** : Exposition de la route `/v1/chat/completions` (standard OpenAI) pour exploiter le GPU Colab dans des outils tiers.
 
@@ -137,8 +137,8 @@ Toute génération produite est conservée avec son contexte intégral et reprod
     "prompt": "Un plan aérien cinématique d'une forêt embrumée au lever du soleil...",
     "negativePrompt": "flou, déformé, basse résolution",
     "compiledPrompt": "A cinematic aerial drone shot of a misty forest at sunrise, sharp focus, volumetric lighting, Apple brand coherence: minimal, generous whitespace.",
-    "filePath": "outputs/projects/proj_court_metrage_01/gen_20261009_143022_a8f9.mp4",
-    "thumbnailPath": "outputs/projects/proj_court_metrage_01/thumbnails/gen_20261009_143022_a8f9.jpg",
+    "filePath": "/home/omni/Videos/Projet_Brume/gen_20261009_143022_a8f9.mp4",
+    "thumbnailPath": "/home/omni/Videos/Projet_Brume/thumbnails/gen_20261009_143022_a8f9.jpg",
     "modelId": "seedance-2.5-pro",
     "modelName": "Seedance 2.5",
     "parameters": {
@@ -271,6 +271,7 @@ Configuration générale de l'environnement, du mode d'exécution et des liaison
 * `POST /api/models/switch` : Ordre de changement de modèle envoyé à Colab (déclenche l'éviction VRAM).
 * `POST /api/generate/media` : Lancement asynchrone d'une tâche de génération.
 * `GET /api/tasks/{task_id}/status` : Flux SSE de progression temps réel de l'inférence.
+* `POST /api/tasks/{task_id}/cancel` : Demande d'annulation idempotente d'une tâche de génération en cours.
 * `GET /api/generations` : Liste des créations locales (avec filtres : favoris, type, projet, recherche).
 * `PATCH /api/generations/{id}/favorite` : Bascule de l'état favori d'un média.
 * `DELETE /api/generations/{id}` : Suppression d'une création (métadonnées et fichier sur disque).
@@ -312,6 +313,7 @@ sequenceDiagram
      - **Priorité 1** : Références manuelles déposées par l'utilisateur (sanctuarisées, jamais écrasées).
      - **Priorité 2** : Images de référence du kit (dans la limite des slots restants).
      - **Priorité 3** : Logo de la marque (dans la limite des slots restants).
+   - **Dépassement de quota utilisateur (`userRefs`)** : Si l'utilisateur dépose plus de références que la capacité admise par le modèle (`modelCaps.maxImageRefs`), le compilateur retient en priorité les $N$ premières références manuelles dans l'ordre de dépôt (avec avertissement visuel préalable dans l'interface), garantissant que les références utilisateur ne sont jamais tronquées au profit des actifs du kit.
 3. **Injection du Logo de Marque** :
    - Le logo est injecté dès qu'un slot de référence est disponible, accompagné dans le prompt de la consigne explicite en anglais :  
      *"Here is the brand logo, make sure your generation remains coherent with this brand identity."*
@@ -348,7 +350,8 @@ Comme le GPU Colab gratuit (Nvidia T4 - 15-16 Go VRAM) ne peut pas héberger sim
 
 ### 5.2. Asynchronisme & Prévention des Timeouts
 * La génération de vidéos pouvant nécessiter plusieurs minutes, l'exécution s'effectue dans un thread d'arrière-plan avec génération d'un identifiant de tâche (`task_id`).
-* Des callbacks de progression (étape $N$ sur $Total$) mettent à jour l'état de la tâche, consultable à tout moment par l'orchestrateur local.
+* Des callbacks de progression (étape $N$ sur $Total$) mettent à jour l'état de la tâche, consultable à tout moment par l'orchestrateur local via flux SSE.
+* **Protocole d'annulation** : Le worker observe la demande d'annulation (`POST /api/tasks/{task_id}/cancel`), interrompt immédiatement la boucle d'inférence en cours et publie un état terminal `cancelled`.
 
 ---
 
