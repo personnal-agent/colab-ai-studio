@@ -97,6 +97,12 @@ if [ -n "$PY_FILES" ]; then
                         echo -e "${RED}❌ Erreur de syntaxe Python dans la cible du lien symbolique : $f${NC}"
                         exit 1
                     }
+                    if command -v ruff >/dev/null 2>&1; then
+                        ruff check "$f" || {
+                            echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la cible du lien symbolique : $f${NC}"
+                            exit 1
+                        }
+                    fi
                 else
                     echo -e "${RED}❌ Lien symbolique Python rompu (cible introuvable) : $f${NC}"
                     exit 1
