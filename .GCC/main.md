@@ -18,8 +18,8 @@ Mise en place de l'environnement de gouvernance, des règles d'agents (`AGENTS.m
 - `chore/governance-coding-stuff-baseline` : Initialisation du socle de gouvernance et des garde-fous de qualité.
 
 ## 📈 Current Status
-- ✅ Terminé : Socle des 6 piliers installé (AGENTS.md, ARCHITECTURE.md, .GCC/, .gouvernance/, .githooks/, .github/, permissions).
-- 🔄 En cours : Création de la Pull Request isolant uniquement les ajouts de gouvernance.
+- ✅ Terminé : Socle des 6 piliers installé et PR #1 validée avec score 5/5 Greptile, approbation (APPROVED), 0 thread non résolu et 100% CI verte.
+- 🔄 En cours : Prêt pour fusion par le mainteneur.
 - ⏳ À venir : Phase 2 du projet (initialisation du backend FastAPI et du frontend React SPA).
 
 ## 👉 Next Session Direction
