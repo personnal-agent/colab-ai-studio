@@ -16,11 +16,11 @@ Modéliser le code et l'architecture logicielle de Colab AI Studio (contrats d'i
 - **2026-10-10** : Création de l'issue GitHub [#2](https://github.com/personnal-agent/colab-ai-studio/issues/2) cadrant la bascule dynamique à chaud entre le mode Local et le mode Google Colab.
 
 ## 🌿 Active Branches / Plans
-- `docs/specifications-and-modeling` : Consolidation des spécifications UI/système, design tokens et modélisation logicielle.
+- [`docs/ui-system-specifications`](https://github.com/personnal-agent/colab-ai-studio/pull/4) : Consolidation des spécifications UI/système, design tokens et modélisation logicielle (Pull Request #4 ouverte).
 
 ## 📈 Current Status
-- ✅ Terminé : PR #1 fusionnée dans `main`. Spécifications UI/UX exhaustives (`UI_SPECIFICATION.md`, 24 captures analysées), Design tokens (`DESIGN_SPECIFICATION.md`), architecture système et stockage JSON (`SPECIFICATION.md`), Issue #2 créée.
-- 🔄 En cours : Modélisation du code (contrats d'API, schémas de données, hiérarchie de composants) et publication de la branche de spécifications.
+- ✅ Terminé : PR #1 fusionnée dans `main`. Spécifications UI/UX exhaustives (`UI_SPECIFICATION.md`, 24 captures analysées), Design tokens (`DESIGN_SPECIFICATION.md`), architecture système et stockage JSON (`SPECIFICATION.md`), Issue #2 créée, et Pull Request [#4](https://github.com/personnal-agent/colab-ai-studio/pull/4) ouverte et poussée sur GitHub.
+- 🔄 En cours : Modélisation du code (contrats d'API, schémas de données, hiérarchie de composants).
 - ⏳ À venir : Implémentation du backend FastAPI (`app/`) et du frontend React SPA (`frontend/`).
 
 ## 👉 Next Session Direction
