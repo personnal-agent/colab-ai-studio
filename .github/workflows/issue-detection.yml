@@ -46,10 +46,9 @@ jobs:
           if [ "${FORCE_FULL}" != "true" ]; then
             issue_num=$(gh issue list --label "antibug-state" --state all --json number --jq '.[0].number' 2>/dev/null || true)
             if [ -n "$issue_num" ]; then
-              marker_comment=$(gh api --method GET \
+              marker_comment=$(gh api --paginate \
                 "repos/${GITHUB_REPOSITORY}/issues/${issue_num}/comments" \
-                -F per_page=50 \
-                --jq '[.[] | select((.user.type == "Bot" or .user.login == "github-actions[bot]") and (.body | contains("ANTIBUG-LAST-AUDIT-SHA:")))] | last | .body // ""' 2>/dev/null || true)
+                --jq '.[] | select((.user.type == "Bot" or .user.login == "github-actions[bot]") and (.body | contains("ANTIBUG-LAST-AUDIT-SHA:"))) | .body' 2>/dev/null | tail -n 1 || true)
               if [ -n "$marker_comment" ]; then
                 base_sha=$(printf '%s' "$marker_comment" | sed -n 's/.*ANTIBUG-LAST-AUDIT-SHA: \([0-9a-f]\{40\}\).*/\1/p')
               fi
@@ -86,14 +85,11 @@ jobs:
           fi
           # --- Backend adapter: Google Jules ---
           scope_content=$(cat /tmp/antibug-scope.txt)
-          combined_prompt="$(cat "$ANTIBUG_PROMPT_FILE")
-
-### Audit Context:
-- Mode: ${AUDIT_MODE}
-- Base SHA: ${BASE_SHA:-N/A}
-
-### Audit Scope Files:
-${scope_content}"
+          combined_prompt=$(printf '%s\n\n### Audit Context:\n- Mode: %s\n- Base SHA: %s\n\n### Audit Scope Files:\n%s\n' \
+            "$(cat "$ANTIBUG_PROMPT_FILE")" \
+            "${AUDIT_MODE}" \
+            "${BASE_SHA:-N/A}" \
+            "${scope_content}")
 
           jules_payload=$(jq -n \
             --arg prompt "$combined_prompt" \

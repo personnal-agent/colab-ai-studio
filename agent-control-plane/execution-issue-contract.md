@@ -34,9 +34,17 @@ Once normalization is complete, an **independent maintainer** adds the marker in
 
 And applies `agent-ready` and `agent-execution` labels. The bot cannot add or modify these labels.
 
-## Lease & Exit States
+## Lease Acquisition & Exit States
 
-Before mutation, the bot confirms no other active lease exists, adds `agent-active`, and posts a lease comment. It releases the lease into one of these states:
+### Exclusive Per-Issue Lease Acquisition
+To prevent race conditions where concurrent bot runs for the same issue both observe an inactive state and mutate the repository in parallel, bots must acquire an exclusive per-issue guard before checking or adding `agent-active` and prior to any repository mutation:
+1. **Per-Issue Execution Guard**: An atomic per-issue concurrency lock (e.g., GitHub Actions concurrency group scoped strictly to the issue number `concurrency: group: agent-execution-${{ issue.number }}, cancel-in-progress: false`, or an atomic conditional API check) ensures that concurrent runs for the same issue are serialized. Concurrent runs cannot both acquire the guard simultaneously.
+2. **Independent Parallel Execution Across Issues**: Concurrency locks are scoped exclusively to individual issue numbers (`agent-execution-${issue_number}`). Distinct issues run concurrently and independently without contention.
+3. **Lease Verification & Claim**: Within the exclusive per-issue guard, the bot verifies that `agent-active` is absent and that no active lease comment exists. It then applies the `agent-active` label, posts a lease comment referencing the workflow run ID, and proceeds to execution. If `agent-active` is already present, the run aborts immediately without mutation.
+
+### Exit States
+
+Upon completion or termination, the bot releases the lease into one of these states:
 
 | State | Meaning | Mandatory Action |
 |---|---|---|

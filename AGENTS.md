@@ -26,7 +26,7 @@ templates and policy documents are linked, never duplicated.
 <constraint id="sensitive_files">Ne jamais lire, écrire, committer ni divulguer : `.env*`, `ngrok.token`, `*.pem`, `*.key`, `secrets/`, `.claude/`, `.agents/`, `.cursor/`.</constraint>
 
 <validation_commands>
-<command type="fast_targeted_lint">python3 -m py_compile app/**/*.py</command>
+<command type="fast_targeted_lint">python3 -m py_compile .github/scripts/*.py</command>
 <command type="targeted_test">pytest tests/ -q && npm --prefix frontend test -- --run</command>
 <command type="full_verification">.githooks/pre-push</command>
 </validation_commands>

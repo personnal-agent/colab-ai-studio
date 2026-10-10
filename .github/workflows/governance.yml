@@ -91,12 +91,19 @@ jobs:
           set -euo pipefail
           pattern='^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-z0-9._/-]+\))?!?: .{3,}'
           invalid=0
-          while IFS= read -r subject; do
-            if ! printf '%s\n' "$subject" | grep -Eq "$pattern" && ! printf '%s\n' "$subject" | grep -Eq '^(Merge (branch|pull request|remote-tracking branch)|Revert \")'; then
-              echo "Invalid commit subject: $subject" >&2
-              invalid=$((invalid + 1))
+          while IFS=' ' read -r commit_hash subject; do
+            if printf '%s\n' "$subject" | grep -Eq "$pattern"; then
+              continue
             fi
-          done < <(git log --format=%s "$BASE_SHA..$HEAD_SHA")
+            if printf '%s\n' "$subject" | grep -Eq '^Revert \"'; then
+              continue
+            fi
+            if git rev-parse "${commit_hash}^2" >/dev/null 2>&1 && printf '%s\n' "$subject" | grep -Eq '^(Merge (branch|pull request|remote-tracking branch))'; then
+              continue
+            fi
+            echo "Invalid commit subject: $subject" >&2
+            invalid=$((invalid + 1))
+          done < <(git log --format='%H %s' "$BASE_SHA..$HEAD_SHA")
           if (( invalid > 0 )); then
             echo 'status=fail' >> "$GITHUB_OUTPUT"
             exit 1

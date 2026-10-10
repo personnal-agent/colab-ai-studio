@@ -34,7 +34,7 @@ if [[ "$FIRST_LINE" =~ ^(Merge (branch|pull request|remote-tracking branch)|Reve
 fi
 
 # Expression régulière Conventional Commits harmonisée avec CI (governance.yml) :
-PATTERN='^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-zA-Z0-9_./-]+\))?!?: .{3,}'
+PATTERN='^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-z0-9._/-]+\))?!?: .{3,}'
 
 if ! echo "$FIRST_LINE" | grep -E "$PATTERN" > /dev/null 2>&1; then
     echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

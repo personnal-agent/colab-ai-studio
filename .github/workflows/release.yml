@@ -64,27 +64,30 @@ jobs:
       - name: Write release summary
         if: always()
         shell: bash
+        env:
+          CONFIG_ENABLED: ${{ steps.config.outputs.enabled || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           {
             echo '## Release summary (dry-run)'
             echo
-            echo "- Semantic Release configured: ${{ steps.config.outputs.enabled || 'false' }}"
-            echo "- Trigger: ${{ github.event_name }}"
+            echo "- Semantic Release configured: ${CONFIG_ENABLED}"
+            echo "- Trigger: ${EVENT_NAME}"
             echo "- Manual mode: dry-run"
             echo '- Dry-run executed with read-only permissions without release environment.'
           } >> "$GITHUB_STEP_SUMMARY"
 
   publish:
     name: Publish release
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish')
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'publish' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
       name: release
     permissions:
-      contents: write
-      issues: write
-      pull-requests: write
+      contents: write # semantic-release needs write access to push Git release tags and assets
+      issues: write # semantic-release needs write access to comment on resolved issues
+      pull-requests: write # semantic-release needs write access to comment on resolved PRs
     steps:
       - name: Checkout release commit
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -122,12 +125,16 @@ jobs:
       - name: Write release summary
         if: always()
         shell: bash
+        env:
+          CONFIG_ENABLED: ${{ steps.config.outputs.enabled || 'false' }}
+          EVENT_NAME: ${{ github.event_name }}
+          MANUAL_MODE: ${{ inputs.mode || 'publish-on-main-push' }}
         run: |
           {
             echo '## Release summary (publish)'
             echo
-            echo "- Semantic Release configured: ${{ steps.config.outputs.enabled || 'false' }}"
-            echo "- Trigger: ${{ github.event_name }}"
-            echo "- Manual mode: ${{ inputs.mode || 'publish-on-main-push' }}"
+            echo "- Semantic Release configured: ${CONFIG_ENABLED}"
+            echo "- Trigger: ${EVENT_NAME}"
+            echo "- Manual mode: ${MANUAL_MODE}"
             echo '- Publish operations protected by the `release` environment.'
           } >> "$GITHUB_STEP_SUMMARY"

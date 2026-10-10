@@ -17,7 +17,7 @@ echo -e "${BLUE}🧪 Recherche et exécution des suites de tests unitaires...${N
 TESTS_FOUND=0
 
 # 1. Tests Python (FastAPI / services) - recherche récursive complète sans limitation de profondeur
-if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -not -path '*/.[!.]*/*' -print -quit | grep -q .; then
+if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -not -path '*/.[!.]*/*' -not -path '*/node_modules/*' -not -path '*/venv/*' -not -path '*/.venv/*' -not -path '*/site-packages/*' -print -quit | grep -q .; then
     TESTS_FOUND=1
     echo -e "${BLUE}  Exécution des tests Python (pytest)...${NC}"
     if command -v pytest >/dev/null 2>&1; then
