@@ -147,7 +147,7 @@ Git hooks are active (`core.hooksPath=.githooks`) — never bypass them. **Singl
 <hook name="commit-msg">Conventional Commits — `type(scope): description` (types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `perf`, `build`, `style`, `revert`).</hook>
 <hook name="pre-push">Full repository Quality Gate + unit tests.</hook>
 
-<governance source=".github/workflows/governance.yml">PR title and every commit must follow Conventional Commits; PR size ≤ 1000 changed lines (warning above 500).</governance>
+<governance source=".github/workflows/governance.yml">PR title and every commit must follow Conventional Commits; PR size ≤ 1000 changed lines (warning above 500; exemption strictly restricted to initial repository bootstrap PR #1).</governance>
 
 </git_hygiene>
 

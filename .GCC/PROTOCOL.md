@@ -108,7 +108,7 @@ Test backlog tracking all pending scenarios and test suites to be executed.
 
 ### 3.2. `.GCC/branches/plan_[name].md` Template
 
-```markdown
+````markdown
 # Execution Plan: [Task Name]
 
 ## 📋 Target Invariant & Pre-requisites
@@ -136,7 +136,7 @@ Test backlog tracking all pending scenarios and test suites to be executed.
 ## ⚠️ Mitigations & Edge Cases
 - **Risk**: [Identify potential risk, e.g., API rate-limits, dependency clash]
 - **Mitigation**: [Describe fallback behavior]
-```
+````
 
 ### 3.3. `.GCC/resume.md` Template
 

@@ -67,7 +67,7 @@ jobs:
           echo "total=$total" >> "$GITHUB_OUTPUT"
           echo "protected=$protected" >> "$GITHUB_OUTPUT"
           is_initial_governance=false
-          if printf '%s\n' "$PR_TITLE" | grep -Eq '^chore\(governance\):[[:space:]]initialiser'; then
+          if [ "${{ github.event.pull_request.number }}" = "1" ]; then
             is_initial_governance=true
           fi
           if (( total > 1000 )) && [ "$is_initial_governance" != "true" ]; then
@@ -92,7 +92,7 @@ jobs:
           pattern='^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-z0-9._/-]+\))?!?: .{3,}'
           invalid=0
           while IFS= read -r subject; do
-            if ! printf '%s\n' "$subject" | grep -Eq "$pattern"; then
+            if ! printf '%s\n' "$subject" | grep -Eq "$pattern" && ! printf '%s\n' "$subject" | grep -Eq '^(Merge (branch|pull request|remote-tracking branch)|Revert \")'; then
               echo "Invalid commit subject: $subject" >&2
               invalid=$((invalid + 1))
             fi
@@ -103,8 +103,23 @@ jobs:
           fi
           echo 'status=pass' >> "$GITHUB_OUTPUT"
 
+      - name: Publish governance summary to job summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Governance summary"
+            echo ""
+            echo "- PR title: **${{ steps.title.outputs.status || 'fail' }}**"
+            echo "- Commit messages: **${{ steps.commits.outputs.status || 'fail' }}**"
+            echo "- Size: **${{ steps.diff.outputs.status || 'fail' }}** (${{ steps.diff.outputs.total || 'unknown' }} changed lines)"
+            echo "- Sensitive automation files changed: **${{ steps.diff.outputs.protected == 'true' && 'yes — require Code Owner review' || 'no' }}**"
+            echo ""
+            echo "Branch protection and CODEOWNERS must enforce approval for sensitive paths."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Upsert governance summary
-        if: always() && github.event.pull_request.head.repo.full_name == github.repository
+        if: always() && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           TITLE_STATUS: ${{ steps.title.outputs.status || 'fail' }}

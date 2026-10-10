@@ -27,7 +27,7 @@ The agent must never execute:
 - Publishing and deployment: `gh release`, `npm publish`, `docker push`, cloud deployments.
 - Elevated privilege commands: `sudo`, changing file ownership or access permissions.
 
-After loading `AGENTS.md`, this active policy (`.gouvernance/accompanied-agent.md`), and project-specific instructions, the agent never reads or writes secrets, real `.env` files, private keys (`.pem`, `.key`), files outside the workspace, `.git/`, agent policies, `CODEOWNERS`, CI workflows, hooks, or setup scripts. It never modifies `AGENTS.md`, the `.gouvernance/` policies, or the bounded project instructions without explicit confirmation.
+After loading `AGENTS.md`, this active policy (`.gouvernance/accompanied-agent.md`), and project-specific instructions, the agent never reads, writes, or commits secrets, real `.env` files, private keys (`.pem`, `.key`), or files outside the workspace. In accordance with safety invariants, it never modifies policy files (`AGENTS.md`, `.gouvernance/**`, `.github/**`, `.githooks/**`, `.GCC/PROTOCOL.md`, `CODEOWNERS`) without explicit maintainer approval.
 
 ---
 

@@ -259,6 +259,48 @@ def top_level_entries(lines: list[str]) -> list[tuple[int, str, str]]:
     return entries
 
 
+def check_permission_entry(path: Path, number: int, scope: str, perm: str, allowed_write_scopes: set[str]) -> int:
+    errors = 0
+    scope_clean = yaml_key(scope)
+    perm_clean = perm.strip("\"'# ").split()[0] if perm.strip() else ""
+    if perm_clean in ("write-all", "all"):
+        fail(f"{path}:{number}: permissions '{perm_clean}' prohibited.")
+        errors += 1
+    elif perm_clean == "write" and scope_clean not in allowed_write_scopes:
+        fail(f"{path}:{number}: permission scope '{scope_clean}: write' prohibited.")
+        errors += 1
+    return errors
+
+
+def validate_permissions_block(
+    path: Path, lines: list[str], number: int, value: str, allowed_write_scopes: set[str]
+) -> int:
+    errors = 0
+    trimmed = value.strip()
+    if re.match(r"^(write-all|write)\b", trimmed):
+        fail(f"{path}:{number}: permissions '{trimmed}' prohibited (least privilege required).")
+        return errors + 1
+    if trimmed.startswith("{"):
+        joined = trimmed
+        cursor = number - 1
+        while not flow_complete(joined) and cursor + 1 < len(lines):
+            cursor += 1
+            joined = f"{joined} {strip_comment(lines[cursor]).strip()}"
+        if flow_complete(joined):
+            for pair in split_flow(joined.strip()[1:-1]):
+                if ":" in pair:
+                    scope, perm = [p.strip() for p in pair.split(":", 1)]
+                    errors += check_permission_entry(path, number, scope, perm, allowed_write_scopes)
+        return errors
+    if not trimmed:
+        for child in child_lines(lines, number - 1):
+            pair = child.strip()
+            if ":" in pair:
+                scope, perm = [p.strip() for p in pair.split(":", 1)]
+                errors += check_permission_entry(path, number, scope, perm, allowed_write_scopes)
+    return errors
+
+
 def check_workflow(path: Path) -> int:
     errors = 0
     lines = path.read_text(encoding="utf-8").splitlines()
@@ -270,31 +312,55 @@ def check_workflow(path: Path) -> int:
         fail(f"{path}: pull_request_target is strictly prohibited in this starter kit.")
         errors += 1
 
-    # 2. Permissions: mandatory top-level block, write-all prohibited.
+    # 2. Permissions: mandatory top-level block, job-level least privilege enforcement.
     has_permissions = False
     allowed_write_scopes = {"issues", "pull-requests", "contents"}
     for number, key, value in top_level_entries(lines):
         if key == "permissions":
             has_permissions = True
-            if re.match(r"^(write-all|write)\b", value):
-                fail(f"{path}:{number}: permissions '{value}' prohibited (least privilege required).")
-                errors += 1
-            elif not value:
-                for child in child_lines(lines, number - 1):
-                    pair = child.strip()
-                    if ":" in pair:
-                        scope, perm = [p.strip() for p in pair.split(":", 1)]
-                        scope = yaml_key(scope)
-                        perm_clean = perm.strip("\"'# ").split()[0] if perm.strip() else ""
-                        if perm_clean == "write" and scope not in allowed_write_scopes:
-                            fail(f"{path}:{number}: permission scope '{scope}: write' prohibited.")
-                            errors += 1
-                        elif perm_clean in ("write-all", "all"):
-                            fail(f"{path}:{number}: permissions '{perm_clean}' prohibited.")
-                            errors += 1
+            errors += validate_permissions_block(path, lines, number, value, allowed_write_scopes)
     if not has_permissions:
         fail(f"{path}: missing top-level permissions block.")
         errors += 1
+
+    jobs_start = None
+    for number, key, value in top_level_entries(lines):
+        if key == "jobs":
+            jobs_start = number
+            break
+    if jobs_start is not None:
+        job_headers: list[tuple[int, int, str]] = []
+        job_indent: int | None = None
+        for number, line in enumerate(lines[jobs_start:], start=jobs_start + 1):
+            indent = len(line) - len(line.lstrip(" "))
+            code = strip_comment(line).rstrip()
+            if not code.strip():
+                continue
+            if indent <= 0:
+                break
+            header = re.match(r"^([^:\s][^:]*):\s*(?:#.*)?$", code.strip())
+            if header and (job_indent is None or indent == job_indent):
+                job_indent = indent
+                job_headers.append((number, indent, yaml_key(header.group(1))))
+
+        for position, (header_line, indent, _) in enumerate(job_headers):
+            end = job_headers[position + 1][0] - 1 if position + 1 < len(job_headers) else len(lines)
+            block = [
+                (number, strip_comment(line).rstrip())
+                for number, line in enumerate(lines[header_line:end], start=header_line + 1)
+                if strip_comment(line).strip()
+            ]
+            direct = [entry for entry in block if len(entry[1]) - len(entry[1].lstrip(" ")) > indent]
+            if not direct:
+                continue
+            prop_indent = min(len(code) - len(code.lstrip(" ")) for _, code in direct)
+            for number, code in direct:
+                if len(code) - len(code.lstrip(" ")) == prop_indent:
+                    prop_match = re.match(r"^([^:\s][^:]*):\s*(.*)$", code.strip())
+                    if prop_match and yaml_key(prop_match.group(1)) == "permissions":
+                        errors += validate_permissions_block(
+                            path, lines, number, prop_match.group(2).strip(), allowed_write_scopes
+                        )
 
     # 3. Concurrency: mandatory group for PR/push triggers.
     if triggers.intersection({"pull_request", "push"}) and not has_concurrency_group(lines):

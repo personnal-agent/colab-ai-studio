@@ -36,7 +36,7 @@ Les agents IA ne créent pas d'issues de façon autonome sans validation préala
 
 - **Mode de livraison** : Toute modification substantielle transite par une branche dédiée et une Pull Request — voir `AGENTS.md` §4 (mode Strict Review).
 - **Titres et commits** : Respect impératif de la norme **Conventional Commits** (`type(scope): description`). Types autorisés : `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `perf`, `build`, `style`, `revert`.
-- **Budget de taille** : ≤ 500 lignes recommandées pour faciliter la relecture, rejet automatique au-delà de 1000 lignes.
+- **Budget de taille** : ≤ 500 lignes recommandées pour faciliter la relecture, rejet automatique au-delà de 1000 lignes (exception unique restreinte à l'initialisation du socle sur la PR #1).
 - **Gabarit obligatoire** : `.github/PULL_REQUEST_TEMPLATE.md` doit être intégralement complété (cause racine, description synthétique, commandes de test exécutées, risques résiduels).
 - **Revues de code & Approbation** :
   - **L'agent IA n'approuve JAMAIS son propre code.**

@@ -28,8 +28,8 @@ if [ -z "$FIRST_LINE" ]; then
     exit 1
 fi
 
-# Accepte les commits automatiques de fusion, revert ou init
-if [[ "$FIRST_LINE" =~ ^(Merge|Revert\ |Initial\ commit|Skip) ]]; then
+# Accepte uniquement les commits automatiques générés par Git
+if [[ "$FIRST_LINE" =~ ^(Merge (branch|pull request|remote-tracking branch)|Revert \") ]]; then
     exit 0
 fi
 
