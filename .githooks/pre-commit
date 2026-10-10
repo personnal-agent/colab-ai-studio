@@ -84,13 +84,15 @@ if [ -n "$PY_FILES" ]; then
 
         STAGED_PY_FILES=()
         while IFS= read -r -d '' f; do
-            if [ -f "$TMP_STAGED/$f" ]; then
-                python3 -m py_compile "$TMP_STAGED/$f" 2>&1 || {
-                    echo -e "${RED}❌ Erreur de syntaxe Python dans la version indexée : $f${NC}"
-                    exit 1
-                }
-                STAGED_PY_FILES+=("$f")
+            if [ ! -f "$TMP_STAGED/$f" ]; then
+                echo -e "${RED}❌ Fichier Python indexé introuvable dans la version extraite : $f${NC}"
+                exit 1
             fi
+            python3 -m py_compile "$TMP_STAGED/$f" 2>&1 || {
+                echo -e "${RED}❌ Erreur de syntaxe Python dans la version indexée : $f${NC}"
+                exit 1
+            }
+            STAGED_PY_FILES+=("$f")
         done < <(git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*')
 
         if command -v ruff >/dev/null 2>&1; then
@@ -105,7 +107,12 @@ if [ -n "$PY_FILES" ]; then
     else
         FULL_PY_FILES=()
         while IFS= read -r f; do
-            if [ -n "$f" ] && [ -f "$f" ]; then
+            if [ -n "$f" ]; then
+                if [ ! -f "$f" ]; then
+                    echo -e "${RED}❌ Fichier Python suivi introuvable sur le disque : $f${NC}"
+                    echo -e "${YELLOW}👉 Si le fichier a été supprimé, indexez sa suppression avec 'git rm $f' avant de valider.${NC}"
+                    exit 1
+                fi
                 python3 -m py_compile "$f" 2>&1 || {
                     echo -e "${RED}❌ Erreur de syntaxe Python dans le fichier : $f${NC}"
                     exit 1
