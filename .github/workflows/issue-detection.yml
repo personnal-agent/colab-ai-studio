@@ -1,0 +1,146 @@
+name: Issue detection (ANTIBUG)
+
+# Scheduled audit that opens bug/performance/logic/design issues.
+# The agent backend is interchangeable; this template connects Google Jules.
+# Required secret: ANTIBUG_AGENT_API_KEY (backend credential).
+# Incremental base is managed via previous run marker (no secret required).
+
+on:
+  schedule:
+    - cron: "23 4 * * *" # Daily, 04:23 UTC — outside top-of-hour peaks
+  workflow_dispatch:
+    inputs:
+      full_audit:
+        description: Force a full-tree audit instead of incremental
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: issue-detection
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve audit scope from previous marker
+        id: scope
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FORCE_FULL: ${{ inputs.full_audit }}
+        run: |
+          set -euo pipefail
+          base_sha=""
+          if [ "${FORCE_FULL}" != "true" ]; then
+            issue_num=$(gh issue list --label "antibug-state" --state all --json number --jq '.[0].number' 2>/dev/null || true)
+            if [ -n "$issue_num" ]; then
+              marker_comment=$(gh api --paginate \
+                "repos/${GITHUB_REPOSITORY}/issues/${issue_num}/comments" \
+                --jq '.[] | select((.user.type == "Bot" or .user.login == "github-actions[bot]") and (.body | contains("ANTIBUG-LAST-AUDIT-SHA:"))) | .body' 2>/dev/null | tail -n 1 || true)
+              if [ -n "$marker_comment" ]; then
+                base_sha=$(printf '%s' "$marker_comment" | sed -n 's/.*ANTIBUG-LAST-AUDIT-SHA: \([0-9a-f]\{40\}\).*/\1/p')
+              fi
+            fi
+          fi
+          if [ -n "$base_sha" ] && git cat-file -e "$base_sha" 2>/dev/null; then
+            echo "mode=incremental" >> "$GITHUB_OUTPUT"
+            echo "base_sha=$base_sha" >> "$GITHUB_OUTPUT"
+            git diff --name-only "$base_sha"..HEAD > /tmp/antibug-scope.txt || true
+          else
+            echo "mode=full" >> "$GITHUB_OUTPUT"
+            echo "base_sha=" >> "$GITHUB_OUTPUT"
+            git ls-files > /tmp/antibug-scope.txt
+          fi
+          echo "files=$(wc -l < /tmp/antibug-scope.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Run ANTIBUG agent backend
+        id: antibug
+        env:
+          ANTIBUG_AGENT_API_KEY: ${{ secrets.ANTIBUG_AGENT_API_KEY }}
+          GH_TOKEN: ${{ secrets.ANTIBUG_BOT_TOKEN || secrets.GITHUB_TOKEN }}
+          ANTIBUG_PROMPT_FILE: ${{ github.workspace }}/.github/antibug-prompt.md
+          AUDIT_MODE: ${{ steps.scope.outputs.mode }}
+          BASE_SHA: ${{ steps.scope.outputs.base_sha }}
+        run: |
+          set -euo pipefail
+          if [ ! -f "$ANTIBUG_PROMPT_FILE" ]; then
+            echo "::error::Missing .github/antibug-prompt.md." >&2
+            exit 1
+          fi
+          if [ -z "$ANTIBUG_AGENT_API_KEY" ]; then
+            echo "::error::Secret ANTIBUG_AGENT_API_KEY is not configured. The audit cannot call the agent backend." >&2
+            exit 1
+          fi
+          # --- Backend adapter: Google Jules ---
+          scope_content=$(cat /tmp/antibug-scope.txt)
+          combined_prompt=$(printf '%s\n\n### Audit Context:\n- Mode: %s\n- Base SHA: %s\n\n### Audit Scope Files:\n%s\n' \
+            "$(cat "$ANTIBUG_PROMPT_FILE")" \
+            "${AUDIT_MODE}" \
+            "${BASE_SHA:-N/A}" \
+            "${scope_content}")
+
+          jules_payload=$(jq -n \
+            --arg prompt "$combined_prompt" \
+            --arg repo "${GITHUB_REPOSITORY}" \
+            '{prompt: $prompt, sourceContext: {source: ("sources/github/" + $repo), githubRepoContext: {startingBranch: "main"}}}')
+          response=$(curl -sS --max-time 1200 \
+            -H "Content-Type: application/json" \
+            -H "X-Goog-Api-Key: ${ANTIBUG_AGENT_API_KEY}" \
+            -d "$jules_payload" \
+            "https://jules.googleapis.com/v1alpha/sessions")
+          session_name=$(printf '%s' "$response" | jq -r '.name // empty')
+          if [ -z "$session_name" ]; then
+            echo "::error::Jules session creation failed." >&2
+            exit 1
+          fi
+          # Poll until the session reaches a terminal state.
+          for i in $(seq 1 60); do
+            sleep 30
+            state=$(curl -sS --max-time 60 \
+              -H "X-Goog-Api-Key: ${ANTIBUG_AGENT_API_KEY}" \
+              "https://jules.googleapis.com/v1alpha/${session_name}" | jq -r '.state // "UNKNOWN"')
+            case "$state" in
+              COMPLETED|FAILED|CANCELLED) break ;;
+            esac
+          done
+          if [ "$state" != "COMPLETED" ]; then
+            echo "::error::Jules session ended in state ${state}." >&2
+            exit 1
+          fi
+
+      - name: Record audit marker for next incremental run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          sha=$(git rev-parse HEAD)
+          body="<!-- coding-stuff:antibug:v1 ANTIBUG-LAST-AUDIT-SHA: ${sha} -->"
+          issue_num=$(gh issue list --label "antibug-state" --state all --json number --jq '.[0].number' 2>/dev/null || true)
+          if [ -z "$issue_num" ]; then
+            issue_url=$(gh issue create --title "ANTIBUG State Tracking" --body "Automated audit state tracking for ANTIBUG." --label "antibug-state")
+            issue_num=$(echo "$issue_url" | grep -o '[0-9]*$')
+          fi
+          if [ -z "$issue_num" ]; then
+            echo "::error::Failed to resolve tracking issue with label 'antibug-state'." >&2
+            exit 1
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/issues/${issue_num}/comments" \
+            -X POST -f body="$body" >/dev/null
+          echo "Recorded audit marker at ${sha}."
+
+      - name: Report run outcome
+        if: steps.antibug.outputs.created == ''
+        run: |
+          echo "ANTIBUG run completed. Check the agent session output for AUDIT PASSED or created issues."

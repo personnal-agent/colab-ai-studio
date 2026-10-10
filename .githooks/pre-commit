@@ -1,0 +1,202 @@
+#!/usr/bin/env bash
+# Git Hook: pre-commit
+# Quality Gate de Colab AI Studio (Python FastAPI & React TypeScript)
+# Périmètre dynamique (Scope-Aware) :
+#   - par défaut SCOPE=staged : contrôle du diff indexé uniquement (rapide)
+#   - QUALITY_GATE_SCOPE=full : audit complet du dépôt (appelé par pre-push)
+
+set -e -o pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+SCOPE="${QUALITY_GATE_SCOPE:-staged}"
+if [ "$SCOPE" != "staged" ] && [ "$SCOPE" != "full" ]; then
+    echo -e "${RED}❌ [Quality Gate] Périmètre inconnu : '$SCOPE' (attendu : staged|full).${NC}"
+    exit 2
+fi
+
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${BLUE}🛡️  QUALITY GATE — Périmètre : ${SCOPE}${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+
+# ==============================================================================
+# 1. Contrôle Anti-Fuite de Secrets et Fichiers Protégés (Toujours sur l'index)
+# ==============================================================================
+echo -e "${BLUE}[1/4] Vérification de sécurité (fichiers sensibles et secrets)...${NC}"
+
+# A. Détection de fichiers .env ou jetons de tunnel dans l'index
+STAGED_SENSITIVE=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(\.env(\.|$)|ngrok\.token|secrets/|.*\.pem$|.*\.key$)' | grep -v '\.env\.example' || true)
+if [ -n "$STAGED_SENSITIVE" ]; then
+    echo -e "${RED}❌ Tentative de validation de fichier confidentiel sensible :${NC}"
+    echo -e "${YELLOW}$STAGED_SENSITIVE${NC}"
+    echo -e "${YELLOW}👉 Seuls les fichiers de gabarits (ex. .env.example) sont autorisés dans le dépôt.${NC}"
+    exit 1
+fi
+
+# B. Détection de motifs de secrets dans les lignes AJOUTÉES de l'index (hors .githooks/)
+SECRET_PATTERN='(sk-[a-zA-Z0-9]{32,}|ghp_[a-zA-Z0-9]{36}|AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)'
+ADDED_SECRETS=$(git diff --cached --diff-filter=ACMR -U0 -- ':(exclude).githooks' | grep -E '^\+[^+]' | grep -E "$SECRET_PATTERN" || true)
+if [ -n "$ADDED_SECRETS" ]; then
+    echo -e "${RED}❌ Motif de clé privée ou jeton d'accès détecté dans les lignes ajoutées :${NC}"
+    echo -e "${YELLOW}$ADDED_SECRETS${NC}"
+    echo -e "${YELLOW}👉 Supprimez le secret du code et utilisez les variables d'environnement.${NC}"
+    exit 1
+fi
+
+# C. Commentaires de masquage de linter interdits dans les lignes AJOUTÉES (hors .githooks/)
+SUPPRESSION_PATTERN='(#\s*(noqa|type:\s*ignore|pylint:\s*disable)|\/\/\s*@ts-ignore)'
+ADDED_SUPPRESSIONS=$(git diff --cached --diff-filter=ACMR -U0 -- ':(exclude).githooks' | grep -E '^\+[^+]' | grep -E "$SUPPRESSION_PATTERN" || true)
+if [ -n "$ADDED_SUPPRESSIONS" ]; then
+    echo -e "${RED}❌ Commentaires d'inhibition détectés dans les lignes ajoutées (# noqa, # type: ignore, // @ts-ignore) :${NC}"
+    echo -e "${YELLOW}$ADDED_SUPPRESSIONS${NC}"
+    echo -e "${YELLOW}👉 Corrigez l'erreur de typage ou de linter à la source au lieu de masquer le contrôle.${NC}"
+    exit 1
+fi
+
+# ==============================================================================
+# 2. Collecte des Fichiers Selon le Périmètre (Python & JS/TS)
+# ==============================================================================
+if [ "$SCOPE" = "full" ]; then
+    PY_FILES=$(git -c core.quotePath=false ls-files -- '*.py' ':(exclude).githooks/*' || true)
+    JS_FILES=$(git -c core.quotePath=false ls-files -- '*.ts' '*.tsx' '*.js' '*.jsx' ':(exclude).githooks/*' || true)
+else
+    PY_FILES=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*' || true)
+    JS_FILES=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' ':(exclude).githooks/*' || true)
+fi
+
+# ==============================================================================
+# 3. Validation Backend (Python)
+# ==============================================================================
+echo -e "${BLUE}[2/4] Validation Backend Python...${NC}"
+if [ -n "$PY_FILES" ]; then
+    echo "  Fichiers Python ciblés :"
+    echo "$PY_FILES" | sed 's/^/   • /'
+
+    if [ "$SCOPE" = "staged" ]; then
+        # Extraire la version indexée dans un répertoire temporaire pour valider ce qui sera réellement committé
+        TMP_STAGED=$(mktemp -d)
+        trap 'rm -rf "$TMP_STAGED"' EXIT
+        git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*' | git checkout-index --prefix="$TMP_STAGED/" -z --stdin
+
+        STAGED_PY_FILES=()
+        while IFS= read -r -d '' f; do
+            if [ -f "$TMP_STAGED/$f" ]; then
+                python3 -m py_compile "$TMP_STAGED/$f" 2>&1 || {
+                    echo -e "${RED}❌ Erreur de syntaxe Python dans la version indexée : $f${NC}"
+                    exit 1
+                }
+                STAGED_PY_FILES+=("$f")
+            elif [ -L "$TMP_STAGED/$f" ]; then
+                # Lien symbolique dont la cible est inchangée ou hors du dossier temporaire
+                if [ -f "$f" ]; then
+                    python3 -m py_compile "$f" 2>&1 || {
+                        echo -e "${RED}❌ Erreur de syntaxe Python dans la cible du lien symbolique : $f${NC}"
+                        exit 1
+                    }
+                    if command -v ruff >/dev/null 2>&1; then
+                        ruff check "$f" || {
+                            echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la cible du lien symbolique : $f${NC}"
+                            exit 1
+                        }
+                    fi
+                else
+                    echo -e "${RED}❌ Lien symbolique Python rompu (cible introuvable) : $f${NC}"
+                    exit 1
+                fi
+            else
+                echo -e "${RED}❌ Fichier Python indexé introuvable dans la version extraite : $f${NC}"
+                exit 1
+            fi
+        done < <(git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*')
+
+        if command -v ruff >/dev/null 2>&1; then
+            if [ ${#STAGED_PY_FILES[@]} -gt 0 ]; then
+                echo "  Exécution de Ruff sur la version indexée..."
+                (cd "$TMP_STAGED" && ruff check "${STAGED_PY_FILES[@]}") || {
+                    echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la version indexée.${NC}"
+                    exit 1
+                }
+            fi
+        fi
+    else
+        FULL_PY_FILES=()
+        while IFS= read -r -d '' f; do
+            if [ -n "$f" ]; then
+                if [ ! -f "$f" ] && [ ! -L "$f" ]; then
+                    echo -e "${RED}❌ Fichier Python suivi introuvable sur le disque : $f${NC}"
+                    echo -e "${YELLOW}👉 Si le fichier a été supprimé, indexez sa suppression avec 'git rm $f' avant de valider.${NC}"
+                    exit 1
+                fi
+                if [ -f "$f" ]; then
+                    python3 -m py_compile "$f" 2>&1 || {
+                        echo -e "${RED}❌ Erreur de syntaxe Python dans le fichier : $f${NC}"
+                        exit 1
+                    }
+                    FULL_PY_FILES+=("$f")
+                elif [ -L "$f" ]; then
+                    echo -e "${RED}❌ Lien symbolique Python rompu (cible introuvable) : $f${NC}"
+                    exit 1
+                fi
+            fi
+        done < <(git ls-files -z -- '*.py' ':(exclude).githooks/*')
+
+        if command -v ruff >/dev/null 2>&1; then
+            if [ ${#FULL_PY_FILES[@]} -gt 0 ]; then
+                echo "  Exécution de Ruff..."
+                ruff check "${FULL_PY_FILES[@]}" || {
+                    echo -e "${RED}❌ Erreurs de linter Ruff détectées.${NC}"
+                    exit 1
+                }
+            fi
+        fi
+    fi
+    echo -e "${GREEN}  ✓ Contrôles Python validés.${NC}"
+else
+    echo "  Aucun fichier Python à analyser."
+fi
+
+# ==============================================================================
+# 4. Validation Frontend (TypeScript / JavaScript)
+# ==============================================================================
+echo -e "${BLUE}[3/4] Validation Frontend TypeScript/React...${NC}"
+if [ -n "$JS_FILES" ]; then
+    echo "  Fichiers Frontend ciblés :"
+    echo "$JS_FILES" | sed 's/^/   • /'
+
+    if [ -f "frontend/package.json" ]; then
+        if [ ! -d "frontend/node_modules" ]; then
+            echo -e "${RED}❌ Dépendances frontend manquantes dans frontend/node_modules.${NC}"
+            echo -e "${YELLOW}👉 Exécutez 'cd frontend && npm install' avant de committer des fichiers frontend.${NC}"
+            exit 1
+        fi
+        (cd frontend && npm run lint --if-present) || {
+            echo -e "${RED}❌ Erreurs de linting frontend détectées.${NC}"
+            exit 1
+        }
+    fi
+    echo -e "${GREEN}  ✓ Contrôles Frontend validés.${NC}"
+else
+    echo "  Aucun fichier Frontend à analyser."
+fi
+
+# ==============================================================================
+# 5. Validation Globale (si périmètre full)
+# ==============================================================================
+echo -e "${BLUE}[4/4] Validation des invariants d'architecture...${NC}"
+if [ "$SCOPE" = "full" ]; then
+    if [ -f ".github/scripts/verify_workflows.py" ]; then
+        python3 .github/scripts/verify_workflows.py .github/workflows >/dev/null 2>&1 || {
+            echo -e "${RED}❌ Invariants de sécurité des workflows GitHub non respectés.${NC}"
+            exit 1
+        }
+    fi
+fi
+
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo -e "${GREEN}✅ Quality Gate passée avec succès (${SCOPE}).${NC}"
+echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+exit 0

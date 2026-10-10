@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# Git Hook: commit-msg
+# Valide le format Conventional Commits pour Colab AI Studio
+# Format requis : type(scope): description ou type(scope)!: description
+# Types autorisés : feat, fix, chore, docs, refactor, test, ci, perf, build, style, revert
+
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+COMMIT_MSG_FILE="$1"
+if [ ! -f "$COMMIT_MSG_FILE" ]; then
+    echo -e "${RED}❌ Fichier de message de commit introuvable : $COMMIT_MSG_FILE${NC}"
+    exit 1
+fi
+
+COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+
+# Récupère la première ligne non vide et non commentée
+FIRST_LINE=$(echo "$COMMIT_MSG" | grep -v "^#" | grep -v "^$" | head -n1 || true)
+
+if [ -z "$FIRST_LINE" ]; then
+    echo -e "${RED}❌ Le message de commit est vide.${NC}"
+    exit 1
+fi
+
+# Accepte uniquement les fusions et annulations automatiques générées par l'état Git actif
+GIT_DIR="$(git rev-parse --git-dir 2>/dev/null || true)"
+if [ -n "$GIT_DIR" ] && { [ -f "$GIT_DIR/MERGE_HEAD" ] || [ -f "$GIT_DIR/REVERT_HEAD" ]; }; then
+    if [[ "$FIRST_LINE" =~ ^(Merge (branch|pull request|remote-tracking branch)|Revert \") ]]; then
+        exit 0
+    fi
+fi
+
+# Expression régulière Conventional Commits harmonisée avec CI (governance.yml) :
+PATTERN='^(feat|fix|chore|docs|refactor|test|ci|perf|build|style|revert)(\([a-z0-9._/-]+\))?!?: .{3,}'
+
+if ! echo "$FIRST_LINE" | grep -E "$PATTERN" > /dev/null 2>&1; then
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -e "${RED}❌ Message de commit non conforme à la norme Conventional Commits${NC}"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo ""
+    echo -e "${YELLOW}Votre message :${NC}"
+    echo "  $FIRST_LINE"
+    echo ""
+    echo -e "${YELLOW}Format attendu :${NC}"
+    echo "  type(scope): description"
+    echo "  type(scope)!: description (en cas de rupture de compatibilité)"
+    echo ""
+    echo -e "${YELLOW}Types autorisés :${NC}"
+    echo "  feat      - Nouvelle fonctionnalité (ex: studio, dock, proxy)"
+    echo "  fix       - Correction d'anomalie"
+    echo "  chore     - Tâche de maintenance, dépendances, configuration"
+    echo "  docs      - Documentation, spécifications, README"
+    echo "  refactor  - Refactorisation sans ajout de fonctionnalité ni correctif"
+    echo "  test      - Ajout ou modification de tests unitaires/intégration"
+    echo "  ci        - Modification des workflows GitHub Actions ou hooks"
+    echo "  perf      - Amélioration de performance (mémoire VRAM, latence)"
+    echo "  build     - Système de build (Vite, packaging Python)"
+    echo "  style     - Formatage, espacements (sans modification de logique)"
+    echo "  revert    - Annulation d'un commit précédent"
+    echo ""
+    echo -e "${YELLOW}Exemples valides :${NC}"
+    echo "  feat(dock): ajouter la sélection de ratio pour les modèles vidéo"
+    echo "  feat(api)!: restructurer les paramètres du payload de génération"
+    echo "  fix(vram): vider le cache cuda lors de l'éviction d'un modèle"
+    echo "  docs(spec): documenter le schéma JSON de generations.json"
+    echo "  chore(governance): initialiser les hooks Git et les règles d'agents"
+    echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    exit 1
+fi
+
+exit 0
