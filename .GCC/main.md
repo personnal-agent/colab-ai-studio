@@ -22,16 +22,16 @@ Phase de revue contradictoire et discussion technique avec l'utilisateur sur les
 - **2026-10-10** : Spécification de la modularité atomique UI (1 fichier par responsabilité, zéro page en dur), séparation stricte des modes vidéo (Ingrédients Dataset Bible / Video-as-Ingredient vs Frame Chaining First/Last Frame avec règle de subsomption obligatoire pour tout mode complet), et gestion modulaire de la durée (intervalle continu range vs paliers discrets).
 - **2026-10-10** : Sélection du corpus UML cible en 7 types et 11 diagrammes : cas d’utilisation; composants; déploiement; classes; activité; séquences génération/compilation de marque/proxy LLM; états-transitions dock/tâche/Model Swapper.
 - **2026-10-11** : Homologation formelle à 100/100 du corpus de modélisation UML face aux spécifications OMG UML 2.5.1 et au référentiel L3 MIAGE (Dr TRAORE Obonan Etienne) via boucle itérative multi-agents Worker / Auditeur sévère (`remediation-uml-worker-auditor-loop`). Traçabilité bidirectionnelle formalisée selon le standard IEEE 1016 dans le README d'architecture.
-- **2026-10-11** : Gel strict des modifications sur les livrables de modélisation pour phase de revue contradictoire et discussion avec l'utilisateur.
+- **2026-10-11** : Consolidation et homologation du registre d'arbitrage contradictoire (`.modelisation/logiciel/corrections.md`) à partir des 11 audits de sous-agents confrontés aux spécifications OMG UML 2.5.1 et au référentiel L3 MIAGE (Dr Traoré). Arbitrage clé validé par l'utilisateur : délimitation de la boîte système sur l'Application Studio Locale (UI React + Orchestrateur FastAPI) avec `«system» Google Colab (Worker GPU distant)` en acteur secondaire externe à droite (le code local de pilotage Colab restant à l'intérieur du système). Rejet formel des anti-patrons (clics d'IHM en messages, états finaux sur tâches persistées, types primitifs pour cycles de vie finis). Intégrité stricte des 11 diagrammes SVG/PNG préservée à 0 modification avant feu vert explicite.
 
 ## 🌿 Active Branches / Plans
 - [`docs/ui-system-specifications`](https://github.com/personnal-agent/colab-ai-studio/pull/4) : Consolidation des spécifications UI/système, design tokens, suivi des maquettes et revue Greptile / CodeRabbit (PR #4 ouverte).
 - `docs/software-modeling` : Modélisation UML certifiée sous `.modelisation/logiciel/`; suivi tactique dans [plan_uml-modelisation.md](branches/plan_uml-modelisation.md).
 
 ## 📈 Current Status
-- ✅ Terminé : Clôture de la session de modélisation UML et gel des livrables.
-- 🔄 En cours : Échange technique et clarification des choix de modélisation avec l'utilisateur (zéro modification de fichier).
-- ⏳ À venir : Prise en compte des retours et arbitrages utilisateur après discussion.
+- ✅ Terminé : Audit normatif 11/11 des diagrammes UML relu directement dans les transcripts d'agents, arbitrages validés avec l'utilisateur et consolidation exhaustive du registre `.modelisation/logiciel/corrections.md`.
+- 🔄 En cours : Clôture de session et commit de transmission.
+- ⏳ À venir (Prochaine session) : Application méthodique des corrections sur les 11 fichiers SVG, régénération des PNG matriciels et actualisation du README d'architecture IEEE 1016.
 
 ## 👉 Next Session Direction
-Discuter point par point des remarques, incompréhensions ou désaccords de l'utilisateur sur les diagrammes sans toucher aux fichiers.
+Démarrer immédiatement la retouche chirurgicale des 11 diagrammes SVG dans l'ordre du tableau de bord de `.modelisation/logiciel/corrections.md`, régénérer les PNG et synchroniser le README.
