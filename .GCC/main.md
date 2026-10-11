@@ -2,9 +2,10 @@
 
 ## 🏆 Major Milestones (Archived Epics)
 - **2026-10-09** : Déploiement complet du socle de gouvernance et qualité des 6 piliers (`coding-stuff` v3.0).
+- **2026-10-11** : Homologation et certification formelle du corpus de modélisation logicielle sous `.modelisation/logiciel/` (11 diagrammes UML SVG + PNG, README d'architecture système IEEE 1016, rapport d'audit normatif OMG UML 2.5.1 / L3 MIAGE résolvant 90 anomalies).
 
 ## 🎯 Objective
-Modéliser le code et l'architecture logicielle de Colab AI Studio (contrats d'interfaces TypeScript, schémas Pydantic, machine à états du dock flottant adaptatif, pipeline BrandContextCompiler, orchestrateur asynchrone FastAPI et gestionnaire dynamique VRAM Colab ModelSwapper) et consolider les spécifications complètes avant la phase de codage.
+Phase de revue contradictoire et discussion technique avec l'utilisateur sur les choix de modélisation UML, les divergences identifiées ou les points d'explication méthodologiques avant tout engagement sur le code.
 
 ## 🧠 Decisions Made
 - **2026-10-09** : Adoption du socle de gouvernance à 6 piliers avec agent cible Antigravity 2.0 / IDE.
@@ -19,14 +20,18 @@ Modéliser le code et l'architecture logicielle de Colab AI Studio (contrats d'i
 - **2026-10-10** : Contrat d'annulation de tâche asynchrone (`POST /api/tasks/{task_id}/cancel`) avec arrêt worker et état terminal `cancelled`.
 - **2026-10-10** : Conformité WCAG AA (contraste placeholder `#6B7280`), tokens typographiques Tailwind v3 et gestion du quota utilisateur `userRefs`.
 - **2026-10-10** : Spécification de la modularité atomique UI (1 fichier par responsabilité, zéro page en dur), séparation stricte des modes vidéo (Ingrédients Dataset Bible / Video-as-Ingredient vs Frame Chaining First/Last Frame avec règle de subsomption obligatoire pour tout mode complet), et gestion modulaire de la durée (intervalle continu range vs paliers discrets).
+- **2026-10-10** : Sélection du corpus UML cible en 7 types et 11 diagrammes : cas d’utilisation; composants; déploiement; classes; activité; séquences génération/compilation de marque/proxy LLM; états-transitions dock/tâche/Model Swapper.
+- **2026-10-11** : Homologation formelle à 100/100 du corpus de modélisation UML face aux spécifications OMG UML 2.5.1 et au référentiel L3 MIAGE (Dr TRAORE Obonan Etienne) via boucle itérative multi-agents Worker / Auditeur sévère (`remediation-uml-worker-auditor-loop`). Traçabilité bidirectionnelle formalisée selon le standard IEEE 1016 dans le README d'architecture.
+- **2026-10-11** : Gel strict des modifications sur les livrables de modélisation pour phase de revue contradictoire et discussion avec l'utilisateur.
 
 ## 🌿 Active Branches / Plans
 - [`docs/ui-system-specifications`](https://github.com/personnal-agent/colab-ai-studio/pull/4) : Consolidation des spécifications UI/système, design tokens, suivi des maquettes et revue Greptile / CodeRabbit (PR #4 ouverte).
+- `docs/software-modeling` : Modélisation UML certifiée sous `.modelisation/logiciel/`; suivi tactique dans [plan_uml-modelisation.md](branches/plan_uml-modelisation.md).
 
 ## 📈 Current Status
-- ✅ Terminé : Spécifications UI/système/architecture mises à jour avec la modularité atomique des paramètres, les 2 modes vidéo (Ingrédients vs Frame Chaining, subsomption) et la durée configurable (range vs discrete).
-- 🔄 En cours : Validation locale de la Quality Gate et vérification du respect du budget strict de PR (<= 1000 lignes).
-- ⏳ À venir : Modélisation logicielle (contrats TypeScript, schémas Pydantic, composants React).
+- ✅ Terminé : Clôture de la session de modélisation UML et gel des livrables.
+- 🔄 En cours : Échange technique et clarification des choix de modélisation avec l'utilisateur (zéro modification de fichier).
+- ⏳ À venir : Prise en compte des retours et arbitrages utilisateur après discussion.
 
 ## 👉 Next Session Direction
-Valider le Quality Gate local, vérifier le budget de gouvernance de la PR, committer conventionnellement les spécifications et engager la modélisation du code.
+Discuter point par point des remarques, incompréhensions ou désaccords de l'utilisateur sur les diagrammes sans toucher aux fichiers.

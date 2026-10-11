@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980">
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0 L10 4 L0 8 Z" fill="#405364"/></marker>
+<marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/></marker>
+<marker id="triangle" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M1 1 L13 7 L1 13 Z" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/></marker>
+</defs>
+<rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+<text x="48" y="48" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#17212B">01 · Périmètre fonctionnel</text>
+<text x="50" y="77" font-family="Arial, sans-serif" font-size="15" fill="#596875">Diagramme de cas d’utilisation UML · objectifs observables, acteurs externes et système cible</text>
+<line x1="48" y1="96" x2="1552" y2="96" stroke="#D8E0E5" stroke-width="1.5"/>
+
+<!-- Limite du système cible -->
+<rect x="300" y="140" width="1000" height="740" rx="0" fill="#FBFCFD" stroke="#17212B" stroke-width="2"/>
+<text x="322" y="171" text-anchor="start" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">«system» Colab AI Studio — cible spécifiée</text>
+
+<!-- Cas d'utilisation métier (valeur observable) -->
+<!-- 1. Produire un média -->
+<ellipse cx="530.0" cy="251.0" rx="150.0" ry="41.0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="530.0" y="247.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="500" fill="#17212B"><tspan x="530.0" dy="0">Produire un média</tspan><tspan x="530.0" dy="20">image · vidéo · lip sync · upscale</tspan></text>
+
+<!-- 2. Interagir avec l'assistant textuel IA (renommé selon Remarque 1.4) -->
+<ellipse cx="950.0" cy="251.0" rx="150.0" ry="41.0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="950.0" y="247.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="500" fill="#17212B"><tspan x="950.0" dy="0">Interagir avec l'assistant textuel IA</tspan><tspan x="950.0" dy="20">génération de texte et assistance</tspan></text>
+
+<!-- 3. Suivre une génération -->
+<ellipse cx="530.0" cy="401.0" rx="150.0" ry="41.0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="530.0" y="397.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="500" fill="#17212B"><tspan x="530.0" dy="0">Suivre une génération</tspan><tspan x="530.0" dy="20">progression temps réel</tspan></text>
+
+<!-- 4. Annuler une génération (relié à Créateur de contenu selon Remarque 1.1) -->
+<ellipse cx="950.0" cy="401.0" rx="150.0" ry="41.0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="950.0" y="397.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="500" fill="#17212B"><tspan x="950.0" dy="0">Annuler une génération</tspan><tspan x="950.0" dy="20">tâche en cours</tspan></text>
+
+<!-- 5. Parcourir et remixer -->
+<ellipse cx="530.0" cy="551.0" rx="150.0" ry="41.0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="530.0" y="547.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="500" fill="#17212B"><tspan x="530.0" dy="0">Parcourir et remixer</tspan><tspan x="530.0" dy="20">favoris · filtres · export</tspan></text>
+
+<!-- 6. Gérer les Brand Kits -->
+<ellipse cx="950.0" cy="551.0" rx="150.0" ry="41.0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="950.0" y="547.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="500" fill="#17212B"><tspan x="950.0" dy="0">Gérer les Brand Kits</tspan><tspan x="950.0" dy="20">actifs · directives · identité</tspan></text>
+
+<!-- 7. Organiser les projets -->
+<ellipse cx="530.0" cy="701.0" rx="150.0" ry="41.0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="530.0" y="697.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="500" fill="#17212B"><tspan x="530.0" dy="0">Organiser les projets</tspan><tspan x="530.0" dy="20">destination de stockage</tspan></text>
+
+<!-- 8. Connecter l'environnement de calcul distant (renommé selon Remarque 1.4) -->
+<ellipse cx="950.0" cy="701.0" rx="150.0" ry="41.0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="950.0" y="697.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="500" fill="#17212B"><tspan x="950.0" dy="0">Connecter l'environnement de calcul distant</tspan><tspan x="950.0" dy="20">liaison réseau · diagnostic du worker</tspan></text>
+
+<!-- Acteur primaire humain : Créateur de contenu (Stickman conforme L3 MIAGE) -->
+<circle cx="120" cy="442" r="10" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<line x1="120" y1="452" x2="120" y2="485" stroke="#17212B" stroke-width="2"/>
+<line x1="102" y1="464" x2="138" y2="464" stroke="#17212B" stroke-width="2"/>
+<line x1="120" y1="485" x2="104" y2="508" stroke="#17212B" stroke-width="2"/>
+<line x1="120" y1="485" x2="136" y2="508" stroke="#17212B" stroke-width="2"/>
+<text x="120" y="531" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">Créateur de contenu</text>
+
+<!-- Acteurs secondaires systèmes / logiciels externes : Notation UML «system» (Remarque 1.5) -->
+<!-- 1. Client API externe -->
+<rect x="1390" y="221" width="160" height="60" rx="4" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<text x="1470" y="244" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">«system»</text>
+<text x="1470" y="263" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#17212B">Client API externe</text>
+
+<!-- 2. Fournisseur LLM -->
+<rect x="1390" y="371" width="160" height="60" rx="4" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<text x="1470" y="394" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">«system»</text>
+<text x="1470" y="413" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#17212B">Fournisseur LLM</text>
+
+<!-- Associations binaires non fléchées (OMG UML 2.5.1 §18.1.3) -->
+<!-- Créateur de contenu -> Produire un média -->
+<path d="M138 464 L270 464 L380 251" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Créateur de contenu -> Suivre une génération -->
+<path d="M138 464 L270 464 L380 401" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Créateur de contenu -> Parcourir et remixer -->
+<path d="M138 464 L270 464 L380 551" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Créateur de contenu -> Organiser les projets -->
+<path d="M138 464 L260 464 L260 701 L380 701" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Créateur de contenu -> Connecter l'environnement de calcul distant -->
+<path d="M138 464 L270 464 L800 701" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Créateur de contenu -> Gérer les Brand Kits -->
+<path d="M138 464 L270 464 L800 551" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Créateur de contenu -> Annuler une génération (Correction Remarque 1.1) -->
+<path d="M138 464 L270 464 L270 401 L800 401" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Créateur de contenu -> Interagir avec l'assistant textuel IA -->
+<path d="M138 464 L270 464 L270 251 L800 251" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Client API externe -> Interagir avec l'assistant textuel IA -->
+<path d="M1390 251 L1100 251" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Fournisseur LLM -> Interagir avec l'assistant textuel IA (Correction Remarque 1.3) -->
+<path d="M1390 401 L1250 401 L1250 251 L1100 251" fill="none" stroke="#405364" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+<!-- Notes d'ingénierie et légendes -->
+<text x="50" y="930" text-anchor="start" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#596875">Le worker Colab est un composant interne au système, pas un acteur externe.</text>
+<text x="48" y="958" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#596875">Modèle cible spécifié conforme OMG UML 2.5.1 · Les acteurs systèmes externes sont stéréotypés «system»</text>
+</svg>

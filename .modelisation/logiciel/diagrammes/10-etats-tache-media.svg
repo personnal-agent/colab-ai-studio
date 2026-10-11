@@ -1,0 +1,208 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1720" height="980" viewBox="0 0 1720 980">
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0 L10 4 L0 8 Z" fill="#405364"/></marker>
+<marker id="arrowRed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0 L10 4 L0 8 Z" fill="#B3261E"/></marker>
+<marker id="arrowAmber" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0 L10 4 L0 8 Z" fill="#8C6418"/></marker>
+<marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/></marker>
+</defs>
+<rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+<!-- Cartouche officiel OMG UML 2.5.1 / Dr TRAORE -->
+<rect x="40" y="24" width="370" height="32" rx="0" fill="#E8F1F3" stroke="#126A78" stroke-width="1.5"/>
+<text x="50" y="46" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#126A78">stm [State Machine] MediaTask</text>
+<text x="425" y="47" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#17212B">10 · Cycle de vie asynchrone d'une tâche média</text>
+<text x="50" y="78" font-family="Arial, sans-serif" font-size="14" fill="#596875">Classification OMG UML 2.5.1 §14 &amp; L3 MIAGE · Contexte formel : class MediaTask · États d'I/O réseau explicites, déterminisme et états finaux normés</text>
+<line x1="40" y1="96" x2="1680" y2="96" stroke="#D8E0E5" stroke-width="1.5"/>
+
+<!-- ======================================================== -->
+<!-- CYCLE NOMINAL : EN ATTENTE -> GPU -> TÉLÉCHARGEMENT -> SAUVEGARDE -> TERMINÉE -->
+<!-- ======================================================== -->
+
+<!-- 1. Pseudo-état initial -->
+<circle cx="70" cy="280" r="11" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<path d="M81 280 L140 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="75" y="240" width="100" height="30" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="0"/>
+<text x="110" y="258" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#17212B"><tspan x="110" dy="0">creerTache() /</tspan><tspan x="110" dy="13">assignerTaskId()</tspan></text>
+
+<!-- ÉTAT 1 : EnAttentePriseEnCharge (Résout Remarque 10.3) -->
+<rect x="140" y="200" width="235" height="170" rx="14" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<text x="257" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">EnAttentePriseEnCharge</text>
+<line x1="140" y1="235" x2="375" y2="235" stroke="#405364" stroke-width="1.2"/>
+<text x="150" y="255" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / genererUUID()</text>
+<text x="150" y="272" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / initialiserHorodatage()</text>
+<text x="150" y="290" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / attendreAcquittementWorker()</text>
+<text x="150" y="308" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / enregistrerDebutAttente()</text>
+<line x1="150" y1="322" x2="365" y2="322" stroke="#D8E0E5" stroke-width="1"/>
+<text x="150" y="338" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Requête persistée en file</text>
+<text x="150" y="352" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">En attente de slot GPU libre</text>
+
+<!-- Transition EnAttente -> EnTraitementGPU -->
+<path d="M375 280 L445 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="375" y="245" width="115" height="30" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="0.8"/>
+<text x="432" y="258" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#17212B"><tspan x="432" dy="0">worker_ack /</tspan><tspan x="432" dy="13">etablirFluxSSE()</tspan></text>
+
+<!-- ÉTAT 2 : EnTraitementGPU -->
+<rect x="445" y="195" width="275" height="185" rx="14" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<text x="582" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">EnTraitementGPU</text>
+<line x1="445" y1="230" x2="720" y2="230" stroke="#405364" stroke-width="1.2"/>
+<text x="455" y="250" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / connecterFluxSSE(tunnel_url)</text>
+<text x="455" y="268" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / surveillerProgressionWorker()</text>
+<text x="455" y="286" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">progressionSSE(p) / diffuserProgression()</text>
+<text x="455" y="304" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">heartbeat / reinitialiserTimeout()</text>
+<text x="455" y="322" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / fermerFluxSSE()</text>
+<line x1="455" y1="334" x2="710" y2="334" stroke="#D8E0E5" stroke-width="1"/>
+<text x="455" y="350" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Exécution PyTorch sur T4 (16 Go)</text>
+<text x="455" y="364" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Diffusion temps réel par SSE</text>
+
+<!-- Transition EnTraitementGPU -> RapatriementEnCours (Résout Remarque 10.1) -->
+<path d="M720 280 L790 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="715" y="245" width="130" height="30" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="0.8"/>
+<text x="780" y="258" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#17212B"><tspan x="780" dy="0">generationTerminee(url) /</tspan><tspan x="780" dy="13">ouvrirFluxDownload()</tspan></text>
+
+<!-- ÉTAT 3 : RapatriementEnCours (État autonome d'I/O réseau, Remarque 10.1) -->
+<rect x="790" y="195" width="280" height="185" rx="14" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<text x="930" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">RapatriementEnCours</text>
+<line x1="790" y1="230" x2="1070" y2="230" stroke="#405364" stroke-width="1.2"/>
+<text x="800" y="250" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / allouerBufferTemporaire()</text>
+<text x="800" y="268" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / telechargerMediaViaTunnel()</text>
+<text x="800" y="286" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">chunk_recu(octets) / majJauge()</text>
+<text x="800" y="304" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / verifierIntegriteChecksum()</text>
+<line x1="800" y1="320" x2="1060" y2="320" stroke="#D8E0E5" stroke-width="1"/>
+<text x="800" y="336" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Transfert HTTP via ngrok / Cloudflare</text>
+<text x="800" y="350" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">I/O réseau lourde (vidéo/image HD)</text>
+<text x="800" y="364" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Surveillance de timeout de flux</text>
+
+<!-- Transition RapatriementEnCours -> SauvegardeEnCours (Résout Remarque 10.1) -->
+<path d="M1070 280 L1140 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="1065" y="245" width="140" height="30" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="0.8"/>
+<text x="1135" y="258" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#17212B"><tspan x="1135" dy="0">telechargementReussi /</tspan><tspan x="1135" dy="13">preparerEcritureDisque()</tspan></text>
+
+<!-- ÉTAT 4 : SauvegardeEnCours (État autonome d'I/O disque, Remarque 10.1) -->
+<rect x="1140" y="195" width="270" height="185" rx="14" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<text x="1275" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">SauvegardeEnCours</text>
+<line x1="1140" y1="230" x2="1410" y2="230" stroke="#405364" stroke-width="1.2"/>
+<text x="1150" y="250" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / resoudreCheminOutputs()</text>
+<text x="1150" y="268" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / ecrireDisqueEtMetadonnees()</text>
+<text x="1150" y="286" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / persisterGenerationsJSON()</text>
+<text x="1150" y="304" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / verifierEcritureAtomique()</text>
+<line x1="1150" y1="320" x2="1400" y2="320" stroke="#D8E0E5" stroke-width="1"/>
+<text x="1150" y="336" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Écriture locale dans outputs/YYYY-MM-DD/</text>
+<text x="1150" y="350" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Mise à jour atomique data/generations.json</text>
+<text x="1150" y="364" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Pas d'écrasement silencieux</text>
+
+<!-- Transition SauvegardeEnCours -> Terminee -->
+<path d="M1410 280 L1470 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="1415" y="245" width="115" height="30" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="0.8"/>
+<text x="1472" y="258" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#17212B"><tspan x="1472" dy="0">persistanceReussie /</tspan><tspan x="1472" dy="13">preparerNotification()</tspan></text>
+
+<!-- ÉTAT 5 : Terminee -->
+<rect x="1470" y="200" width="180" height="165" rx="14" fill="#EDF7ED" stroke="#2E7D32" stroke-width="2"/>
+<text x="1560" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#1E4620">Terminee</text>
+<line x1="1470" y1="235" x2="1650" y2="235" stroke="#2E7D32" stroke-width="1.2"/>
+<text x="1480" y="255" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#2E7D32">entry / publierEventSucces()</text>
+<text x="1480" y="272" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / figerResultatLocal()</text>
+<line x1="1480" y1="288" x2="1640" y2="288" stroke="#D8E0E5" stroke-width="1"/>
+<text x="1480" y="304" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Fichier prêt pour aperçu,</text>
+<text x="1480" y="318" text-anchor="start" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">diffusion et réutilisation</text>
+
+<!-- Sortie Terminee vers Pseudo-état final (FinalState 1) -->
+<path d="M1560 365 L1560 415" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<circle cx="1560" cy="435" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<circle cx="1560" cy="435" r="8" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="1585" y="440" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#17212B">FinalState</text>
+
+
+<!-- ======================================================== -->
+<!-- ÉTATS TERMINAUX D'EXCEPTION : ANNULÉE & ÉCHOUÉE (BORDURES PLEINES NORMÉES - Remarque 10.2) -->
+<!-- ======================================================== -->
+
+<!-- ÉTAT TERMINAL : Annulee (Bordure pleine normée, pas de tirets fantaisistes) -->
+<rect x="420" y="540" width="300" height="180" rx="14" fill="#FBF8F0" stroke="#8C6418" stroke-width="2"/>
+<text x="570" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#8C6418">Annulee</text>
+<line x1="420" y1="575" x2="720" y2="575" stroke="#8C6418" stroke-width="1.2"/>
+<text x="430" y="595" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">entry / emettreRequeteCancelWorker()</text>
+<text x="430" y="613" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / nettoyerFichiersTemporaires()</text>
+<text x="430" y="631" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">annuler() [deja_annule] / ignorer()</text>
+<text x="430" y="649" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / cloreContexteTache()</text>
+<line x1="430" y1="663" x2="710" y2="663" stroke="#D8E0E5" stroke-width="1"/>
+<text x="430" y="680" text-anchor="start" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#596875">Idempotence respectée via transition interne</text>
+<text x="430" y="696" text-anchor="start" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#596875">État terminal `cancelled` sans média publié</text>
+
+<!-- Sortie Annulee vers Pseudo-état final (FinalState 2) -->
+<path d="M570 720 L570 770" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<circle cx="570" cy="790" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<circle cx="570" cy="790" r="8" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="595" y="795" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#17212B">FinalState</text>
+
+<!-- ÉTAT TERMINAL : Echouee (Bordure pleine normée, pas de pointillés d'avertissement informels, Remarque 10.2) -->
+<rect x="850" y="540" width="330" height="180" rx="14" fill="#FDF2F2" stroke="#B3261E" stroke-width="2"/>
+<text x="1015" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#B3261E">Echouee</text>
+<line x1="850" y1="575" x2="1180" y2="575" stroke="#B3261E" stroke-width="1.2"/>
+<text x="860" y="595" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#B3261E">entry / journaliserCauseErreur(code, msg)</text>
+<text x="860" y="613" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / purgerReliquatsEtBuffers()</text>
+<text x="860" y="631" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / notifierClientEchec(details)</text>
+<text x="860" y="649" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / cloreContexteTache()</text>
+<line x1="860" y1="663" x2="1170" y2="663" stroke="#D8E0E5" stroke-width="1"/>
+<text x="860" y="680" text-anchor="start" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#596875">Capture : timeout, panne réseau, erreur GPU,</text>
+<text x="860" y="696" text-anchor="start" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#596875">saturation disque ou exception I/O</text>
+
+<!-- Sortie Echouee vers Pseudo-état final (FinalState 3) -->
+<path d="M1015 720 L1015 770" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<circle cx="1015" cy="790" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<circle cx="1015" cy="790" r="8" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="1040" y="795" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#17212B">FinalState</text>
+
+
+<!-- ======================================================== -->
+<!-- TRANSITIONS D'ANNULATION (DEPUIS LES ÉTATS INTERMÉDIAIRES) -->
+<!-- ======================================================== -->
+
+<!-- Transition EnAttente -> Annulee -->
+<path d="M250 370 L250 630 L420 630" fill="none" stroke="#8C6418" stroke-width="1.8" marker-end="url(#arrowAmber)"/>
+<rect x="255" y="475" width="145" height="28" fill="#FFFFFF" stroke="#8C6418" stroke-width="0.8"/>
+<text x="327" y="487" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#8C6418"><tspan x="327" dy="0">annuler() /</tspan><tspan x="327" dy="13">retirerDeLaFile()</tspan></text>
+
+<!-- Transition EnTraitementGPU -> Annulee -->
+<path d="M530 380 L530 540" fill="none" stroke="#8C6418" stroke-width="1.8" marker-end="url(#arrowAmber)"/>
+<rect x="445" y="445" width="165" height="28" fill="#FFFFFF" stroke="#8C6418" stroke-width="0.8"/>
+<text x="527" y="457" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#8C6418"><tspan x="527" dy="0">annuler() /</tspan><tspan x="527" dy="13">envoyerSignalCancel()</tspan></text>
+
+
+<!-- ======================================================== -->
+<!-- TRANSITIONS D'ERREUR (VERS ÉCHOUEE DEPUIS CHAQUE ÉTAT) -->
+<!-- ======================================================== -->
+
+<!-- 1. EnAttente -> Echouee (Timeout attente travailleur) -->
+<path d="M280 370 C 280 490, 840 500, 880 540" fill="none" stroke="#B3261E" stroke-width="1.6" marker-end="url(#arrowRed)"/>
+<rect x="290" y="420" width="160" height="26" fill="#FFFFFF" stroke="#B3261E" stroke-width="0.8"/>
+<text x="370" y="433" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="600" fill="#B3261E"><tspan x="370" dy="0">when(delai &gt; 120s) [sans worker] /</tspan><tspan x="370" dy="12">declarerTimeoutAttente()</tspan></text>
+
+<!-- 2. EnTraitementGPU -> Echouee (Erreur calcul / OOM / crash worker) -->
+<path d="M660 380 C 660 480, 850 480, 910 540" fill="none" stroke="#B3261E" stroke-width="1.6" marker-end="url(#arrowRed)"/>
+<rect x="670" y="450" width="165" height="26" fill="#FFFFFF" stroke="#B3261E" stroke-width="0.8"/>
+<text x="752" y="463" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="600" fill="#B3261E"><tspan x="752" dy="0">erreurGPU(code_exception) /</tspan><tspan x="752" dy="12">interrompreSessionSSE()</tspan></text>
+
+<!-- 3. RapatriementEnCours -> Echouee (Coupure réseau tunnel / corruption transfert) -->
+<path d="M960 380 L960 540" fill="none" stroke="#B3261E" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+<rect x="965" y="445" width="180" height="26" fill="#FFFFFF" stroke="#B3261E" stroke-width="0.8"/>
+<text x="1055" y="458" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="600" fill="#B3261E"><tspan x="1055" dy="0">echecTransfert(panne_tunnel) /</tspan><tspan x="1055" dy="12">fermerSocketEtPurger()</tspan></text>
+
+<!-- 4. SauvegardeEnCours -> Echouee (Erreur disque plein / permission / JSON) -->
+<path d="M1250 380 C 1250 490, 1160 500, 1140 540" fill="none" stroke="#B3261E" stroke-width="1.6" marker-end="url(#arrowRed)"/>
+<rect x="1175" y="460" width="165" height="26" fill="#FFFFFF" stroke="#B3261E" stroke-width="0.8"/>
+<text x="1257" y="473" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="600" fill="#B3261E"><tspan x="1257" dy="0">erreurIO(disque_ou_json) /</tspan><tspan x="1257" dy="12">consignerEchecDisque()</tspan></text>
+
+
+<!-- ======================================================== -->
+<!-- PANNEAU EXPLICATIF D'INGÉNIERIE & RÈGLES NORMATIVES -->
+<!-- ======================================================== -->
+<rect x="40" y="840" width="1640" height="110" rx="8" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+<text x="60" y="865" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#1E293B">CONFORMITÉ OMG UML 2.5.1 §14 &amp; RÈGLES D'AUTOMATES DU Dr TRAORE (L3 MIAGE) :</text>
+
+<text x="60" y="890" font-family="Arial, sans-serif" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#126A78">1. Sémantique Run-to-Completion &amp; I/O :</tspan> Une transition et son effet d'action (/ action) sont instantanés. Les opérations durables d'attente réseau et d'écriture disque sont modélisées dans des états stables distincts (RapatriementEnCours, SauvegardeEnCours) avec activités d'exécution continues (do / ...).</text>
+
+<text x="60" y="912" font-family="Arial, sans-serif" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#126A78">2. Prise en charge asynchrone :</tspan> L'état initial pointe obligatoirement vers EnAttentePriseEnCharge (Pending/Queued) matérialisant l'enregistrement de la tâche avant assignation du slot de calcul GPU sur le worker Colab.</text>
+
+<text x="60" y="934" font-family="Arial, sans-serif" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#126A78">3. Standardisation graphique &amp; états terminaux :</tspan> Tous les états (y compris Echouee et Annulee) adoptent des contours continus pleins normés (bannissement des pointillés décoratifs). Chaque branche terminale converge sans ambiguïté vers un FinalState (disque cerclé).</text>
+
+</svg>

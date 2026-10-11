@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1760" height="1420" viewBox="0 0 1760 1420">
+<defs>
+  <!-- Marqueur appel synchrone : flèche à tête triangulaire pleine (OMG UML 2.5.1) -->
+  <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+    <path d="M0 0 L10 4 L0 8 Z" fill="#405364"/>
+  </marker>
+  <!-- Marqueur appel asynchrone et retour : flèche à tête ouverte (OMG UML 2.5.1) -->
+  <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+    <path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/>
+  </marker>
+</defs>
+
+<!-- Fond d'écran blanc pur -->
+<rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+<!-- ========================================== -->
+<!-- EN-TÊTE ET CARTOUCHE NORMATIF OMG UML      -->
+<!-- ========================================== -->
+<rect x="48" y="24" width="370" height="32" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.5"/>
+<text x="60" y="46" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#126A78">sd</text>
+<text x="90" y="46" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#17212B">Compilation et Injection Contexte Marque</text>
+
+<text x="48" y="80" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">07 · Diagramme de Séquence — Compilation de Marque &amp; Arbitrage Références</text>
+<text x="50" y="104" font-family="Arial, sans-serif" font-size="13" fill="#596875">Conformité OMG UML 2.5.1 &amp; L3 MIAGE · Chargement persistance amont, repli LLM déterministe, auto-appels U-shape et chaîne de réponse symétrique</text>
+<line x1="48" y1="118" x2="1712" y2="118" stroke="#D8E0E5" stroke-width="1.5"/>
+
+<!-- ========================================== -->
+<!-- PARTICIPANTS ET LIGNES DE VIE              -->
+<!-- ========================================== -->
+
+<!-- 1. Acteur Humain : c : Créateur (x = 120) -->
+<circle cx="120" cy="148" r="10" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<line x1="120" y1="158" x2="120" y2="186" stroke="#17212B" stroke-width="2"/>
+<line x1="102" y1="168" x2="138" y2="168" stroke="#17212B" stroke-width="2"/>
+<line x1="120" y1="186" x2="104" y2="208" stroke="#17212B" stroke-width="2"/>
+<line x1="120" y1="186" x2="136" y2="208" stroke="#17212B" stroke-width="2"/>
+<text x="120" y="226" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">c : Créateur</text>
+<line x1="120" y1="234" x2="120" y2="1270" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 2. Participant : :FloatingPromptDock (x = 410) -->
+<rect x="315" y="145" width="190" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="410" y="173" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:FloatingPromptDock</text>
+<line x1="410" y1="191" x2="410" y2="1270" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 3. Participant : :BrandContextCompiler (x = 720) -->
+<rect x="620" y="145" width="200" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="720" y="173" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:BrandContextCompiler</text>
+<line x1="720" y1="191" x2="720" y2="1270" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 4. Participant : :StorageManager (x = 1010) -->
+<rect x="915" y="145" width="190" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="1010" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:StorageManager</text>
+<text x="1010" y="181" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">data/brand_kits.json</text>
+<line x1="1010" y1="191" x2="1010" y2="1270" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 5. Participant : :LLMProvider (x = 1290) -->
+<rect x="1200" y="145" width="180" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="1290" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:LLMProvider</text>
+<text x="1290" y="181" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">Proxy / OpenAI Ext.</text>
+<line x1="1290" y1="191" x2="1290" y2="1270" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 6. Participant : :ColabWorker (x = 1580) -->
+<rect x="1490" y="145" width="180" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="1580" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:ColabWorker</text>
+<text x="1580" y="181" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">Worker Distant GPU</text>
+<line x1="1580" y1="191" x2="1580" y2="1270" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- ========================================== -->
+<!-- BARRES D'ACTIVATION (ExecutionSpecification) -->
+<!-- ========================================== -->
+
+<!-- :FloatingPromptDock -->
+<rect x="403" y="240" width="14" height="970" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+<!-- Sous-barre d'activation réflexive sur le dock (mise à jour UI) -->
+<rect x="417" y="1170" width="10" height="30" fill="#FFFFFF" stroke="#405364" stroke-width="1.2"/>
+
+<!-- :BrandContextCompiler -->
+<rect x="713" y="275" width="14" height="855" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+<!-- Sous-barres d'activation imbriquées pour les self-calls (U-shape) -->
+<!-- Self-call 1 : repli déterministe -->
+<rect x="727" y="620" width="10" height="30" fill="#FFFFFF" stroke="#405364" stroke-width="1.2"/>
+<!-- Self-call 2 : abandon références texte seul -->
+<rect x="727" y="780" width="10" height="25" fill="#FFFFFF" stroke="#405364" stroke-width="1.2"/>
+<!-- Self-call 3 : allocation des slots -->
+<rect x="727" y="875" width="10" height="25" fill="#FFFFFF" stroke="#405364" stroke-width="1.2"/>
+<!-- Self-call 4 : priorisation des références -->
+<rect x="727" y="940" width="10" height="25" fill="#FFFFFF" stroke="#405364" stroke-width="1.2"/>
+
+<!-- :StorageManager -->
+<rect x="1003" y="340" width="14" height="50" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+<!-- :LLMProvider -->
+<rect x="1283" y="495" width="14" height="35" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+<!-- :ColabWorker -->
+<rect x="1573" y="1035" width="14" height="50" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+<!-- ========================================== -->
+<!-- INTERACTIONS ET MESSAGES                   -->
+<!-- ========================================== -->
+
+<!-- 1. Déclenchement par le créateur -->
+<path d="M120 240 L403 240" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="261" y="232" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">submitWithBrand(prompt, kitId, userRefs)</text>
+
+<!-- 2. Appel du compilateur de contexte -->
+<path d="M417 275 L713 275" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="565" y="267" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">compileAndSubmit(prompt, kitId, userRefs, modelCaps)</text>
+
+<!-- 3. CORRECTION AUDIT 7.2 : Accès persistance EN AMONT du fragment alt -->
+<rect x="660" y="305" width="410" height="110" rx="0" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="660" y="305" width="60" height="24" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<text x="690" y="322" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">opt</text>
+<text x="730" y="322" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[kitId != null (Brand Kit sélectionné)]</text>
+
+<path d="M727 340 L1003 340" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="865" y="332" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">readBrandKit(kitId)</text>
+
+<path d="M1003 390 L727 390" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="865" y="382" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">brandKitData {palette, fonts, guidelines, logo}</text>
+
+<!-- 4. FRAGMENT COMBINÉ ALT : Synthèse LLM vs Repli Déterministe -->
+<rect x="650" y="440" width="710" height="245" rx="0" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="650" y="440" width="60" height="24" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<text x="680" y="457" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">alt</text>
+<text x="720" y="457" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[Stratégie de synthèse de marque : LLM vs Repli Déterministe]</text>
+
+<!-- Branche 1 : LLM disponible et actif -->
+<text x="665" y="482" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[LLM disponible et configuré]</text>
+
+<path d="M727 495 L1283 495" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1005" y="487" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">synthesizeBrandBrief(prompt, brandKitData)</text>
+
+<path d="M1283 530 L727 530" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="1005" y="522" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">compiledBrief {enrichedPrompt, negativePrompt}</text>
+
+<!-- Séparation opérande alt -->
+<line x1="650" y1="555" x2="1360" y2="555" stroke="#126A78" stroke-width="1.2" stroke-dasharray="6 4"/>
+
+<!-- Branche 2 : Repli déterministe hors-ligne -->
+<text x="665" y="575" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[clé absente, timeout, quota dépassé ou mode hors-ligne]</text>
+
+<!-- CORRECTION AUDIT 7.3 : Auto-appel 1 en U-shape normé avec sous-activation -->
+<path d="M727 595 L765 595 L765 620 L737 620" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="775" y="612" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">mergeDeterministicTokens(prompt, brandKitData)</text>
+<text x="775" y="642" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">→ injection déterministe palette + tokens + négatifs statiques</text>
+
+<!-- 5. FRAGMENT COMBINÉ ALT : Arbitrage des Références Visuelles -->
+<rect x="650" y="705" width="810" height="280" rx="0" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="650" y="705" width="60" height="24" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<text x="680" y="722" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">alt</text>
+<text x="720" y="722" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[Arbitrage références visuelles selon modelCaps.maxImageRefs]</text>
+
+<!-- Branche 1 : Modèle texte seul -->
+<text x="665" y="745" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[modelCaps.maxImageRefs == 0 (texte seul)]</text>
+
+<!-- CORRECTION AUDIT 7.3 : Auto-appel 2 en U-shape normé -->
+<path d="M727 760 L765 760 L765 780 L737 780" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="775" y="774" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">dropAllImageRefs(reason="text_only_model")</text>
+
+<!-- Séparation opérande alt -->
+<line x1="650" y1="810" x2="1460" y2="810" stroke="#126A78" stroke-width="1.2" stroke-dasharray="6 4"/>
+
+<!-- Branche 2 : Modèle multi-modal avec slots d'images -->
+<text x="665" y="830" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[modelCaps.maxImageRefs &gt; 0 (capacité visuelle disponible)]</text>
+
+<!-- CORRECTION AUDIT 7.3 : Auto-appel 3 en U-shape normé -->
+<path d="M727 855 L765 855 L765 875 L737 875" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="775" y="869" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">allocateReferenceSlots(userRefs, kitRefs, logo)</text>
+
+<!-- CORRECTION AUDIT 7.3 : Auto-appel 4 en U-shape normé -->
+<path d="M727 920 L765 920 L765 940 L737 940" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="775" y="934" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">prioritizeRefs(P1: userRefs, P2: kitRefs, P3: logo)</text>
+<text x="775" y="964" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">→ conservation ordonnée dans la limite du quota maxImageRefs</text>
+
+<!-- ========================================== -->
+<!-- SOUMISSION AU WORKER ET CHAÎNE DE RETOUR   -->
+<!-- ========================================== -->
+
+<!-- 6. Transmission de la tâche compilée au Worker Colab -->
+<path d="M727 1035 L1573 1035" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1150" y="1027" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">POST /infer (taskSpec: compiledBrief, selectedRefs, modelParams)</text>
+
+<!-- 7. CORRECTION AUDIT 7.1 : Retour du ColabWorker vers le BrandContextCompiler (PAS DIRECTEMENT LE DOCK !) -->
+<path d="M1573 1085 L727 1085" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="1150" y="1077" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">202 Accepted {taskId, status: "queued"}</text>
+
+<!-- 8. CORRECTION AUDIT 7.1 : Retour du BrandContextCompiler vers le FloatingPromptDock -->
+<path d="M713 1130 L417 1130" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="565" y="1122" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">202 Accepted {taskId, compiledBrief}</text>
+
+<!-- 9. CORRECTION AUDIT 7.3 : Auto-appel de mise à jour UI sur le dock (sans écran intermédiaire) -->
+<path d="M417 1150 L455 1150 L455 1170 L427 1170" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="465" y="1164" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">displayImmediateProgress(taskId)</text>
+<text x="465" y="1185" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">→ soumission immédiate · pas d’écran intermédiaire bloquant</text>
+
+<!-- ========================================== -->
+<!-- CARTOUCHE DE RÈGLES MÉTIER ET INVARIANTS   -->
+<!-- ========================================== -->
+<rect x="85" y="1220" width="1590" height="90" rx="4" fill="#FFF8E8" stroke="#8C6418" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="105" y="1245" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#8C6418">RÈGLES D'INVARIANCE MÉTIER &amp; CONTRAT D'ARCHITECTURE :</text>
+<text x="105" y="1268" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">1. Symétrie réseau : La SPA React ne possède aucune connexion directe vers le Colab Worker. Toute requête et réponse transite strictement par le backend FastAPI local.</text>
+<text x="105" y="1288" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">2. Déterminisme hors-ligne : La lecture de persistance Brand Kit s'exécute toujours en amont afin d'assurer l'injection des tokens même en cas de panne LLM.</text>
+<text x="105" y="1308" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">3. Arbitrage de quota d'images : Si userRefs.length &gt; maxImageRefs, les N premières références sont conservées par ordre de dépôt avec avertissement toast avant envoi.</text>
+
+<text x="48" y="1380" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#596875">Diagramme certifié conforme OMG UML 2.5.1 &amp; Référentiel Pédagogique L3 MIAGE · Colab AI Studio</text>
+</svg>

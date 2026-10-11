@@ -1,0 +1,395 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1450" viewBox="0 0 1900 1450">
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0 L10 4 L0 8 Z" fill="#405364"/></marker>
+<marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/></marker>
+<marker id="triangle" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M1 1 L13 7 L1 13 Z" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/></marker>
+</defs>
+<rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+<!-- En-tête du diagramme -->
+<text x="48" y="48" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#17212B">04 · Modèle de données (Diagramme de classes UML)</text>
+<text x="50" y="77" font-family="Arial, sans-serif" font-size="15" fill="#596875">Modèle structurel et conceptuel conforme OMG UML 2.5.1 &amp; L3 MIAGE · 3 compartiments normalisés, typage strict, zéro clé étrangère</text>
+<line x1="48" y1="96" x2="1852" y2="96" stroke="#D8E0E5" stroke-width="1.5"/>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 1 : Generation (Document)                                         -->
+<!-- ========================================================================= -->
+<rect x="75" y="140" width="480" height="460" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="75" y="140" width="480" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="75" y1="194" x2="555" y2="194" stroke="#405364" stroke-width="1.8"/>
+<text x="315" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«document»</text>
+<text x="315" y="182" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">Generation</text>
+
+<!-- Attributs -->
+<text x="89" y="216" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- id : String</text>
+<text x="89" y="236" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- mediaType : String</text>
+<text x="89" y="256" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- prompt : String</text>
+<text x="89" y="276" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- negativePrompt : String [0..1]</text>
+<text x="89" y="296" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- compiledPrompt : String [0..1]</text>
+<text x="89" y="316" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- filePath : Path</text>
+<text x="89" y="336" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- thumbnailPath : Path [0..1]</text>
+<text x="89" y="356" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- modelId : String</text>
+<text x="89" y="376" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- modelName : String</text>
+<text x="89" y="396" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- isFavorite : Boolean</text>
+<text x="89" y="416" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- createdAt : DateTime</text>
+
+<!-- Séparateur Opérations -->
+<line x1="75" y1="432" x2="555" y2="432" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="89" y="454" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ isCompleted() : Boolean</text>
+<text x="89" y="474" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ markFailed(reason : String) : void</text>
+<text x="89" y="494" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ getOutputPath() : Path</text>
+<text x="89" y="514" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ toggleFavorite() : Boolean</text>
+<text x="89" y="534" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ getProject() : Project [0..1]</text>
+<text x="89" y="554" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ setProject(p : Project) : void</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 2 : GenerationParameters (Value Object)                           -->
+<!-- ========================================================================= -->
+<rect x="650" y="140" width="440" height="280" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="650" y="140" width="440" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="650" y1="194" x2="1090" y2="194" stroke="#405364" stroke-width="1.8"/>
+<text x="870" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«value object»</text>
+<text x="870" y="182" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">GenerationParameters</text>
+
+<!-- Attributs -->
+<text x="664" y="216" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- seed : Integer</text>
+<text x="664" y="236" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- aspectRatio : String</text>
+<text x="664" y="256" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- resolution : String</text>
+<text x="664" y="276" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- duration : String</text>
+<text x="664" y="296" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- frameRate : String [0..1]</text>
+<text x="664" y="316" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- audio : Boolean [0..1]</text>
+<text x="664" y="336" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- enhance : Boolean [0..1]</text>
+
+<!-- Séparateur Opérations -->
+<line x1="650" y1="352" x2="1090" y2="352" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="664" y="374" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ validate() : Boolean</text>
+<text x="664" y="394" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ toPayloadDict() : Dict</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 3 : GenerationReferences (Value Object)                           -->
+<!-- ========================================================================= -->
+<rect x="650" y="460" width="440" height="270" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="650" y="460" width="440" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="650" y1="514" x2="1090" y2="514" stroke="#405364" stroke-width="1.8"/>
+<text x="870" y="480" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«value object»</text>
+<text x="870" y="502" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">GenerationReferences</text>
+
+<!-- Attributs (brandKitId supprimé conformément à l'audit) -->
+<text x="664" y="536" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- startFrame : Path [0..1]</text>
+<text x="664" y="556" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- endFrame : Path [0..1]</text>
+<text x="664" y="576" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- imageRefs : Path [0..*]</text>
+<text x="664" y="596" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- videoRefs : Path [0..*]</text>
+<text x="664" y="616" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- audioRefs : Path [0..*]</text>
+<text x="664" y="636" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- upscaleSource : Path [0..1]</text>
+
+<!-- Séparateur Opérations -->
+<line x1="650" y1="652" x2="1090" y2="652" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="664" y="674" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ hasVisualReferences() : Boolean</text>
+<text x="664" y="694" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ clearReferences() : void</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 4 : BrandKitSnapshot (Value Object)                               -->
+<!-- ========================================================================= -->
+<rect x="1230" y="140" width="570" height="280" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="1230" y="140" width="570" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="1230" y1="194" x2="1800" y2="194" stroke="#405364" stroke-width="1.8"/>
+<text x="1515" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«value object»</text>
+<text x="1515" y="182" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">BrandKitSnapshot</text>
+
+<!-- Attributs -->
+<text x="1244" y="216" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- id : String</text>
+<text x="1244" y="236" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- name : String</text>
+<text x="1244" y="256" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- overview : String</text>
+<text x="1244" y="276" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- colors : String [0..*]</text>
+<text x="1244" y="296" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- logos : Path [0..*]</text>
+<text x="1244" y="316" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- fonts : String [0..*]</text>
+<text x="1244" y="336" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- guidelines : String [0..*]</text>
+
+<!-- Séparateur Opérations -->
+<line x1="1230" y1="352" x2="1800" y2="352" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="1244" y="374" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ getPrimaryColor() : String [0..1]</text>
+<text x="1244" y="394" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ formatPromptTokens() : String</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 5 : Project (Document)                                            -->
+<!-- ========================================================================= -->
+<rect x="75" y="710" width="480" height="270" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="75" y="710" width="480" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="75" y1="764" x2="555" y2="764" stroke="#405364" stroke-width="1.8"/>
+<text x="315" y="730" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«document»</text>
+<text x="315" y="752" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">Project</text>
+
+<!-- Attributs -->
+<text x="89" y="786" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- id : String</text>
+<text x="89" y="806" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- name : String</text>
+<text x="89" y="826" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- description : String [0..1]</text>
+<text x="89" y="846" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- colorTag : HexColor [0..1]</text>
+<text x="89" y="866" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- storagePath : Path [0..1]</text>
+<text x="89" y="886" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- createdAt : DateTime</text>
+
+<!-- Séparateur Opérations -->
+<line x1="75" y1="902" x2="555" y2="902" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="89" y="924" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ addGeneration(gen : Generation) : void</text>
+<text x="89" y="944" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ getGenerations() : Generation [0..*]</text>
+<text x="89" y="964" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ setBrandKit(kit : BrandKit) : void</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 6 : BrandKit (Document)                                           -->
+<!-- ========================================================================= -->
+<rect x="1230" y="480" width="570" height="370" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="1230" y="480" width="570" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="1230" y1="534" x2="1800" y2="534" stroke="#405364" stroke-width="1.8"/>
+<text x="1515" y="500" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«document»</text>
+<text x="1515" y="522" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">BrandKit</text>
+
+<!-- Attributs -->
+<text x="1244" y="556" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- id : String</text>
+<text x="1244" y="576" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- name : String</text>
+<text x="1244" y="596" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- overview : String</text>
+<text x="1244" y="616" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- logos : Logo [0..*]</text>
+<text x="1244" y="636" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- colors : Color [0..*]</text>
+<text x="1244" y="656" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- fonts : Font [0..*]</text>
+<text x="1244" y="676" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- referenceImages : Asset [0..*]</text>
+<text x="1244" y="696" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- voices : Object [0..*]</text>
+<text x="1244" y="716" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- guidelines : Guideline [0..*]</text>
+<text x="1244" y="736" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- createdAt : DateTime</text>
+<text x="1244" y="756" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- updatedAt : DateTime</text>
+<text x="1244" y="776" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- lastUsedAt : DateTime [0..1]</text>
+
+<!-- Séparateur Opérations -->
+<line x1="1230" y1="792" x2="1800" y2="792" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="1244" y="814" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ compileContext() : String</text>
+<text x="1244" y="834" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ createSnapshot() : BrandKitSnapshot</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 7 : StudioConfig (Singleton JSON)                                 -->
+<!-- ========================================================================= -->
+<rect x="650" y="780" width="440" height="260" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="650" y="780" width="440" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="650" y1="834" x2="1090" y2="834" stroke="#405364" stroke-width="1.8"/>
+<text x="870" y="800" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«singleton JSON»</text>
+<text x="870" y="822" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">StudioConfig</text>
+
+<!-- Attributs -->
+<text x="664" y="856" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- executionMode : ExecutionMode</text>
+<text x="664" y="876" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- defaultStoragePath : Path</text>
+<text x="664" y="896" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- colab : ColabConfig</text>
+<text x="664" y="916" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- local : LocalConfig</text>
+<text x="664" y="936" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- compilerLlm : CompilerLlmConfig [0..1]</text>
+<text x="664" y="956" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- llmProxy : LlmProxyConfig [0..1]</text>
+
+<!-- Séparateur Opérations -->
+<line x1="650" y1="972" x2="1090" y2="972" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="664" y="994" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ isColabActive() : Boolean</text>
+<text x="664" y="1014" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ getActiveEndpoint() : URL</text>
+<text x="664" y="1034" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ setExecutionMode(m : ExecutionMode) : void</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 8 : ColabConfig (Value Object)                                    -->
+<!-- ========================================================================= -->
+<rect x="75" y="1080" width="440" height="200" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="75" y="1080" width="440" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="75" y1="1134" x2="515" y2="1134" stroke="#405364" stroke-width="1.8"/>
+<text x="295" y="1100" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«value object»</text>
+<text x="295" y="1122" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">ColabConfig</text>
+
+<!-- Attributs -->
+<text x="89" y="1156" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- tunnelUrl : URL</text>
+<text x="89" y="1176" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- accountEmail : String [0..1]</text>
+<text x="89" y="1196" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- lastPing : DateTime [0..1]</text>
+
+<!-- Séparateur Opérations -->
+<line x1="75" y1="1212" x2="515" y2="1212" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="89" y="1234" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ isConnected() : Boolean</text>
+<text x="89" y="1254" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ touchPing() : void</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 9 : LocalConfig (Value Object)                                    -->
+<!-- ========================================================================= -->
+<rect x="560" y="1110" width="370" height="180" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="560" y="1110" width="370" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="560" y1="1164" x2="930" y2="1164" stroke="#405364" stroke-width="1.8"/>
+<text x="745" y="1130" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«value object»</text>
+<text x="745" y="1152" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">LocalConfig</text>
+
+<!-- Attributs -->
+<text x="574" y="1186" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- device : String</text>
+<text x="574" y="1206" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- threads : Integer</text>
+
+<!-- Séparateur Opérations -->
+<line x1="560" y1="1222" x2="930" y2="1222" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="574" y="1244" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ isCpuFallback() : Boolean</text>
+<text x="574" y="1264" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ getDeviceName() : String</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 10 : Énumération ExecutionMode                                    -->
+<!-- ========================================================================= -->
+<rect x="960" y="1110" width="230" height="170" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="960" y="1110" width="230" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="960" y1="1164" x2="1190" y2="1164" stroke="#405364" stroke-width="1.8"/>
+<text x="1075" y="1130" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«enumeration»</text>
+<text x="1075" y="1152" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">ExecutionMode</text>
+
+<!-- Littéraux -->
+<text x="975" y="1190" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#17212B">+ colab</text>
+<text x="975" y="1214" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#17212B">+ local</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 11 : CompilerLlmConfig (Value Object)                             -->
+<!-- ========================================================================= -->
+<rect x="1230" y="910" width="270" height="200" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="1230" y="910" width="270" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="1230" y1="964" x2="1500" y2="964" stroke="#405364" stroke-width="1.8"/>
+<text x="1365" y="930" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«value object»</text>
+<text x="1365" y="952" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">CompilerLlmConfig</text>
+
+<!-- Attributs -->
+<text x="1244" y="986" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- provider : String</text>
+<text x="1244" y="1006" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- model : String</text>
+<text x="1244" y="1026" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- apiKeyEnv : String</text>
+
+<!-- Séparateur Opérations -->
+<line x1="1230" y1="1042" x2="1500" y2="1042" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="1244" y="1064" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ isConfigured() : Boolean</text>
+<text x="1244" y="1084" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ getApiKey() : String [0..1]</text>
+
+<!-- ========================================================================= -->
+<!-- CLASSE 12 : LlmProxyConfig (Value Object)                                -->
+<!-- ========================================================================= -->
+<rect x="1530" y="910" width="270" height="200" rx="0" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<rect x="1530" y="910" width="270" height="54" rx="0" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+<line x1="1530" y1="964" x2="1800" y2="964" stroke="#405364" stroke-width="1.8"/>
+<text x="1665" y="930" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">«value object»</text>
+<text x="1665" y="952" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#17212B">LlmProxyConfig</text>
+
+<!-- Attributs -->
+<text x="1544" y="986" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- enabled : Boolean</text>
+<text x="1544" y="1006" font-family="Arial, sans-serif" font-size="14" fill="#17212B">- port : Integer</text>
+
+<!-- Séparateur Opérations -->
+<line x1="1530" y1="1042" x2="1800" y2="1042" stroke="#405364" stroke-width="1.5"/>
+
+<!-- Opérations -->
+<text x="1544" y="1064" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ isRunning() : Boolean</text>
+<text x="1544" y="1084" font-family="Arial, sans-serif" font-size="14" fill="#17212B">+ getEndpointUrl() : URL</text>
+
+<!-- ========================================================================= -->
+<!-- RELATIONS ET ASSOCIATIONS                                                 -->
+<!-- ========================================================================= -->
+
+<!-- 1. Composition Generation -> GenerationParameters -->
+<path d="M555 260 L650 260" fill="none" stroke="#405364" stroke-width="1.8"/>
+<polygon points="555,260 567,252 579,260 567,268" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="590" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="630" y="250" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="610" y="278" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">+parameters</text>
+
+<!-- 2. Composition Generation -> GenerationReferences -->
+<path d="M555 520 L650 520" fill="none" stroke="#405364" stroke-width="1.8"/>
+<polygon points="555,520 567,512 579,520 567,528" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="590" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="630" y="510" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="610" y="538" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">+references</text>
+
+<!-- 3. Composition Generation -> BrandKitSnapshot -->
+<path d="M555 200 L1160 200 L1230 200" fill="none" stroke="#405364" stroke-width="1.8"/>
+<polygon points="555,200 567,192 579,200 567,208" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="595" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="1208" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">0..1</text>
+<text x="1140" y="218" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">+brandKitSnapshot</text>
+
+<!-- 4. Association Project - Generation (CORRECTION MULTIPLICITÉS INVERSÉES P0) -->
+<!-- Règle d'or : Côté Project = 0..1 (une génération est liée à au plus 1 projet) -->
+<!-- Côté Generation = 0..* (un projet contient 0..* générations) -->
+<path d="M300 710 L300 600" fill="none" stroke="#405364" stroke-width="1.8"/>
+<!-- Multiplicité côté Project (en bas) -->
+<text x="315" y="695" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">0..1</text>
+<text x="315" y="675" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#596875">+project</text>
+<!-- Multiplicité côté Generation (en haut) -->
+<text x="315" y="625" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">0..*</text>
+<text x="315" y="645" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#596875">+generations</text>
+<text x="250" y="655" text-anchor="end" font-family="Arial, sans-serif" font-size="13" font-style="italic" fill="#405364">regroupe ▴</text>
+
+<!-- 5. Association de navigation Project -> BrandKit (CORRECTION CONNEXITÉ BRANDKIT P0) -->
+<!-- Un projet peut référencer un kit de marque actif pour ses tokens -->
+<path d="M555 830 L1230 830" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#openArrow)"/>
+<text x="580" y="820" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">0..*</text>
+<text x="1200" y="820" text-anchor="end" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">0..1</text>
+<text x="890" y="820" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-style="italic" fill="#405364">applique ▸</text>
+<text x="1190" y="845" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#596875">+activeBrandKit</text>
+
+<!-- 6. Composition StudioConfig -> BrandKit (CORRECTION CONNEXITÉ BRANDKIT P0) -->
+<!-- StudioConfig gère et possède le catalogue de BrandKits (data/brand_kits.json) -->
+<path d="M1090 800 L1230 800" fill="none" stroke="#405364" stroke-width="1.8"/>
+<polygon points="1090,800 1102,792 1114,800 1102,808" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="1125" y="790" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="1205" y="790" text-anchor="end" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">0..*</text>
+<text x="1170" y="815" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">+brandKits</text>
+
+<!-- 7. Composition StudioConfig -> ColabConfig -->
+<path d="M650 920 L400 920 L400 1080" fill="none" stroke="#405364" stroke-width="1.8"/>
+<polygon points="650,920 638,912 626,920 638,928" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="615" y="910" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="415" y="1065" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="415" y="1045" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#596875">+colab</text>
+
+<!-- 8. Composition StudioConfig -> LocalConfig -->
+<path d="M745 1040 L745 1110" fill="none" stroke="#405364" stroke-width="1.8"/>
+<polygon points="745,1040 737,1052 745,1064 753,1052" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="735" y="1075" text-anchor="end" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="755" y="1095" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="760" y="1075" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#596875">+local</text>
+
+<!-- 9. Dépendance / Typage StudioConfig -> ExecutionMode -->
+<path d="M1020 1040 L1020 1110" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#openArrow)"/>
+<text x="1030" y="1080" font-family="Arial, sans-serif" font-size="12" fill="#596875">«use»</text>
+
+<!-- 10. Composition StudioConfig -> CompilerLlmConfig -->
+<path d="M1090 940 L1230 940" fill="none" stroke="#405364" stroke-width="1.8"/>
+<polygon points="1090,940 1102,932 1114,940 1102,948" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="1125" y="930" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="1205" y="930" text-anchor="end" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">0..1</text>
+<text x="1170" y="955" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">+compilerLlm</text>
+
+<!-- 11. Composition StudioConfig -> LlmProxyConfig -->
+<path d="M1090 980 L1180 980 L1180 1010 L1530 1010" fill="none" stroke="#405364" stroke-width="1.8"/>
+<polygon points="1090,980 1102,972 1114,980 1102,988" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<text x="1125" y="970" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
+<text x="1510" y="1000" text-anchor="end" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">0..1</text>
+<text x="1450" y="1025" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">+llmProxy</text>
+
+<!-- ========================================================================= -->
+<!-- NOTE DE CONFORMITÉ & LÉGENDE DU MODÈLE                                    -->
+<!-- ========================================================================= -->
+<rect x="1230" y="1170" width="570" height="150" rx="4" fill="#FFF8E8" stroke="#8C6418" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="1245" y="1195" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#8C6418">Notes de conformité UML &amp; Architecture :</text>
+<text x="1245" y="1218" font-family="Arial, sans-serif" font-size="13" fill="#17212B">1. <tspan font-weight="600">Structure normalisée :</tspan> Chaque classe présente ses 3 compartiments réglementaires.</text>
+<text x="1245" y="1238" font-family="Arial, sans-serif" font-size="13" fill="#17212B">2. <tspan font-weight="600">Multiplicités corrigées :</tspan> 0..1 côté Project et 0..* côté Generation.</text>
+<text x="1245" y="1258" font-family="Arial, sans-serif" font-size="13" fill="#17212B">3. <tspan font-weight="600">Connexité garantie :</tspan> BrandKit est composé par StudioConfig et appliqué par Project.</text>
+<text x="1245" y="1278" font-family="Arial, sans-serif" font-size="13" fill="#17212B">4. <tspan font-weight="600">Zéro clé étrangère :</tspan> projectId et brandKitId remplacés par la navigation objet pure.</text>
+<text x="1245" y="1298" font-family="Arial, sans-serif" font-size="13" fill="#17212B">5. <tspan font-weight="600">Typage formel :</tspan> Syntaxes TypeScript [0..1] et énumération ExecutionMode.</text>
+
+<!-- Bas de page -->
+<text x="75" y="1390" text-anchor="start" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#596875">Persistance documentaire atomique (data/*.json) · Les objets métiers encapsulent leur état sans fuite de clés étrangères relationnelles.</text>
+<text x="48" y="1428" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#596875">Colab AI Studio · Modélisation du domaine et de données conforme aux spécifications OMG UML 2.5.1</text>
+</svg>
