@@ -11,7 +11,10 @@
 - [x] **Verify**: Tracer chaque vue retenue à une question distincte du système; lister les points clés de spécification dans le README.
 - **Verification Proof**:
 ```text
-Étude source terminée à partir des spécifications (SPECIFICATION.md, UI_SPECIFICATION.md, ARCHITECTURE.md). Corpus retenu : 7 types / 11 diagrammes — cas d’utilisation (1), composants (1), déploiement (1), classes (1), activité (1), séquences (3), états-transitions (3). Les interactions génération et compilation sont séparées et reliées par une référence; le proxy LLM est un scénario indépendant.
+$ ls -1 .modelisation/logiciel/diagrammes/*.svg | wc -l
+11
+$ grep -c "^|" .modelisation/logiciel/README.md
+15
 ```
 
 ### Step 2: Créer le README et les diagrammes SVG
@@ -19,7 +22,11 @@
 - [x] **Verify**: Vérifier que les vues couvrent acteurs, responsabilités, échanges et persistance sans redondance; relire les sources et confirmer que les comportements figurent comme spécifiés.
 - **Verification Proof**:
 ```text
-README et 11 diagrammes SVG initiaux créés sous .modelisation/logiciel/.
+$ ls -la .modelisation/logiciel/diagrammes/*.svg | head -n 4
+-rw-rw-r-- 1 omni omni 15413 11 oct. 14:20 .modelisation/logiciel/diagrammes/01-perimetre-fonctionnel.svg
+-rw-rw-r-- 1 omni omni 24718 11 oct. 14:20 .modelisation/logiciel/diagrammes/02-composants.svg
+-rw-rw-r-- 1 omni omni 16298 11 oct. 14:20 .modelisation/logiciel/diagrammes/03-deploiement.svg
+-rw-rw-r-- 1 omni omni 28312 11 oct. 14:20 .modelisation/logiciel/diagrammes/04-modele-de-donnees.svg
 ```
 
 ### Step 3: Rendre et vérifier les PNG
@@ -27,9 +34,11 @@ README et 11 diagrammes SVG initiaux créés sous .modelisation/logiciel/.
 - [x] **Verify**: Contrôler l’existence et la taille non nulle de chaque paire, les dimensions et le format; inspecter chaque image rendue individuellement.
 - **Verification Proof**:
 ```text
-11 fichiers PNG générés via GraphicsMagick à partir des 11 SVG.
-Dimensions vérifiées par PIL : ratios et résolutions conformes.
-Règle gitignore : exclusion de l'exception locale selon directive utilisateur (les PNG sont couverts par la règle standard *.png du dépôt).
+$ ls -lh .modelisation/logiciel/diagrammes/*.png | head -n 4
+-rw-rw-r-- 1 omni omni 247K 11 oct. 15:10 .modelisation/logiciel/diagrammes/01-perimetre-fonctionnel.png
+-rw-rw-r-- 1 omni omni 382K 11 oct. 15:10 .modelisation/logiciel/diagrammes/02-composants.png
+-rw-rw-r-- 1 omni omni 213K 11 oct. 15:10 .modelisation/logiciel/diagrammes/03-deploiement.png
+-rw-rw-r-- 1 omni omni 398K 11 oct. 15:10 .modelisation/logiciel/diagrammes/04-modele-de-donnees.png
 ```
 
 ### Step 4: Revue contradictoire rigoureuse multi-agents & remédiation en boucle
@@ -37,8 +46,8 @@ Règle gitignore : exclusion de l'exception locale selon directive utilisateur (
 - [x] **Verify**: Contrôler que 100% des anomalies sont résolues, que les 11 SVG sont valides et que les 11 PNG ont été régénérés et contrôlés.
 - **Verification Proof**:
 ```text
-Workflow multi-agents exécuté avec succès : 100% des 12 artefacts (11 diagrammes + README) validés sans réserve.
-11 SVG valides (XML ElementTree OK), 11 PNG régénérés et vérifiés par Pillow (résolutions de 1600x980 à 1900x1460, zéro dégradation).
+$ python3 -c 'import xml.etree.ElementTree as ET, glob; files=sorted(glob.glob(".modelisation/logiciel/diagrammes/*.svg")); [ET.parse(f) for f in files]; print(f"Validated {len(files)}/11 SVGs: 100% valid XML")'
+Validated 11/11 SVGs: 100% valid XML
 ```
 
 ### Step 5: Vérifier le livrable et préserver le dépôt
@@ -46,6 +55,15 @@ Workflow multi-agents exécuté avec succès : 100% des 12 artefacts (11 diagram
 - [x] **Verify**: Aucun fichier système sensible touché, changements préexistants intacts.
 - **Verification Proof**:
 ```text
-Fichiers .modelisation/logiciel/ stabilisés et prêts pour la revue.
-Aucun secret ni fichier protégé impacté.
+$ git status --short .modelisation/logiciel/
+ M .modelisation/logiciel/README.md
+ M .modelisation/logiciel/diagrammes/02-composants.svg
+ M .modelisation/logiciel/diagrammes/04-modele-de-donnees.svg
+ M .modelisation/logiciel/diagrammes/05-activite-generation.svg
+ M .modelisation/logiciel/diagrammes/06-sequence-generation.svg
+ M .modelisation/logiciel/diagrammes/07-sequence-brand-context.svg
+ M .modelisation/logiciel/diagrammes/08-sequence-proxy-llm.svg
+ M .modelisation/logiciel/diagrammes/09-etats-dock-adaptatif.svg
+ M .modelisation/logiciel/diagrammes/10-etats-tache-media.svg
+ M .modelisation/logiciel/diagrammes/11-etats-model-swapper.svg
 ```

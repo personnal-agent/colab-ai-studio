@@ -33,6 +33,9 @@ Livraison par Pull Request des 11 diagrammes UML finalisés, de la documentation
 ## 🌿 Active Branches / Plans
 - [`docs/ui-system-specifications`](https://github.com/personnal-agent/colab-ai-studio/pull/4) : Consolidation des spécifications UI/système, design tokens, suivi des maquettes et revue Greptile / CodeRabbit (PR #4 ouverte).
 - [`docs/software-modeling`](https://github.com/personnal-agent/colab-ai-studio/pull/6) : Modélisation logicielle sous `.modelisation/logiciel/` ; Pull Request #6 ouverte.
+  - [`.GCC/branches/plan_uml-modelisation.md`](branches/plan_uml-modelisation.md) : Corpus UML et architecture cible sous `.modelisation/logiciel/`.
+  - [`.GCC/branches/plan_corrections-uml.md`](branches/plan_corrections-uml.md) : Correction et consolidation des 11 diagrammes UML et du README.
+  - [`.GCC/branches/plan_purge_academique.md`](branches/plan_purge_academique.md) : Purge des références externes et théoriques dans les diagrammes UML et le README.
 
 ## 📈 Current Status
 - ✅ Terminé : Création et ouverture de la Pull Request [#6](https://github.com/personnal-agent/colab-ai-studio/pull/6) de livraison sur la branche `docs/software-modeling`.

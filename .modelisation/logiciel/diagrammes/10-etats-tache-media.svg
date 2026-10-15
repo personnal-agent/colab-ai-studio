@@ -96,7 +96,8 @@
 
 <!-- ÉTAT 5 : Terminee (État terminal stable sans transition sortante vers FinalState) -->
 <rect x="1670" y="195" width="230" height="185" rx="14" fill="#EDF7ED" stroke="#2E7D32" stroke-width="2.5"/>
-<text x="1785" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#1E4620">Terminee</text>
+<text x="1785" y="214" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#1E4620">Terminee</text>
+<text x="1785" y="227" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#2E7D32">«TaskStatus.completed»</text>
 <line x1="1670" y1="230" x2="1900" y2="230" stroke="#2E7D32" stroke-width="1.2"/>
 <text x="1680" y="250" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#2E7D32">entry / publierEventSucces()</text>
 <text x="1680" y="268" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / figerResultatLocal()</text>
@@ -113,7 +114,8 @@
 
 <!-- ÉTAT TERMINAL : Annulee (État stable, idempotent via transition interne) -->
 <rect x="460" y="540" width="310" height="185" rx="14" fill="#FBF8F0" stroke="#8C6418" stroke-width="2.2"/>
-<text x="615" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#8C6418">Annulee</text>
+<text x="615" y="559" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#8C6418">Annulee</text>
+<text x="615" y="572" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#8C6418">«TaskStatus.cancelled»</text>
 <line x1="460" y1="575" x2="770" y2="575" stroke="#8C6418" stroke-width="1.2"/>
 <text x="470" y="595" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">entry / emettreRequeteCancelWorker()</text>
 <text x="470" y="613" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / nettoyerFichiersTemporaires()</text>
@@ -125,7 +127,8 @@
 
 <!-- ÉTAT TERMINAL : Echouee (État stable, capture complète des erreurs) -->
 <rect x="950" y="540" width="340" height="185" rx="14" fill="#FDF2F2" stroke="#B3261E" stroke-width="2.2"/>
-<text x="1120" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#B3261E">Echouee</text>
+<text x="1120" y="559" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#B3261E">Echouee</text>
+<text x="1120" y="572" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#B3261E">«TaskStatus.failed»</text>
 <line x1="950" y1="575" x2="1290" y2="575" stroke="#B3261E" stroke-width="1.2"/>
 <text x="960" y="595" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#B3261E">entry / journaliserCauseErreur(code, msg)</text>
 <text x="960" y="613" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / purgerReliquatsEtBuffers()</text>
@@ -183,6 +186,6 @@
 
 <text x="60" y="892" font-family="Arial, sans-serif" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#126A78">2. Prise en charge et délai d'attente :</tspan> La création bascule en attente de disponibilité du worker. Si aucun worker n'est accessible après 120 secondes, la tâche bascule déterministement en état d'échec.</text>
 
-<text x="60" y="914" font-family="Arial, sans-serif" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#126A78">3. États terminaux stables et persistance :</tspan> Les états Terminee, Annulee et Echouee sont des états stables conservés dans data/generations.json et consultables dans la galerie de créations sans destruction de document.</text>
+<text x="60" y="914" font-family="Arial, sans-serif" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#126A78">3. États terminaux stables et persistance :</tspan> Les états Terminee («completed»), Annulee («cancelled») et Echouee («failed») correspondent aux valeurs canoniques de l'énumération TaskStatus conservées dans data/generations.json et consultables dans la galerie sans destruction de document.</text>
 
 </svg>

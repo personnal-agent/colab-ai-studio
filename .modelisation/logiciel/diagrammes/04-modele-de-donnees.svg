@@ -356,12 +356,11 @@
 <text x="610" y="820" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-style="italic" fill="#405364">applique ▸</text>
 <text x="1190" y="860" text-anchor="end" font-family="Arial, sans-serif" font-size="12" fill="#596875">+activeBrandKit</text>
 
-<!-- 6. Composition StudioConfig -> BrandKit (ESPACEMENT VERTICAL 0..* et 0..1) -->
-<path d="M1090 790 L1230 790" fill="none" stroke="#405364" stroke-width="1.8"/>
-<polygon points="1090,790 1102,782 1114,790 1102,798" fill="#17212B" stroke="#17212B" stroke-width="1"/>
-<text x="1125" y="780" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">1</text>
-<text x="1205" y="780" text-anchor="end" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">0..*</text>
-<text x="1170" y="805" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">+brandKits</text>
+<!-- 6. Association navigable StudioConfig -> BrandKit (référence de configuration sans cycle de vie partagé) -->
+<path d="M1090 790 L1230 790" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#openArrow)"/>
+<text x="1110" y="780" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">0..*</text>
+<text x="1205" y="780" text-anchor="end" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">0..1</text>
+<text x="1165" y="805" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#596875">+defaultBrandKit</text>
 
 <!-- 7. Composition StudioConfig -> ColabConfig -->
 <path d="M665 920 L400 920 L400 1080" fill="none" stroke="#405364" stroke-width="1.8"/>

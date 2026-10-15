@@ -141,7 +141,7 @@
 
 <!-- 7. Établissement de la connexion d'écoute SSE unidirectionnelle -->
 <path d="M387 750 L673 750" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<text x="530" y="742" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">GET /api/tasks/{taskId}/stream (SSE Subscription)</text>
+<text x="530" y="742" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">GET /api/tasks/{task_id}/status (SSE Subscription)</text>
 
 <!-- 8. Fragment COMBINÉ LOOP : Streaming d'événements de progression SSE unidirectionnel -->
 <rect x="340" y="795" width="970" height="155" rx="0" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="6 4"/>
@@ -172,13 +172,16 @@
 <text x="960" y="1007" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">pushEvent("completed", {artifactUri, metrics})</text>
 
 <path d="M687 1045 L1733 1045" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<text x="1210" y="1037" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">telechargerEtPersister(artifactUri, outputsDir, generationsJson)</text>
+<text x="1210" y="1037" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">telechargerMedia(artifactUri, outputsDir)</text>
 
-<path d="M1733 1080 L687 1080" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
-<text x="1210" y="1072" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">savedSuccess(localMediaMetadata)</text>
+<path d="M1733 1070 L687 1070" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="1210" y="1062" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">mediaStocke(filePath, size)</text>
 
-<path d="M673 1105 L387 1105" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
-<text x="530" y="1097" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">sseEvent: completed {localMediaMetadata}</text>
+<path d="M687 1085 L720 1085 L720 1105 L687 1105" fill="none" stroke="#405364" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="730" y="1100" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">persisterMetadata(generations.json)</text>
+
+<path d="M673 1115 L387 1115" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
+<text x="530" y="1107" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">sseEvent: completed {localMediaMetadata}</text>
 
 <path d="M373 1125 L120 1125" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
 <text x="246" y="1117" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">afficherMediaDansTimeline(localMediaMetadata)</text>

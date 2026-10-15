@@ -62,7 +62,7 @@
 <circle cx="510" cy="280" r="6" fill="#EDF5F6" stroke="#126A78" stroke-width="2"/>
 <line x1="516" y1="280" x2="610" y2="280" stroke="#405364" stroke-width="2"/>
 <text x="510" y="264" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">IStudioApi</text>
-<text x="510" y="303" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">REST /api/v1/*</text>
+<text x="510" y="303" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">REST /api/*</text>
 
 <!-- Port IEventStream (y=480) -->
 <line x1="427" y1="480" x2="502" y2="480" stroke="#405364" stroke-width="2"/>
@@ -70,7 +70,7 @@
 <circle cx="510" cy="480" r="6" fill="#EDF5F6" stroke="#126A78" stroke-width="2"/>
 <line x1="516" y1="480" x2="610" y2="480" stroke="#405364" stroke-width="2"/>
 <text x="510" y="464" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">IEventStream</text>
-<text x="510" y="503" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">SSE /api/v1/events</text>
+<text x="510" y="503" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">SSE /api/tasks/{task_id}/status</text>
 
 <!-- Port IChatCompletions (y=680) -->
 <line x1="427" y1="680" x2="502" y2="680" stroke="#405364" stroke-width="2"/>
@@ -105,7 +105,7 @@
 <rect x="918" y="242.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
 <text x="651" y="252" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» API Locale</text>
 <text x="651" y="274" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : ApiRouter &amp; Validations</text>
-<text x="651" y="304" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">/api/v1/* · Pydantic v2 · config</text>
+<text x="651" y="304" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">/api/* · Pydantic v2 · config</text>
 
 <!-- Composant 2 : Orchestrateur Asynchrone (REDIMENSIONNÉ 330px : z-index et texte dégagés) -->
 <rect x="980" y="220" width="330" height="135" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
@@ -294,7 +294,7 @@
 <rect x="50" y="915" width="2060" height="85" rx="4" fill="#F4F6F8" stroke="#405364" stroke-width="1.5"/>
 <text x="65" y="937" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Principes d'ingénierie et responsabilités modulaires :</text>
 <text x="65" y="958" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">• Découplage Frontend / Backend : communication asynchrone via interfaces REST/SSE et délégation du service d'inférence LLM (fournisseur local ou distant).</text>
-<text x="65" y="976" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">• Gestion documentaire et médias : le composant MediaFileStore centralise la persistance atomique JSON dans data/ et le stockage ordonné des créations dans outputs/.</text>
+<text x="65" y="976" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">• Gestion documentaire et médias : JSONDocumentStore assure la persistance atomique JSON dans data/ (asyncio.Lock), tandis que MediaFileStore gère le stockage binaire dans outputs/.</text>
 <text x="65" y="993" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#596875">• Déport de charge GPU : l'Orchestrateur Asynchrone gère la file d'attente locale et relaie les inférences lourdes au worker distant Google Colab via tunnel chiffré.</text>
 
 <text x="48" y="1060" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#596875">Colab AI Studio · Architecture logique distribuée (SPA React locale, backend FastAPI asynchrone et worker distant)</text>

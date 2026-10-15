@@ -139,8 +139,8 @@
   <tspan x="1080" dy="18">au worker distant via tunnel sécurisé</tspan>
 </text>
 
-<!-- Flux vers Colab Worker -->
-<path d="M1280 699 L1420 699" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<!-- Flux vers Colab Worker (rejoint directement le losange de décision en x=1565) -->
+<path d="M1280 704 L1565 704" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 
 <!-- Décision 3 : Modèle déjà actif en VRAM ? (Épurée sans texte parasite) -->
 <polygon points="1590,679 1615,704 1590,729 1565,704" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
@@ -173,8 +173,8 @@
 <path d="M1710 890 L1710 910 L1610 910" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <polygon points="1590,897 1610,910 1590,923 1570,910" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
 
-<!-- Flux unique post-fusion vers exécution inférence -->
-<path d="M1590 923 L1590 945" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<!-- Flux unique post-fusion vers exécution inférence (rejoint directement le rectangle en y=960) -->
+<path d="M1590 923 L1590 960" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 
 <!-- ========================================================================= -->
 <!-- RÉGION D'ACTIVITÉ INTERRUPTIBLE (Gestion de l'annulation asynchrone) -->
@@ -211,7 +211,7 @@
   <tspan x="602" dy="17">et proposer l'annulation</tspan>
 </text>
 
-<!-- Action d'annulation intentionnelle Créateur (Bannissement du simple clic d'IHM) -->
+<!-- Action d'annulation intentionnelle Créateur -->
 <path d="M475 1080 L390 1080" fill="none" stroke="#BA3C2A" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
 <rect x="90" y="1046" width="300" height="68" rx="12" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.8"/>
 <text x="240" y="1075" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#BA3C2A">
@@ -219,8 +219,19 @@
   <tspan x="240" dy="17">de la génération en cours</tspan>
 </text>
 
-<!-- Arc d'interruption en zigzag vers la sortie de région interruptible -->
-<path d="M 1830 1010 L 1860 1010 L 1845 1050 L 1860 1090 L 1840 1145" fill="none" stroke="#BA3C2A" stroke-width="2.2" marker-end="url(#zigzagArrow)"/>
+<!-- Flux sortant d'annulation vers l'action de transmission -->
+<path d="M240 1114 L240 1175 L500 1175" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="500" y="1145" width="225" height="60" rx="12" fill="#FFFFFF" stroke="#BA3C2A" stroke-width="1.8"/>
+<text x="612" y="1170" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#BA3C2A">
+  <tspan x="612" dy="0">POST /api/tasks/{task_id}/cancel</tspan>
+  <tspan x="612" dy="17">transmettre signal d'arrêt</tspan>
+</text>
+<path d="M725 1175 L1350 1022" fill="none" stroke="#BA3C2A" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+<rect x="930" y="1165" width="165" height="18" fill="#FFFFFF"/>
+<text x="1012" y="1178" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">signal annulation worker</text>
+
+<!-- Arc d'interruption en zigzag ancré sur l'action d'inférence vers la sortie de région interruptible -->
+<path d="M 1770 994 L 1860 994 L 1845 1045 L 1865 1095 L 1840 1145" fill="none" stroke="#BA3C2A" stroke-width="2.2" marker-end="url(#zigzagArrow)"/>
 <rect x="1750" y="1055" width="105" height="20" fill="#FFFFFF"/>
 <text x="1802" y="1069" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">«interrupting»</text>
 

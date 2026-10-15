@@ -116,7 +116,7 @@
 
 <!-- 2. Transmission de ReactSPA vers FastAPIBackend -->
 <path d="M327 265 L573 265" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<text x="450" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">POST /api/generate (prompt, kitId, userRefs)</text>
+<text x="450" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">POST /api/generate/media (prompt, kitId, userRefs)</text>
 
 <!-- 3. Invocation interne du compilateur par le backend -->
 <path d="M587 290 L853 290" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>

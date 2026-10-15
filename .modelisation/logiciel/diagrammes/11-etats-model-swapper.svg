@@ -112,10 +112,10 @@
   <rect x="1110" y="583" width="265" height="26" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
   <text x="1242" y="600" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0F172A">requeteRecue(m) [m != active_model] / demarrerEviction()</text>
 
-  <!-- Transition 2 : Déclenchée par l'expiration du timer d'inactivité (syntaxe after(delaiInactivite) normée) -->
+  <!-- Transition 2 : Déclenchée par l'expiration du timer d'inactivité (protégée par la garde d'inactivité GPU) -->
   <path d="M1490 470 L1490 655 L1060 655" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="1110" y="642" width="265" height="26" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
-  <text x="1242" y="659" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#475569">after(delaiInactivite) / demarrerEviction()</text>
+  <rect x="1080" y="642" width="370" height="26" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="1265" y="659" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#475569">after(delaiInactivite) [gpu_idle == true] / demarrerEviction()</text>
 
   <!-- ==================== ÉTAT 5 : EvictionVRAMEnCours ==================== -->
   <g id="state-EvictionVRAMEnCours">
