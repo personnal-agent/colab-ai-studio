@@ -67,15 +67,16 @@
   <text x="1065" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#0F172A">chargementAcheve / pret()</text>
 
   <!-- ==================== ÉTAT 3 : ModeleActif ==================== -->
+  <!-- ==================== ÉTAT 3 : ModeleActif ==================== -->
   <g id="state-ModeleActif">
-    <rect x="1150" y="295" width="410" height="175" rx="16" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" filter="url(#cardShadow)"/>
+    <rect x="1150" y="295" width="410" height="205" rx="16" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" filter="url(#cardShadow)"/>
     <text x="1355" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#1D4ED8">ModeleActif</text>
     <line x1="1150" y1="336" x2="1560" y2="336" stroke="#BFDBFE" stroke-width="1.5"/>
-    <text x="1165" y="358" font-family="Courier New, monospace" font-size="12" fill="#1E40AF">entry / pipeline_prete = True</text>
-    <text x="1165" y="380" font-family="Courier New, monospace" font-size="12" fill="#1E40AF">entry / armerTimerInactivite()</text>
-    <text x="1165" y="402" font-family="Courier New, monospace" font-size="12" fill="#1E40AF">do / executerInferenceGPU()</text>
-    <text x="1165" y="424" font-family="Courier New, monospace" font-size="12" font-weight="700" fill="#1E3A8A">requeteRecue(m) [m == active_model] /</text>
-    <text x="1178" y="444" font-family="Courier New, monospace" font-size="12" font-weight="700" fill="#1E3A8A">  reutiliserPipeline(); rearmerTimer()</text>
+    <text x="1165" y="358" font-family="Courier New, monospace" font-size="12" fill="#1E40AF">entry / pipeline_prete = True; armerTimer()</text>
+    <text x="1165" y="380" font-family="Courier New, monospace" font-size="12" fill="#1E40AF">do / executerInferenceGPU()</text>
+    <text x="1165" y="402" font-family="Courier New, monospace" font-size="11.5" font-weight="700" fill="#1E3A8A">inferenceAchevee / gpu_idle = True; rearmerTimer()</text>
+    <text x="1165" y="424" font-family="Courier New, monospace" font-size="11.5" font-weight="700" fill="#1E3A8A">requeteRecue(m) [m == active_model] /</text>
+    <text x="1178" y="444" font-family="Courier New, monospace" font-size="11.5" font-weight="700" fill="#1E3A8A">  reutiliserPipeline(); rearmerTimer()</text>
   </g>
 
   <!-- ==================== ÉTAT 4 : EnRecuperationSaturation ==================== -->
@@ -108,12 +109,12 @@
 
   <!-- ==================== TRANSITIONS ModeleActif -> EvictionVRAMEnCours ==================== -->
   <!-- Transition 1 : Déclenchée par une nouvelle requête pour un modèle différent -->
-  <path d="M1410 470 L1410 600 L1060 600" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M1410 500 L1410 600 L1060 600" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
   <rect x="1110" y="583" width="265" height="26" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
   <text x="1242" y="600" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0F172A">requeteRecue(m) [m != active_model] / demarrerEviction()</text>
 
   <!-- Transition 2 : Déclenchée par l'expiration du timer d'inactivité (protégée par la garde d'inactivité GPU) -->
-  <path d="M1490 470 L1490 655 L1060 655" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <path d="M1490 500 L1490 655 L1060 655" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
   <rect x="1080" y="642" width="370" height="26" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
   <text x="1265" y="659" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#475569">after(delaiInactivite) [gpu_idle == true] / demarrerEviction()</text>
 
