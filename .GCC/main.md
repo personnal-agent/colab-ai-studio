@@ -32,12 +32,12 @@ Livraison par Pull Request des 11 diagrammes UML finalisés, de la documentation
 
 ## 🌿 Active Branches / Plans
 - [`docs/ui-system-specifications`](https://github.com/personnal-agent/colab-ai-studio/pull/4) : Consolidation des spécifications UI/système, design tokens, suivi des maquettes et revue Greptile / CodeRabbit (PR #4 ouverte).
-- `docs/software-modeling` : Modélisation UML sous `.modelisation/logiciel/` ; livraison PR en cours.
+- [`docs/software-modeling`](https://github.com/personnal-agent/colab-ai-studio/pull/6) : Modélisation logicielle sous `.modelisation/logiciel/` ; Pull Request #6 ouverte.
 
 ## 📈 Current Status
-- ✅ Terminé : Purge intégrale des citations externes sur les 11 diagrammes SVG et PNG ainsi que dans le README. Reformulation 100% orientée métier et système. Spécification du mode LLM sur le dock flottant (`SPECIFICATION.md`, `UI_SPECIFICATION.md`). Validation XML (11/11 OK), conversion PNG haute fidélité (11/11 OK), validation statique Python (exit code 0).
-- 🔄 En cours : Création de la Pull Request de livraison sur la branche `docs/software-modeling`.
+- ✅ Terminé : Création et ouverture de la Pull Request [#6](https://github.com/personnal-agent/colab-ai-studio/pull/6) de livraison sur la branche `docs/software-modeling`.
+- 🔄 En cours : Suivi des vérifications CI et analyse des retours de revue des bots en ligne.
 - ⏳ À venir : Lecture 100% des retours de revue des bots en ligne et signature par le mainteneur.
 
 ## 👉 Next Session Direction
-Suivre la revue de la Pull Request par les bots et le mainteneur.
+Suivre la revue de la Pull Request #6 par les bots et le mainteneur.
