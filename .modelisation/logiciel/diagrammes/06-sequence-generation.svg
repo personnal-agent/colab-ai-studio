@@ -1,0 +1,235 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1460" viewBox="0 0 1900 1460">
+<defs>
+  <!-- Marqueur appel synchrone : flèche à tête triangulaire pleine -->
+  <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+    <path d="M0 0 L10 4 L0 8 Z" fill="#405364"/>
+  </marker>
+  <!-- Marqueur appel asynchrone et retour : flèche à tête ouverte -->
+  <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+    <path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/>
+  </marker>
+</defs>
+
+<!-- Fond d'écran -->
+<rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+<!-- Cartouche de titre de séquence -->
+<rect x="48" y="24" width="360" height="32" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.5"/>
+<text x="60" y="46" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#126A78">sd</text>
+<text x="90" y="46" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#17212B">Génération Asynchrone Multimédia</text>
+
+<text x="48" y="80" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">06 · Diagramme de Séquence — Génération Asynchrone</text>
+<text x="50" y="104" font-family="Arial, sans-serif" font-size="13" fill="#596875">Cinématique d'exécution asynchrone · Déclenchement de génération, notifications SSE temps réel, annulation et persistance</text>
+<line x1="48" y1="118" x2="1852" y2="118" stroke="#D8E0E5" stroke-width="1.5"/>
+
+<!-- ========================================== -->
+<!-- PARTICIPANTS ET LIGNES DE VIE             -->
+<!-- ========================================== -->
+
+<!-- 1. Acteur Humain : c : Créateur (x = 120) -->
+<circle cx="120" cy="148" r="10" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<line x1="120" y1="158" x2="120" y2="186" stroke="#17212B" stroke-width="2"/>
+<line x1="102" y1="168" x2="138" y2="168" stroke="#17212B" stroke-width="2"/>
+<line x1="120" y1="186" x2="104" y2="208" stroke="#17212B" stroke-width="2"/>
+<line x1="120" y1="186" x2="136" y2="208" stroke="#17212B" stroke-width="2"/>
+<text x="120" y="226" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">c : Créateur</text>
+<line x1="120" y1="234" x2="120" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 2. Participant : :ReactSPA (x = 380) -->
+<rect x="300" y="145" width="160" height="42" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="380" y="171" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:ReactSPA</text>
+<line x1="380" y1="187" x2="380" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 3. Participant : :FastAPIBackend (x = 680) -->
+<rect x="590" y="145" width="180" height="42" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="680" y="171" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:FastAPIBackend</text>
+<line x1="680" y1="187" x2="680" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 4. Participant : :BrandContextCompiler (x = 960) -->
+<rect x="860" y="145" width="200" height="42" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="960" y="171" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:BrandContextCompiler</text>
+<line x1="960" y1="187" x2="960" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 5. Participant : :ColabWorker (x = 1240) -->
+<rect x="1150" y="145" width="180" height="42" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="1240" y="171" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:ColabWorker</text>
+<line x1="1240" y1="187" x2="1240" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 6. Participant : :ModelSwapper (x = 1500) -->
+<rect x="1410" y="145" width="180" height="42" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="1500" y="171" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:ModelSwapper</text>
+<line x1="1500" y1="187" x2="1500" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- 7. Participant : :MediaFileStore (HARMONISÉ AVEC LE DIAGRAMME 02 - Remarque 06.3) -->
+<rect x="1650" y="145" width="180" height="44" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="1740" y="164" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:MediaFileStore</text>
+<text x="1740" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#596875">rôle : MediaAssetManager</text>
+<line x1="1740" y1="189" x2="1740" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+<!-- ========================================== -->
+<!-- BARRES D'ACTIVATION (ExecutionSpecification) -->
+<!-- ========================================== -->
+
+<!-- :ReactSPA -->
+<rect x="373" y="240" width="14" height="450" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+<rect x="373" y="730" width="14" height="620" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+<!-- :FastAPIBackend -->
+<rect x="673" y="270" width="14" height="400" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+<rect x="673" y="750" width="14" height="580" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+<!-- :BrandContextCompiler -->
+<rect x="953" y="325" width="14" height="65" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+<!-- :ColabWorker -->
+<rect x="1233" y="445" width="14" height="205" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+<rect x="1233" y="780" width="14" height="540" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+<!-- :ModelSwapper -->
+<rect x="1493" y="480" width="14" height="135" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+<!-- :MediaFileStore -->
+<rect x="1733" y="1035" width="14" height="55" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+<!-- ========================================== -->
+<!-- MESSAGES ET FRAGMENTS COMBINÉS             -->
+<!-- ========================================== -->
+
+<!-- 1. Déclenchement de la génération par l'utilisateur -->
+<path d="M120 240 L373 240" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="246" y="232" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">demanderGeneration(prompt, config)</text>
+
+<!-- 2. Requête HTTP synchrone vers le backend local -->
+<path d="M387 270 L673 270" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="530" y="262" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">POST /api/generate/media (GenerationRequest)</text>
+
+<!-- 3. Fragment OPTIONAL : Brand Kit actif -->
+<rect x="640" y="295" width="370" height="110" rx="0" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="640" y="295" width="60" height="24" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<text x="670" y="312" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">opt</text>
+<text x="715" y="312" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[brandKitEnabled == true]</text>
+
+<path d="M687 330 L953 330" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="820" y="322" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">compile(prompt, kitId, modelCaps)</text>
+
+<path d="M953 380 L687 380" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="820" y="372" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">compiledBrief</text>
+
+<!-- 4. Transmission directe de la tâche au Worker Colab -->
+<path d="M687 445 L1233 445" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="960" y="437" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">POST /infer (taskSpec)</text>
+
+<!-- 5. Vérification et swap de modèle sur le worker GPU -->
+<path d="M1247 480 L1493 480" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1370" y="472" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">ensureLoaded(modelId)</text>
+
+<!-- Référence au diagramme d'état du ModelSwapper -->
+<rect x="1260" y="505" width="310" height="50" rx="0" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="1260" y="505" width="50" height="22" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<text x="1285" y="521" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#126A78">ref</text>
+<text x="1320" y="534" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="500" fill="#126A78">Cycle de vie ModelSwapper (Diag. 11)</text>
+
+<path d="M1493 600 L1247 600" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="1370" y="592" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">modelReady</text>
+
+<!-- 6. Acquittement asynchrone avec task_id -->
+<path d="M1233 635 L687 635" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="960" y="627" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">202 Accepted {taskId, status: "queued"}</text>
+
+<path d="M673 670 L387 670" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="530" y="662" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">202 Accepted {taskId}</text>
+
+<!-- 7. Établissement de la connexion d'écoute SSE unidirectionnelle -->
+<path d="M387 750 L673 750" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="530" y="742" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">GET /api/tasks/{task_id}/status (SSE Subscription)</text>
+
+<!-- 8. Fragment COMBINÉ LOOP : Streaming d'événements de progression SSE unidirectionnel -->
+<rect x="340" y="795" width="970" height="155" rx="0" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="340" y="795" width="70" height="24" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<text x="375" y="812" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">loop</text>
+<text x="425" y="812" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[tant que tâche active &amp;&amp; non terminée]</text>
+
+<!-- Événements asynchrones poussés (signal métier normé) -->
+<path d="M1233 840 L687 840" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
+<text x="960" y="832" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">notifierProgression(pct, step, eta)</text>
+
+<path d="M673 875 L387 875" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
+<text x="530" y="867" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">relayerProgression(pct, step)</text>
+
+<!-- Auto-appel pour mise à jour de jauge UI -->
+<path d="M387 895 L420 895 L420 925 L387 925" fill="none" stroke="#405364" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="430" y="915" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">updateProgressBar(pct)</text>
+
+<!-- 9. Fragment COMBINÉ ALT : Issues de la génération (Succès, Annulation, Échec) -->
+<rect x="80" y="970" width="1740" height="380" rx="0" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="6 4"/>
+<rect x="80" y="970" width="60" height="24" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<text x="110" y="987" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">alt</text>
+
+<!-- BRANCHE 1 : Succès de la génération -->
+<text x="155" y="987" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">[statut == completed]</text>
+
+<path d="M1233 1015 L687 1015" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
+<text x="960" y="1007" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">pushEvent("completed", {artifactUri, metrics})</text>
+
+<path d="M687 1045 L1733 1045" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1210" y="1037" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">telechargerMedia(artifactUri, outputsDir)</text>
+
+<path d="M1733 1070 L687 1070" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="1210" y="1062" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">mediaStocke(filePath, size)</text>
+
+<path d="M687 1085 L720 1085 L720 1105 L687 1105" fill="none" stroke="#405364" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text x="730" y="1100" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">persisterMetadata(generations.json)</text>
+
+<path d="M673 1115 L387 1115" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
+<text x="530" y="1107" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">sseEvent: completed {localMediaMetadata}</text>
+
+<path d="M373 1125 L120 1125" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="246" y="1117" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">afficherMediaDansTimeline(localMediaMetadata)</text>
+
+<!-- LIGNE POINTILLÉE SÉPARATRICE D'OPÉRANDE 1 & 2 -->
+<line x1="80" y1="1140" x2="1820" y2="1140" stroke="#126A78" stroke-width="1.2" stroke-dasharray="6 4"/>
+
+<!-- BRANCHE 2 : Annulation par l'utilisateur (GARDE DÉGAGÉE ET GESTE D'IHM BANI) -->
+<rect x="85" y="1144" width="280" height="20" fill="#EDF5F6" stroke="#126A78" stroke-width="0.8"/>
+<text x="95" y="1158" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#126A78">[annulation demandée par le Créateur]</text>
+
+<path d="M120 1175 L373 1175" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="246" y="1167" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">demanderAnnulation(taskId)</text>
+
+<path d="M387 1195 L673 1195" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="530" y="1187" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">POST /api/tasks/{taskId}/cancel</text>
+
+<path d="M687 1215 L1233 1215" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="960" y="1207" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">POST /cancel (taskId)</text>
+
+<path d="M1233 1235 L687 1235" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="960" y="1227" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">200 OK {status: "cancelled"}</text>
+
+<path d="M673 1255 L387 1255" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="530" y="1247" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">200 OK (cancelled) + fermeture flux SSE</text>
+
+<!-- LIGNE POINTILLÉE SÉPARATRICE D'OPÉRANDE 2 & 3 -->
+<line x1="80" y1="1270" x2="1820" y2="1270" stroke="#126A78" stroke-width="1.2" stroke-dasharray="6 4"/>
+
+<!-- BRANCHE 3 : Échec de la génération ou Timeout -->
+<text x="155" y="1288" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">[statut == failed || timeout]</text>
+
+<path d="M1233 1305 L687 1305" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
+<text x="960" y="1297" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">pushEvent("failed", {error: "CUDA OOM", code: 500})</text>
+
+<path d="M673 1325 L387 1325" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
+<text x="530" y="1317" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">sseEvent: error {error, code}</text>
+
+<path d="M373 1345 L120 1345" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<text x="246" y="1337" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">afficherNotificationErreur(errorMsg)</text>
+
+<!-- ========================================== -->
+<!-- PRINCIPES D'INGÉNIERIE DE LA SÉQUENCE      -->
+<!-- ========================================== -->
+<rect x="48" y="1395" width="1804" height="42" rx="4" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.2"/>
+<text x="62" y="1420" font-family="Arial, sans-serif" font-size="12" fill="#334155">
+  <tspan font-weight="700">Principes d'ingénierie de la séquence : </tspan>
+  Découplage asynchrone entre la SPA et le backend FastAPI · Flux d'événements SSE pour la progression en direct · Persistance atomique via :MediaFileStore et gestion d'abandon immédiat.
+</text>
+
+</svg>

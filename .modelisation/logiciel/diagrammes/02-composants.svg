@@ -1,0 +1,301 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2160" height="1120" viewBox="0 0 2160 1120">
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0 L10 4 L0 8 Z" fill="#405364"/></marker>
+  <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/></marker>
+  <marker id="triangle" markerWidth="14" markerHeight="14" refX="13" refY="7" orient="auto"><path d="M1 1 L13 7 L1 13 Z" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/></marker>
+</defs>
+<rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+<text x="48" y="48" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#17212B">02 · Architecture logique modulaire</text>
+<text x="50" y="77" font-family="Arial, sans-serif" font-size="15" fill="#596875">Architecture logique modulaire · Sous-systèmes, ports de frontière, interfaces et connecteurs d'assemblage</text>
+<line x1="48" y1="96" x2="2112" y2="96" stroke="#D8E0E5" stroke-width="1.5"/>
+
+<!-- 1. SOUS-SYSTÈME FRONTEND -->
+<rect x="50" y="145" width="370" height="740" rx="8" fill="#FBFCFD" stroke="#126A78" stroke-width="2"/>
+<text x="75" y="178" text-anchor="start" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#126A78">«subsystem» Frontend Client</text>
+<text x="75" y="198" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">SPA React / Vite / TypeScript (Navigateur)</text>
+<rect x="385" y="160" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="381" y="162.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="381" y="168.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+
+<!-- Composants internes Frontend -->
+<rect x="75" y="225" width="315" height="135" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="362" y="239" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="358" y="241.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="358" y="247.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="91" y="257" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» React SPA</text>
+<text x="91" y="279" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : Dock adaptatif &amp; éditeur</text>
+<text x="91" y="309" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">paramètres selon capabilities · studio</text>
+
+<rect x="75" y="425" width="315" height="130" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="362" y="439" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="358" y="441.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="358" y="447.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="91" y="457" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» Galerie &amp; Suivi</text>
+<text x="91" y="479" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : MediaGallery &amp; Tracker</text>
+<text x="91" y="509" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">grille réactive · statut tâche · remix</text>
+
+<rect x="75" y="625" width="315" height="130" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="362" y="639" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="358" y="641.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="358" y="647.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="91" y="657" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» Vue Conversationnelle</text>
+<text x="91" y="679" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : ChatAssistantClient</text>
+<text x="91" y="709" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">client local du proxy LLM /chat</text>
+
+<!-- Ports Frontend (x=413) -->
+<rect x="413" y="273" width="14" height="14" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="2"/>
+<text x="405" y="268" text-anchor="end" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">pWebClient</text>
+<line x1="390" y1="280" x2="413" y2="280" stroke="#405364" stroke-width="1.8"/>
+
+<rect x="413" y="473" width="14" height="14" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="2"/>
+<text x="405" y="468" text-anchor="end" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">pWebStatus</text>
+<line x1="390" y1="480" x2="413" y2="480" stroke="#405364" stroke-width="1.8"/>
+
+<rect x="413" y="673" width="14" height="14" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="2"/>
+<text x="405" y="668" text-anchor="end" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">pWebChat</text>
+<line x1="390" y1="680" x2="413" y2="680" stroke="#405364" stroke-width="1.8"/>
+
+<!-- 2. CANAL INTER-SYSTÈMES FRONTEND <-> BACKEND (ÉLARGISSEMENT 190px >= 180px) -->
+<!-- Port IStudioApi (y=280) -->
+<line x1="427" y1="280" x2="502" y2="280" stroke="#405364" stroke-width="2"/>
+<path d="M 510 272 A 8 8 0 0 0 510 288" fill="none" stroke="#405364" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="510" cy="280" r="6" fill="#EDF5F6" stroke="#126A78" stroke-width="2"/>
+<line x1="516" y1="280" x2="610" y2="280" stroke="#405364" stroke-width="2"/>
+<text x="510" y="264" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">IStudioApi</text>
+<text x="510" y="303" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">REST /api/*</text>
+
+<!-- Port IEventStream (y=480) -->
+<line x1="427" y1="480" x2="502" y2="480" stroke="#405364" stroke-width="2"/>
+<path d="M 510 472 A 8 8 0 0 0 510 488" fill="none" stroke="#405364" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="510" cy="480" r="6" fill="#EDF5F6" stroke="#126A78" stroke-width="2"/>
+<line x1="516" y1="480" x2="610" y2="480" stroke="#405364" stroke-width="2"/>
+<text x="510" y="464" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">IEventStream</text>
+<text x="510" y="503" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">SSE /api/tasks/{task_id}/status</text>
+
+<!-- Port IChatCompletions (y=680) -->
+<line x1="427" y1="680" x2="502" y2="680" stroke="#405364" stroke-width="2"/>
+<path d="M 510 672 A 8 8 0 0 0 510 688" fill="none" stroke="#405364" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="510" cy="680" r="6" fill="#EDF5F6" stroke="#126A78" stroke-width="2"/>
+<line x1="516" y1="680" x2="610" y2="680" stroke="#405364" stroke-width="2"/>
+<text x="510" y="664" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">IChatCompletions</text>
+<text x="510" y="703" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">POST /v1/chat/completions</text>
+
+<!-- 3. SOUS-SYSTÈME BACKEND LOCAL FASTAPI (7 COMPOSANTS INTERNES MODULAIRES) -->
+<rect x="610" y="145" width="720" height="740" rx="8" fill="#FBFCFD" stroke="#126A78" stroke-width="2"/>
+<text x="635" y="178" text-anchor="start" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#126A78">«subsystem» Backend local FastAPI</text>
+<text x="635" y="198" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">Serveur asynchrone Python 3.10+ · Persistance documentaire atomique &amp; gestionnaire médias</text>
+<rect x="1295" y="160" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1291" y="162.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1291" y="168.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+
+<!-- Ports de gauche du Backend (x=603) -->
+<rect x="603" y="273" width="14" height="14" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="2"/>
+<text x="625" y="268" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">pStudioApi</text>
+
+<rect x="603" y="473" width="14" height="14" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="2"/>
+<text x="625" y="468" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">pEventStream</text>
+
+<rect x="603" y="673" width="14" height="14" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="2"/>
+<text x="625" y="668" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">pChatProxy</text>
+
+<!-- Composant 1 : API Locale -->
+<rect x="635" y="220" width="315" height="135" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="922" y="234" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="918" y="236.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="918" y="242.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="651" y="252" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» API Locale</text>
+<text x="651" y="274" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : ApiRouter &amp; Validations</text>
+<text x="651" y="304" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">/api/* · Pydantic v2 · config</text>
+
+<!-- Composant 2 : Orchestrateur Asynchrone (REDIMENSIONNÉ 330px : z-index et texte dégagés) -->
+<rect x="980" y="220" width="330" height="135" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="1282" y="234" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1278" y="236.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1278" y="242.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="996" y="252" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» Orchestrateur Asynchrone</text>
+<text x="996" y="274" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : AsyncOrchestrator</text>
+<text x="996" y="304" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">task_id · boucle d’avancement · SSE</text>
+
+<!-- Composant 3 : BrandContextCompiler -->
+<rect x="635" y="400" width="315" height="135" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="922" y="414" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="918" y="416.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="918" y="422.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="651" y="432" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» BrandContextCompiler</text>
+<text x="651" y="454" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : ContextCompiler</text>
+<text x="651" y="484" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">injection tokens · fallback · slots</text>
+
+<!-- Composant 4 : Proxy LLM -->
+<rect x="980" y="400" width="330" height="135" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="1282" y="414" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1278" y="416.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1278" y="422.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="996" y="432" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» Proxy LLM</text>
+<text x="996" y="454" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : OpenAiProxy</text>
+<text x="996" y="484" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">/v1/chat/completions · streaming</text>
+
+<!-- Composant 5 : JSONDocumentStore -->
+<rect x="635" y="600" width="215" height="145" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="822" y="614" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="818" y="616.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="818" y="622.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="645" y="626" text-anchor="start" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">«component»</text>
+<text x="645" y="644" text-anchor="start" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">JSONDocumentStore</text>
+<text x="645" y="664" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">rôle : AtomicFileStore</text>
+<text x="645" y="688" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#596875">asyncio.Lock · data/</text>
+
+<!-- Composant 6 : MediaFileStore (rôle MediaAssetManager) -->
+<rect x="865" y="600" width="220" height="145" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="1057" y="614" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1053" y="616.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1053" y="622.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="875" y="626" text-anchor="start" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">«component»</text>
+<text x="875" y="644" text-anchor="start" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">MediaFileStore</text>
+<text x="875" y="664" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">rôle : MediaAssetManager</text>
+<text x="875" y="688" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#596875">outputs/ · flux binaires</text>
+
+<!-- Composant 7 : ColabClient -->
+<rect x="1100" y="600" width="210" height="145" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="1282" y="614" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1278" y="616.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1278" y="622.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="1110" y="626" text-anchor="start" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">«component»</text>
+<text x="1110" y="644" text-anchor="start" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">ColabClient</text>
+<text x="1110" y="664" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">rôle : RemoteWorkerClient</text>
+<text x="1110" y="688" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#596875">HTTP persistant · stream</text>
+
+<!-- Connecteurs internes Backend déroutés sans traverser les boîtes -->
+<!-- API Locale -> Orchestrateur Asynchrone -->
+<path d="M 950 260 L 980 260" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="965" y="252" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">déclenche</text>
+
+<!-- API Locale -> BrandContextCompiler -->
+<path d="M 720 355 L 720 400" fill="none" stroke="#405364" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+<rect x="680" y="367" width="80" height="17" fill="#FFFFFF"/>
+<text x="720" y="379" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#17212B">résout kit</text>
+
+<!-- API Locale -> JSONDocumentStore -->
+<path d="M 680 355 L 680 600" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="640" y="555" width="80" height="17" fill="#FFFFFF"/>
+<text x="680" y="567" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">lecture doc</text>
+
+<!-- API Locale -> MediaFileStore (resolveMediaPath) -->
+<path d="M 800 355 L 800 560 L 920 560 L 920 600" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="840" y="550" width="115" height="17" fill="#FFFFFF"/>
+<text x="895" y="562" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">resolveMediaPath</text>
+
+<!-- BrandContextCompiler -> JSONDocumentStore (lecture kits) -->
+<path d="M 740 535 L 740 600" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="700" y="555" width="80" height="17" fill="#FFFFFF"/>
+<text x="740" y="567" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">lecture kits</text>
+
+<!-- Orchestrateur Asynchrone -> ColabClient -->
+<path d="M 1200 355 L 1200 600" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="1140" y="555" width="120" height="17" fill="#FFFFFF"/>
+<text x="1200" y="567" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">requête inférence</text>
+
+<!-- Orchestrateur Asynchrone -> MediaFileStore (saveBinaryStream) -->
+<path d="M 1040 355 L 1040 600" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="980" y="550" width="120" height="17" fill="#FFFFFF"/>
+<text x="1040" y="562" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">saveBinaryStream</text>
+
+<!-- Délégation interne Frontend -> Backend -->
+<line x1="617" y1="280" x2="635" y2="280" stroke="#405364" stroke-width="1.8"/>
+<text x="626" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#596875">«del»</text>
+
+<path d="M 617 480 L 980 340" fill="none" stroke="#405364" stroke-width="1.8"/>
+<path d="M 617 680 L 980 480" fill="none" stroke="#405364" stroke-width="1.8"/>
+
+<!-- Ports de droite du Backend (x=1323) -->
+<rect x="1323" y="273" width="14" height="14" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="2"/>
+<text x="1315" y="268" text-anchor="end" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">pWorkerOut</text>
+<path d="M 1250 600 L 1250 280 L 1323 280" fill="none" stroke="#405364" stroke-width="1.8"/>
+
+<!-- Port pLlmOut vers Service LLM Externe (douille requise ILlmEngine) -->
+<rect x="1323" y="468" width="14" height="14" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="2"/>
+<text x="1315" y="463" text-anchor="end" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">pLlmOut</text>
+<line x1="1310" y1="475" x2="1323" y2="475" stroke="#405364" stroke-width="1.8"/>
+
+<!-- Assemblage Ball-and-Socket pLlmOut <-> Service LLM Externe -->
+<line x1="1337" y1="475" x2="1377" y2="475" stroke="#405364" stroke-width="2"/>
+<path d="M 1385 467 A 8 8 0 0 0 1385 483" fill="none" stroke="#405364" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1385" cy="475" r="6" fill="#EDF5F6" stroke="#126A78" stroke-width="2"/>
+<line x1="1391" y1="475" x2="1430" y2="475" stroke="#405364" stroke-width="2"/>
+<text x="1385" y="458" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">ILlmEngine</text>
+<text x="1385" y="497" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="400" fill="#596875">ChatStream</text>
+
+<!-- 4. COMPOSANT EXTERNE : Service d'Inférence LLM -->
+<rect x="1430" y="420" width="215" height="110" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="1617" y="434" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1613" y="436.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="1613" y="442.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="1445" y="446" text-anchor="start" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">«component»</text>
+<text x="1445" y="466" text-anchor="start" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Service Inférence LLM</text>
+<text x="1445" y="488" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">«externe»</text>
+<text x="1445" y="508" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#596875">Cloud OpenAI / Local</text>
+
+<!-- Assemblage Ball-and-Socket pWorkerOut <-> pInferenceIn (IWorkerInference) -->
+<line x1="1337" y1="280" x2="1527" y2="280" stroke="#405364" stroke-width="2"/>
+<path d="M 1535 272 A 8 8 0 0 0 1535 288" fill="none" stroke="#405364" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1535" cy="280" r="6" fill="#EDF5F6" stroke="#126A78" stroke-width="2"/>
+<line x1="1541" y1="280" x2="1680" y2="280" stroke="#405364" stroke-width="2"/>
+<text x="1535" y="264" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">IWorkerInference</text>
+<text x="1535" y="303" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">HTTPS /infer · /health · /cancel</text>
+
+<!-- 5. SOUS-SYSTÈME WORKER GOOGLE COLAB -->
+<rect x="1680" y="145" width="430" height="740" rx="8" fill="#FBFCFD" stroke="#126A78" stroke-width="2"/>
+<text x="1705" y="178" text-anchor="start" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#126A78">«subsystem» Worker Google Colab</text>
+<text x="1705" y="198" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">Moteur d’inférence distant PyTorch (GPU T4 16 Go VRAM)</text>
+<rect x="2075" y="160" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="2071" y="162.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="2071" y="168.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+
+<!-- Port d'entrée Colab (x=1673) -->
+<rect x="1673" y="273" width="14" height="14" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="2"/>
+<text x="1695" y="268" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">pInferenceIn</text>
+
+<!-- Composants Colab -->
+<rect x="1705" y="225" width="380" height="135" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="2057" y="239" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="2053" y="241.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="2053" y="247.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="1721" y="257" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» Worker FastAPI</text>
+<text x="1721" y="279" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : RemoteInferenceApi</text>
+<text x="1721" y="309" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">endpoints /infer, /health, /cancel, /evict</text>
+<line x1="1687" y1="280" x2="1705" y2="280" stroke="#405364" stroke-width="1.8"/>
+
+<rect x="1705" y="430" width="380" height="135" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="2057" y="444" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="2053" y="446.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="2053" y="452.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="1721" y="462" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» ModelSwapper</text>
+<text x="1721" y="484" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : VramManager</text>
+<text x="1721" y="514" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">chargement dynamique · éviction VRAM T4</text>
+
+<rect x="1705" y="640" width="380" height="135" rx="4" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+<rect x="2057" y="654" width="18" height="14" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+<rect x="2053" y="656.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<rect x="2053" y="662.5" width="6" height="3" rx="0" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+<text x="1721" y="672" text-anchor="start" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">«component» Pipelines Inférence</text>
+<text x="1721" y="694" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#126A78">rôle : ExecutionPipelines</text>
+<text x="1721" y="724" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">Diffusers (image/vidéo) · LipSync · LLM</text>
+
+<!-- Liaisons internes Colab -->
+<path d="M 1895 360 L 1895 430" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1895" y="395" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#17212B">assure modèle chargé</text>
+
+<path d="M 1895 565 L 1895 640" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="1895" y="605" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#17212B">pipeline VRAM prêt</text>
+
+<path d="M 1730 360 L 1730 640" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="1730" y="500" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#17212B">exécute inférence</text>
+
+<!-- Notes d'ingénierie et responsabilités -->
+<rect x="50" y="915" width="2060" height="85" rx="4" fill="#F4F6F8" stroke="#405364" stroke-width="1.5"/>
+<text x="65" y="937" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Principes d'ingénierie et responsabilités modulaires :</text>
+<text x="65" y="958" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">• Découplage Frontend / Backend : communication asynchrone via interfaces REST/SSE et délégation du service d'inférence LLM (fournisseur local ou distant).</text>
+<text x="65" y="976" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">• Gestion documentaire et médias : JSONDocumentStore assure la persistance atomique JSON dans data/ (asyncio.Lock), tandis que MediaFileStore gère le stockage binaire dans outputs/.</text>
+<text x="65" y="993" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="400" fill="#596875">• Déport de charge GPU : l'Orchestrateur Asynchrone gère la file d'attente locale et relaie les inférences lourdes au worker distant Google Colab via tunnel chiffré.</text>
+
+<text x="48" y="1060" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#596875">Colab AI Studio · Architecture logique distribuée (SPA React locale, backend FastAPI asynchrone et worker distant)</text>
+</svg>

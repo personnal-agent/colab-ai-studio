@@ -1,0 +1,321 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="1440" viewBox="0 0 1900 1440">
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0 L10 4 L0 8 Z" fill="#405364"/></marker>
+<marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/></marker>
+<marker id="zigzagArrow" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto"><path d="M0 0 L12 5 L0 10 Z" fill="#BA3C2A"/></marker>
+</defs>
+
+<!-- Arrière-plan -->
+<rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+<!-- En-tête -->
+<text x="48" y="48" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#17212B">05 · Flux d’activité — génération média</text>
+<text x="50" y="77" font-family="Arial, sans-serif" font-size="15" fill="#596875">Flux de processus métier · Orchestration asynchrone, région interruptible et persistance documentaire</text>
+<line x1="48" y1="96" x2="1852" y2="96" stroke="#D8E0E5" stroke-width="1.5"/>
+
+<!-- Partitions d'activité (Responsabilités d'exécution) -->
+<!-- Couloir 1 : Créateur de contenu (Humain) -->
+<rect x="55" y="140" width="370" height="1230" fill="#FCFDFD" stroke="#C8D3DB" stroke-width="1.2"/>
+<rect x="55" y="140" width="370" height="54" fill="#EDF5F6" stroke="#126A78" stroke-width="1.4"/>
+<text x="240" y="174" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#17212B">Créateur de contenu (Humain)</text>
+
+<!-- Couloir 2 : React SPA (Client) -->
+<rect x="425" y="140" width="380" height="1230" fill="#FCFDFD" stroke="#C8D3DB" stroke-width="1.2"/>
+<rect x="425" y="140" width="380" height="54" fill="#EDF5F6" stroke="#126A78" stroke-width="1.4"/>
+<text x="615" y="174" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#17212B">React SPA (Client)</text>
+
+<!-- Couloir 3 : FastAPI Backend (Serveur local) -->
+<rect x="805" y="140" width="530" height="1230" fill="#FCFDFD" stroke="#C8D3DB" stroke-width="1.2"/>
+<rect x="805" y="140" width="530" height="54" fill="#EDF5F6" stroke="#126A78" stroke-width="1.4"/>
+<text x="1070" y="174" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#17212B">FastAPI Backend (Serveur local)</text>
+
+<!-- Couloir 4 : Colab Worker (Serveur GPU distant) -->
+<rect x="1335" y="140" width="515" height="1230" fill="#FCFDFD" stroke="#C8D3DB" stroke-width="1.2"/>
+<rect x="1335" y="140" width="515" height="54" fill="#EDF5F6" stroke="#126A78" stroke-width="1.4"/>
+<text x="1592" y="174" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#17212B">Colab Worker (Serveur GPU distant)</text>
+
+<!-- ================= FLUX DE CONTRÔLE ET ACTIONS ================= -->
+
+<!-- 1. Nœud Initial dans Couloir Créateur -->
+<circle cx="240" cy="225" r="9" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+<path d="M240 234 L240 264" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Action Créateur : Configurer la tâche média (termes métier normés) -->
+<rect x="90" y="264" width="300" height="74" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="240" y="296" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
+  <tspan x="240" dy="0">Définir paramètres, références</tspan>
+  <tspan x="240" dy="20">et kit de marque actif</tspan>
+</text>
+
+<!-- Flux vers React SPA -->
+<path d="M390 301 L475 301" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Action React SPA : Émettre la demande (action métier normée sans geste d'IHM) -->
+<rect x="475" y="264" width="280" height="74" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="615" y="296" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
+  <tspan x="615" dy="0">Transmettre la demande</tspan>
+  <tspan x="615" dy="20">de génération multimédia</tspan>
+</text>
+
+<!-- Flux vers FastAPI Backend -->
+<path d="M755 301 L870 301" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Action FastAPI Backend : Valider et enregistrer tâche initiale -->
+<rect x="870" y="264" width="400" height="74" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1070" y="296" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
+  <tspan x="1070" dy="0">Valider charge utile (Pydantic)</tspan>
+  <tspan x="1070" dy="20">et initialiser tâche asynchrone</tspan>
+</text>
+
+<!-- Flux vers décision executionMode -->
+<path d="M1070 338 L1070 375" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Décision 1 : executionMode ? (Épurée sans texte parasite) -->
+<polygon points="1070,375 1096,401 1070,427 1044,401" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
+<text x="1104" y="396" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">executionMode ?</text>
+
+<!-- Branche [local] -> Erreur 501 -->
+<path d="M1044 401 L910 401 L910 445" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="940" y="385" width="60" height="20" fill="#FFFFFF"/>
+<text x="970" y="399" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[local]</text>
+
+<rect x="830" y="445" width="160" height="60" rx="12" fill="#FFF8E8" stroke="#8C6418" stroke-width="2"/>
+<text x="910" y="471" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="910" dy="0">Notifier refus :</tspan>
+  <tspan x="910" dy="17">mode local non géré</tspan>
+</text>
+
+<!-- Flux 501 vers SPA pour affichage puis terminaison -->
+<path d="M830 475 L685 475" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="525" y="445" width="160" height="60" rx="12" fill="#FFF8E8" stroke="#8C6418" stroke-width="2"/>
+<text x="605" y="471" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="605" dy="0">Afficher notification</tspan>
+  <tspan x="605" dy="17">support local indisponible</tspan>
+</text>
+
+<path d="M525 475 L480 475" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<!-- Nœud final de flux (FlowFinalNode) pour fin d'échec local -->
+<circle cx="460" cy="475" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<line x1="450" y1="465" x2="470" y2="485" stroke="#17212B" stroke-width="2"/>
+<line x1="450" y1="485" x2="470" y2="465" stroke="#17212B" stroke-width="2"/>
+
+<!-- Branche [colab] (Épurée sans lettre polluée) -->
+<path d="M1096 401 L1180 401 L1180 445" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="1115" y="385" width="55" height="20" fill="#FFFFFF"/>
+<text x="1142" y="399" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[colab]</text>
+
+<!-- Décision 2 : Brand Kit actif ? (Épurée sans texte parasite) -->
+<polygon points="1180,445 1205,470 1180,495 1155,470" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
+<text x="1215" y="465" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">Brand Kit actif ?</text>
+
+<!-- Branche [oui] -> Compilation Contexte Brand Kit -->
+<path d="M1155 470 L1070 470 L1070 515" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="1085" y="455" width="45" height="20" fill="#FFFFFF"/>
+<text x="1107" y="469" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[oui]</text>
+
+<rect x="880" y="515" width="380" height="66" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1070" y="543" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="1070" dy="0">Compiler tokens et règles de marque</tspan>
+  <tspan x="1070" dy="18">(mode LLM ou repli déterministe)</tspan>
+</text>
+
+<!-- Branche [non] contourne la compilation -->
+<path d="M1205 470 L1285 470 L1285 605" fill="none" stroke="#405364" stroke-width="1.8"/>
+<rect x="1225" y="455" width="45" height="20" fill="#FFFFFF"/>
+<text x="1247" y="469" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[non]</text>
+
+<!-- NŒUD DE FUSION 1 (MergeNode 1) -->
+<path d="M1070 581 L1070 625 L1160 625" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<path d="M1285 605 L1285 625 L1200 625" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<polygon points="1180,612 1200,625 1180,638 1160,625" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
+
+<!-- Flux unique post-fusion vers soumission worker -->
+<path d="M1180 638 L1180 665" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Action Backend : Déléguer au worker distant via tunnel -->
+<rect x="880" y="665" width="400" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1080" y="694" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
+  <tspan x="1080" dy="0">Déléguer la tâche d'inférence</tspan>
+  <tspan x="1080" dy="18">au worker distant via tunnel sécurisé</tspan>
+</text>
+
+<!-- Flux vers Colab Worker (rejoint directement le losange de décision en x=1565) -->
+<path d="M1280 704 L1565 704" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Décision 3 : Modèle déjà actif en VRAM ? (Épurée sans texte parasite) -->
+<polygon points="1590,679 1615,704 1590,729 1565,704" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
+<text x="1625" y="699" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">Modèle actif en VRAM ?</text>
+
+<!-- Branche [non] : Model Swapper -->
+<path d="M1565 704 L1490 704 L1490 740" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="1500" y="688" width="45" height="20" fill="#FFFFFF"/>
+<text x="1522" y="702" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[non]</text>
+
+<rect x="1390" y="740" width="200" height="64" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1490" y="767" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="1490" dy="0">Évincer modèle courant</tspan>
+  <tspan x="1490" dy="17">gc · empty_cache · swap</tspan>
+</text>
+
+<rect x="1390" y="825" width="200" height="54" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1490" y="857" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="1490" dy="0">Allouer nouveau pipeline</tspan>
+</text>
+<path d="M1490 804 L1490 825" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Branche [oui] : conservation directe -->
+<path d="M1615 704 L1710 704 L1710 890" fill="none" stroke="#405364" stroke-width="1.8"/>
+<rect x="1630" y="688" width="60" height="20" fill="#FFFFFF"/>
+<text x="1660" y="702" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[oui : actif]</text>
+
+<!-- NŒUD DE FUSION 2 (MergeNode 2) -->
+<path d="M1490 879 L1490 910 L1570 910" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<path d="M1710 890 L1710 910 L1610 910" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<polygon points="1590,897 1610,910 1590,923 1570,910" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
+
+<!-- Flux unique post-fusion vers exécution inférence (rejoint directement le rectangle en y=960) -->
+<path d="M1590 923 L1590 960" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- ========================================================================= -->
+<!-- RÉGION D'ACTIVITÉ INTERRUPTIBLE (Gestion de l'annulation asynchrone) -->
+<!-- ========================================================================= -->
+<rect x="1350" y="930" width="480" height="185" rx="16" fill="none" stroke="#BA3C2A" stroke-width="1.8" stroke-dasharray="6 4"/>
+<text x="1365" y="948" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">«interruptible activity region»</text>
+
+<rect x="1410" y="960" width="360" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1590" y="989" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
+  <tspan x="1590" dy="0">Exécuter inférence GPU asynchrone</tspan>
+  <tspan x="1590" dy="18">et diffuser progression / statut</tspan>
+</text>
+
+<!-- Décision 4 : Événement tâche ? -->
+<path d="M1590 1028 L1590 1055" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<polygon points="1590,1055 1615,1080 1590,1105 1565,1080" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
+<text x="1625" y="1075" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">Statut tâche ?</text>
+
+<!-- Branche 1 : [progression en cours] vers Backend puis SPA -->
+<path d="M1565 1080 L1280 1080" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="1350" y="1065" width="130" height="20" fill="#FFFFFF"/>
+<text x="1415" y="1079" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[en cours / progress]</text>
+
+<rect x="880" y="1046" width="400" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1080" y="1075" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="1080" dy="0">Relayer événements de progression</tspan>
+  <tspan x="1080" dy="17">via le flux asynchrone SSE</tspan>
+</text>
+
+<path d="M880 1080 L730 1080" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="475" y="1046" width="255" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="602" y="1075" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="602" dy="0">Afficher progression temps réel</tspan>
+  <tspan x="602" dy="17">et proposer l'annulation</tspan>
+</text>
+
+<!-- Action d'annulation intentionnelle Créateur -->
+<path d="M475 1080 L390 1080" fill="none" stroke="#BA3C2A" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<rect x="90" y="1046" width="300" height="68" rx="12" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.8"/>
+<text x="240" y="1075" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#BA3C2A">
+  <tspan x="240" dy="0">Demander l'annulation</tspan>
+  <tspan x="240" dy="17">de la génération en cours</tspan>
+</text>
+
+<!-- ======================================================== -->
+<!-- BRANCHE D'ANNULATION (LIGNE DÉDIÉE Y=1135 SANS COLLISION) -->
+<!-- ======================================================== -->
+<!-- Flux sortant de la demande d'annulation Créateur vers la SPA -->
+<path d="M240 1114 L240 1165 L460 1165" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Action React SPA : Émettre la requête REST d'annulation -->
+<rect x="460" y="1135" width="280" height="60" rx="12" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.8"/>
+<text x="600" y="1160" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#BA3C2A">
+  <tspan x="600" dy="0">POST /api/tasks/{task_id}/cancel</tspan>
+  <tspan x="600" dy="17">transmettre signal d'arrêt</tspan>
+</text>
+
+<!-- Transmission du signal d'annulation vers le Colab Worker via le tunnel -->
+<path d="M740 1165 L1350 1165" fill="none" stroke="#BA3C2A" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#arrow)"/>
+<rect x="970" y="1153" width="170" height="20" fill="#FFFFFF" stroke="#BA3C2A" stroke-width="0.8"/>
+<text x="1055" y="1167" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">signal annulation worker</text>
+
+<!-- Relais dans Couloir Worker vers l'action d'annulation -->
+<path d="M1350 1165 L1600 1165" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Arc d'interruption en zigzag ancré sur l'action d'inférence vers la sortie de région interruptible -->
+<path d="M 1770 994 L 1860 994 L 1845 1045 L 1865 1095 L 1840 1135" fill="none" stroke="#BA3C2A" stroke-width="2.2" marker-end="url(#zigzagArrow)"/>
+<rect x="1750" y="1055" width="105" height="20" fill="#FFFFFF"/>
+<text x="1802" y="1069" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">«interrupting»</text>
+
+<!-- Branche d'annulation Worker : Marquer annulée et libérer ressources -->
+<rect x="1600" y="1135" width="240" height="60" rx="12" fill="#FFF8E8" stroke="#8C6418" stroke-width="2"/>
+<text x="1720" y="1161" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="1720" dy="0">Marquer tâche annulée</tspan>
+  <tspan x="1720" dy="17">(libérer buffers VRAM)</tspan>
+</text>
+
+<!-- Sortie formelle vers FlowFinalNode pour annulation -->
+<path d="M1720 1195 L1720 1225" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<circle cx="1720" cy="1239" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<line x1="1710" y1="1229" x2="1730" y2="1249" stroke="#17212B" stroke-width="2"/>
+<line x1="1710" y1="1249" x2="1730" y2="1229" stroke="#17212B" stroke-width="2"/>
+
+<!-- ======================================================== -->
+<!-- BRANCHE NOMINALE : [complétée] (LIGNE Y=1220 DÉGAGÉE)     -->
+<!-- ======================================================== -->
+<!-- Branche 2 : [génération complétée] -> Rapatriement et écriture locale -->
+<path d="M1590 1105 L1590 1220" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="1520" y="1145" width="70" height="20" fill="#FFFFFF"/>
+<text x="1555" y="1159" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[complétée]</text>
+
+<rect x="1390" y="1220" width="220" height="60" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1500" y="1246" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="1500" dy="0">Exposer artefact média</tspan>
+  <tspan x="1500" dy="17">via tunnel sécurisé</tspan>
+</text>
+
+<!-- Flux vers Backend pour rapatriement et persistance -->
+<path d="M1390 1250 L1280 1250" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<!-- Action Backend : Rapatrier média et persister localement -->
+<rect x="880" y="1220" width="400" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1080" y="1247" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="1080" dy="0">Télécharger média, résoudre destination</tspan>
+  <tspan x="1080" dy="18">outputs/YYYY-MM-DD/ et persister métadonnées</tspan>
+</text>
+
+<!-- Nœud de Données / Datastore -->
+<rect x="940" y="1310" width="280" height="42" fill="#F4F8FA" stroke="#126A78" stroke-width="1.5"/>
+<text x="1080" y="1327" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">«datastore»</text>
+<text x="1080" y="1342" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">data/generations.json &amp; outputs/</text>
+
+<!-- Flux d'objet (ObjectFlow) pointant vers le datastore -->
+<path d="M1080 1288 L1080 1310" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+
+<!-- Flux vers SPA pour mise à jour galerie et affichage résultat -->
+<path d="M880 1250 L730 1250" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<rect x="475" y="1220" width="255" height="60" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="602" y="1246" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="602" dy="0">Actualiser galerie réactive</tspan>
+  <tspan x="602" dy="17">et notifier le créateur</tspan>
+</text>
+
+<!-- Flux vers Créateur (Consultation résultat) -->
+<path d="M475 1250 L390 1250" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+<rect x="130" y="1220" width="260" height="60" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="260" y="1246" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="260" dy="0">Visualiser média généré</tspan>
+  <tspan x="260" dy="17">dans la galerie locale</tspan>
+</text>
+
+<!-- Clôture formelle : Nœud final d'activité (ActivityFinalNode) -->
+<path d="M260 1280 L260 1318" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<circle cx="260" cy="1332" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+<circle cx="260" cy="1332" r="8" fill="#17212B" stroke="#17212B" stroke-width="1"/>
+
+<!-- Note d'ingénierie système -->
+<rect x="55" y="1378" width="1300" height="36" rx="4" fill="#F8FAFB" stroke="#C8D3DB" stroke-width="1"/>
+<text x="65" y="1401" font-family="Arial, sans-serif" font-size="12" fill="#596875">
+  Colab AI Studio · Gestion asynchrone : région d'activité interruptible avec signal d'annulation immédiat vers le worker et persistance de statut.
+</text>
+</svg>

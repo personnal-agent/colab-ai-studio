@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="980" viewBox="0 0 1680 980">
+  <defs>
+    <!-- Marqueur de transition standard UML -->
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#334155"/>
+    </marker>
+    <!-- Marqueur d'alerte OOM -->
+    <marker id="arrowRed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#DC2626"/>
+    </marker>
+    <!-- Ombre douce pour les conteneurs -->
+    <filter id="cardShadow" x="-3%" y="-3%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- Fond de toile -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#F8FAFC"/>
+
+  <!-- En-tête documentaire -->
+  <text x="48" y="44" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#0F172A">11 · Machine à États-Transitions — Model Swapper (VRAM GPU)</text>
+  <text x="48" y="72" font-family="Arial, sans-serif" font-size="14" fill="#475569">Cycle de vie dynamique du Model Swapper · Gestion de la mémoire VRAM GPU T4 16 Go, permutation à chaud et reprise sur saturation CUDA</text>
+  <line x1="48" y1="90" x2="1632" y2="90" stroke="#CBD5E1" stroke-width="1.5"/>
+
+  <!-- Cadre global de la Machine à États (Frame / Cartouche UML) -->
+  <rect x="48" y="105" width="1584" height="745" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.8" filter="url(#cardShadow)"/>
+
+  <!-- Onglet du Cartouche UML (stm context ModelSwapper) -->
+  <path d="M48 105 L260 105 L275 133 L48 133 Z" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1.5"/>
+  <text x="60" y="124" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#1E293B">stm [context ModelSwapper]</text>
+
+  <!-- ==================== PSEUDO-ÉTAT INITIAL ==================== -->
+  <circle cx="100" cy="380" r="10" fill="#0F172A"/>
+  <path d="M110 380 L180 380" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="145" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">/ initialiser()</text>
+
+  <!-- ==================== ÉTAT 1 : EnVeilleVRAMLibre ==================== -->
+  <g id="state-EnVeilleVRAMLibre">
+    <rect x="180" y="300" width="310" height="155" rx="16" fill="#F0FDF4" stroke="#16A34A" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="335" y="328" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#14532D">EnVeilleVRAMLibre</text>
+    <line x1="180" y1="340" x2="490" y2="340" stroke="#86EFAC" stroke-width="1.5"/>
+    <text x="195" y="362" font-family="Courier New, monospace" font-size="12" fill="#166534">entry / active_model = None</text>
+    <text x="195" y="384" font-family="Courier New, monospace" font-size="12" fill="#166534">entry / vram_allouee_go = 0.0</text>
+    <text x="195" y="406" font-family="Courier New, monospace" font-size="12" fill="#166534">entry / pipeline_prete = False</text>
+    <text x="195" y="428" font-family="Courier New, monospace" font-size="12" fill="#166534">do / attendreRequeteInference()</text>
+  </g>
+
+  <!-- Transition EnVeilleVRAMLibre -> ChargementEnCours -->
+  <path d="M490 380 L650 380" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="502" y="356" width="136" height="20" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="570" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#0F172A">requeteRecue(m) / reserver()</text>
+
+  <!-- ==================== ÉTAT 2 : ChargementEnCours ==================== -->
+  <g id="state-ChargementEnCours">
+    <rect x="650" y="300" width="330" height="155" rx="16" fill="#F8FAFC" stroke="#0284C7" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="815" y="328" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#0369A1">ChargementEnCours</text>
+    <line x1="650" y1="340" x2="980" y2="340" stroke="#BAE6FD" stroke-width="1.5"/>
+    <text x="665" y="362" font-family="Courier New, monospace" font-size="12" fill="#075985">entry / publierProgression(0%)</text>
+    <text x="665" y="384" font-family="Courier New, monospace" font-size="12" fill="#075985">do / transfererPoidsVRAM(m)</text>
+    <text x="665" y="406" font-family="Courier New, monospace" font-size="12" fill="#075985">do / initialiserPipeline(m)</text>
+    <text x="665" y="428" font-family="Courier New, monospace" font-size="12" fill="#075985">exit / set_active_model(m)</text>
+  </g>
+
+  <!-- Transition ChargementEnCours -> ModeleActif -->
+  <path d="M980 380 L1150 380" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="998" y="356" width="134" height="20" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="1065" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#0F172A">chargementAcheve / pret()</text>
+
+  <!-- ==================== ÉTAT 3 : ModeleActif ==================== -->
+  <!-- ==================== ÉTAT 3 : ModeleActif ==================== -->
+  <g id="state-ModeleActif">
+    <rect x="1150" y="295" width="410" height="205" rx="16" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="1355" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#1D4ED8">ModeleActif</text>
+    <line x1="1150" y1="336" x2="1560" y2="336" stroke="#BFDBFE" stroke-width="1.5"/>
+    <text x="1165" y="358" font-family="Courier New, monospace" font-size="12" fill="#1E40AF">entry / pipeline_prete = True; armerTimer()</text>
+    <text x="1165" y="380" font-family="Courier New, monospace" font-size="12" fill="#1E40AF">do / executerInferenceGPU()</text>
+    <text x="1165" y="402" font-family="Courier New, monospace" font-size="11.5" font-weight="700" fill="#1E3A8A">inferenceAchevee / gpu_idle = True; rearmerTimer()</text>
+    <text x="1165" y="424" font-family="Courier New, monospace" font-size="11.5" font-weight="700" fill="#1E3A8A">requeteRecue(m) [m == active_model] /</text>
+    <text x="1178" y="444" font-family="Courier New, monospace" font-size="11.5" font-weight="700" fill="#1E3A8A">  reutiliserPipeline(); rearmerTimer()</text>
+  </g>
+
+  <!-- ==================== ÉTAT 4 : EnRecuperationSaturation ==================== -->
+  <g id="state-EnRecuperationSaturation">
+    <rect x="750" y="145" width="410" height="115" rx="16" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="955" y="172" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#991B1B">EnRecuperationSaturation</text>
+    <line x1="750" y1="182" x2="1160" y2="182" stroke="#FECACA" stroke-width="1.5"/>
+    <text x="765" y="202" font-family="Courier New, monospace" font-size="12" fill="#B91C1C">entry / log_error("CUDA Out of Memory")</text>
+    <text x="765" y="222" font-family="Courier New, monospace" font-size="12" fill="#B91C1C">do / purgeVRAMUrgence(); gc.collect()</text>
+    <text x="765" y="242" font-family="Courier New, monospace" font-size="12" fill="#B91C1C">exit / notifierEchecSaturation()</text>
+  </g>
+
+  <!-- Transition d'erreur OOM depuis ChargementEnCours -->
+  <path d="M815 300 L815 260" fill="none" stroke="#DC2626" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <rect x="700" y="270" width="110" height="22" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
+  <text x="755" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="700" fill="#DC2626">erreurChargement</text>
+  <text x="755" y="289" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#B91C1C">[exception OOM]</text>
+
+  <!-- Transition d'erreur OOM depuis ModeleActif (Cartouche décollée de 10px vers le haut) -->
+  <path d="M1250 295 L1250 195 L1160 195" fill="none" stroke="#DC2626" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <rect x="1175" y="198" width="150" height="24" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
+  <text x="1250" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#DC2626">erreurInference [CUDA OOM]</text>
+  <text x="1250" y="219" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#B91C1C">/ interrompreTache()</text>
+
+  <!-- Transition de sortie de EnRecuperationSaturation vers EnVeilleVRAMLibre (garde épurée) -->
+  <path d="M750 200 L335 200 L335 300" fill="none" stroke="#DC2626" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="440" y="188" width="200" height="24" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
+  <text x="540" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#991B1B">recuperationAchevee</text>
+  <text x="540" y="209" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#B91C1C">/ reinitialiserContexte()</text>
+
+  <!-- ==================== TRANSITIONS ModeleActif -> EvictionVRAMEnCours ==================== -->
+  <!-- Transition 1 : Déclenchée par une nouvelle requête pour un modèle différent -->
+  <path d="M1410 500 L1410 600 L1060 600" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1110" y="583" width="265" height="26" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="1242" y="600" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0F172A">requeteRecue(m) [m != active_model] / demarrerEviction()</text>
+
+  <!-- Transition 2 : Déclenchée par l'expiration du timer d'inactivité (protégée par la garde d'inactivité GPU) -->
+  <path d="M1490 500 L1490 655 L1060 655" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1080" y="642" width="370" height="26" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="1265" y="659" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#475569">after(delaiInactivite) [gpu_idle == true] / demarrerEviction()</text>
+
+  <!-- ==================== ÉTAT 5 : EvictionVRAMEnCours ==================== -->
+  <g id="state-EvictionVRAMEnCours">
+    <rect x="710" y="560" width="350" height="150" rx="16" fill="#FFFBEB" stroke="#D97706" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="885" y="588" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#B45309">EvictionVRAMEnCours</text>
+    <line x1="710" y1="600" x2="1060" y2="600" stroke="#FDE68A" stroke-width="1.5"/>
+    <text x="725" y="622" font-family="Courier New, monospace" font-size="12" fill="#92400E">entry / del pipeline</text>
+    <text x="725" y="644" font-family="Courier New, monospace" font-size="12" fill="#92400E">entry / active_model = None</text>
+    <text x="725" y="666" font-family="Courier New, monospace" font-size="12" fill="#92400E">do / gc.collect()</text>
+    <text x="725" y="688" font-family="Courier New, monospace" font-size="12" fill="#92400E">do / torch.cuda.empty_cache()</text>
+  </g>
+
+  <!-- Transition EvictionVRAMEnCours vers Pseudo-état de Choix -->
+  <path d="M710 635 L580 635" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="600" y="618" width="95" height="18" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="647" y="631" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#0F172A">evictionTerminee</text>
+
+  <!-- ==================== PSEUDO-ÉTAT DE CHOIX UML (Épuré sans libellé parasite) ==================== -->
+  <g id="pseudostate-choice">
+    <!-- Losange vide officiel UML -->
+    <polygon points="560,635 540,615 520,635 540,655" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+  </g>
+
+  <!-- Branche 1 du Choix : Vers ChargementEnCours (nouvelle requête en attente) -->
+  <path d="M540 615 L540 435 L650 435" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="425" y="515" width="220" height="28" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="535" y="528" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0369A1">[nouvelle_requete_disponible]</text>
+  <text x="535" y="539" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#075985">/ preparerChargement(req.model_id)</text>
+
+  <!-- Branche 2 du Choix : Vers EnVeilleVRAMLibre (garde épurée en [else]) -->
+  <path d="M520 635 L260 635 L260 455" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="320" y="620" width="120" height="28" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="380" y="633" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#166534">[else]</text>
+  <text x="380" y="644" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#14532D">/ passerEnVeille()</text>
+
+  <!-- ==================== PSEUDO-ÉTAT TERMINAL / FINAL ==================== -->
+  <path d="M220 455 L220 540 L160 540" fill="none" stroke="#334155" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="165" y="490" width="110" height="24" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="220" y="502" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#0F172A">arreterWorker()</text>
+  <text x="220" y="511" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#475569">/ detruire()</text>
+
+  <!-- Œil de bœuf (FinalState) -->
+  <circle cx="140" cy="540" r="13" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+  <circle cx="140" cy="540" r="8" fill="#0F172A"/>
+
+  <!-- ==================== CADRE DE SYNTHÈSE D'INGÉNIERIE GPU ==================== -->
+  <rect x="65" y="735" width="1550" height="100" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+
+  <text x="80" y="756" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0F172A">Principes d'ingénierie et gestion de la mémoire GPU (VRAM T4 16 Go) :</text>
+
+  <text x="80" y="776" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
+    <tspan font-weight="700" fill="#0369A1">1. Variable de contexte :</tspan> L'identité du modèle actif est stockée dans <tspan font-family="Courier New, monospace">active_model: Optional[str]</tspan> (None, SDXL, Wan2.1, etc.). Le swapper évite tout rechargement redondant lorsque le modèle demandé est déjà en mémoire.
+  </text>
+  <text x="80" y="796" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
+    <tspan font-weight="700" fill="#D97706">2. Permutation et temporisation :</tspan> En sortie d'éviction, le choix arbitre immédiatement entre le chargement d'une nouvelle requête en attente (<tspan font-weight="600">[nouvelle_requete_disponible]</tspan>) ou la libération en veille (<tspan font-weight="600">[else]</tspan>).
+  </text>
+  <text x="80" y="816" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
+    <tspan font-weight="700" fill="#DC2626">3. Résilience et purge CUDA OOM :</tspan> L'état autonome <tspan font-weight="600">EnRecuperationSaturation</tspan> intercepte toute saturation mémoire, force un <tspan font-family="Courier New, monospace">torch.cuda.empty_cache()</tspan>, purge les tenseurs orphelins et réinitialise le worker en veille.
+  </text>
+
+  <!-- Mentions de bas de page -->
+  <text x="48" y="962" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Colab AI Studio · Gestion de l'allocation VRAM et permutation dynamique des pipelines d'inférence (Worker Google Colab)</text>
+</svg>

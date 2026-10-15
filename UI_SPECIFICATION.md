@@ -108,7 +108,7 @@ La galerie présente les créations générées sous forme de cartes standardis�
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ [ Image ]  [ Video ]  [ Lip sync ]  [ Upscaling ]                                [@ Brand Kit] │
+│ [ Image ]  [ Video ]  [ Lip sync ]  [ Upscaling ]  [ LLM ]                       [@ Brand Kit] │
 ├────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ [Start frame]  [End frame]  [Image refs]  [Video refs]  [Audio refs]                           │
 │ Describe your video or reference by using @...                                                 │
@@ -118,7 +118,15 @@ La galerie présente les créations générées sous forme de cartes standardis�
 ```
 
 ### 6.1. Onglets de Catégorie & Action de Marque
-- **Onglets de Mode** : `Image` (images fixes), `Video` (fentes temporelles et dynamique), `Lip sync` (visage + voix), `Upscaling` (super-résolution).
+- **Onglets de Mode** : `Image` (images fixes), `Video` (fentes temporelles et dynamique), `Lip sync` (visage + voix), `Upscaling` (super-résolution), **`LLM`** (modèles de langage, génération textuelle et assistance).
+  - *Comportement du mode `LLM`* :
+    - **Activation directe** : Un clic sur l'onglet `[ LLM ]` bascule instantanément l'interface en mode textuel.
+    - **Reconfiguration dynamique** : Masquage automatique des contrôles multimédias spécifiques (ingrédients, première/dernière image, formats ratio, résolutions vidéo, curseur de durée, commutateur audio).
+    - **Filtrage automatique du sélecteur de modèle** : La pilule `[🎬 MODEL-NAME]` filtre son catalogue pour ne présenter que les modèles de langage disponibles (ex. `Llama-3-8B`, `Mistral-7B`, `Qwen-2.5-7B`).
+    - **Zone de dialogue & streaming** : Le dock s'adapte en vue conversationnelle avec rendu Markdown, historique des échanges et streaming mot à mot par Server-Sent Events (SSE).
+    - **Bouton Pilule `@ Brand Kit` maintenu** : Permet d'injecter la tonalité, la charte éditoriale et les consignes de marque directement dans le contexte du LLM.
+    - **Bandeau d'intégration API** : Rappel de l'endpoint local compatible OpenAI (`http://localhost:8000/v1/chat/completions`).
+    - **Retour au studio média** : Un simple clic sur l'un des 4 autres onglets (`Image`, `Video`, `Lip sync`, `Upscaling`) restaure instantanément l'affichage du studio de création multimédia et ses paramètres sans perte de contexte.
 - **Bouton Pilule `@ Brand Kit`** : Insertion d'une identité de marque active dans le prompt.
   - *Premier usage (aucun kit)* : Popover avec message *« Aucun brand kit. Définissez votre marque une fois, puis utilisez-la pour générer. »* et bouton *« Create brand kit »*.
   - *Kits existants* : Popover ancré trié par `lastUsedAt`. Survol : carte d'aperçu dynamique (logo, nom, compteur d'actifs, nuancier).

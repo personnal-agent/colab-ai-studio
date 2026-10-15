@@ -1,0 +1,226 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1640" height="1200" viewBox="0 0 1640 1200">
+  <defs>
+    <!-- Flèche synchrone : triangle plein -->
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#2C3E50"/>
+    </marker>
+    <!-- Flèche asynchrone / retour : pointe ouverte en V -->
+    <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#2C3E50" stroke-width="1.6"/>
+    </marker>
+    <!-- Flèche d'annulation / signal interruption (rouge sombre) -->
+    <marker id="abortArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#A93226" stroke-width="1.6"/>
+    </marker>
+  </defs>
+
+  <!-- Fond général blanc pur -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- Cadre d'interaction de séquence (sd) -->
+  <rect x="25" y="25" width="1590" height="1150" fill="none" stroke="#2C3E50" stroke-width="1.5"/>
+  <path d="M25 25 L650 25 L650 56 L630 82 L25 82 Z" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.5"/>
+  <text x="40" y="48" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#126A78">sd</text>
+  <text x="70" y="48" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C3E50">Séquence — Proxy LLM Streaming (Inférence distante Colab &amp; Annulation AbortSignal)</text>
+  <text x="40" y="70" font-family="Arial, sans-serif" font-size="12" font-style="italic" fill="#596875">Colab AI Studio · Architecture Proxy OpenAI-compatible, streaming SSE et gestion d'interruption propre</text>
+
+  <!-- ========================================== -->
+  <!-- LIGNES DE VIE (LIFELINES CONFORMES UML)    -->
+  <!-- ========================================== -->
+
+  <!-- 1. Acteur Système : «system» client : ClientAPI (x = 130) -->
+  <rect x="35" y="105" width="190" height="48" rx="4" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.8"/>
+  <text x="130" y="123" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#596875">«system»</text>
+  <text x="130" y="141" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C3E50">client : ClientAPI</text>
+  <line x1="130" y1="153" x2="130" y2="1020" stroke="#7F8C8D" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- Note UML descriptive attachée à l'acteur système -->
+  <rect x="25" y="162" width="210" height="34" rx="3" fill="#FFFDE7" stroke="#F1C40F" stroke-width="1"/>
+  <text x="35" y="176" font-family="Arial, sans-serif" font-size="10" fill="#7D6608">Consommateur : Client tiers (Cursor,</text>
+  <text x="35" y="189" font-family="Arial, sans-serif" font-size="10" fill="#7D6608">Continue) ou SPA locale React</text>
+
+  <!-- 2. Instance : :FastAPIBackend (x = 440) -->
+  <rect x="350" y="105" width="180" height="48" rx="4" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.8"/>
+  <text x="440" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C3E50">:FastAPIBackend</text>
+  <text x="440" y="143" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#596875">«proxy local / SSE»</text>
+  <line x1="440" y1="153" x2="440" y2="1020" stroke="#7F8C8D" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 3. Instance : :ColabWorker (x = 790) -->
+  <rect x="700" y="105" width="180" height="48" rx="4" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.8"/>
+  <text x="790" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C3E50">:ColabWorker</text>
+  <text x="790" y="143" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#596875">«serveur GPU distant»</text>
+  <line x1="790" y1="153" x2="790" y2="1020" stroke="#7F8C8D" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 4. Instance : :ModelSwapper (x = 1130) -->
+  <rect x="1040" y="105" width="180" height="48" rx="4" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.8"/>
+  <text x="1130" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C3E50">:ModelSwapper</text>
+  <text x="1130" y="143" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#596875">«gestionnaire VRAM»</text>
+  <line x1="1130" y1="153" x2="1130" y2="1020" stroke="#7F8C8D" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 5. Instance : :InferenceEngine (x = 1450) -->
+  <rect x="1360" y="105" width="180" height="48" rx="4" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.8"/>
+  <text x="1450" y="126" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C3E50">:InferenceEngine</text>
+  <text x="1450" y="143" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#596875">«pipeline LLM actif»</text>
+  <line x1="1450" y1="153" x2="1450" y2="1020" stroke="#7F8C8D" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- ========================================== -->
+  <!-- BARRES D'ACTIVATION (EXECUTION SPECIFICATIONS) -->
+  <!-- ========================================== -->
+  <!-- ClientAPI activation -->
+  <rect x="123" y="210" width="14" height="780" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+  <!-- FastAPIBackend activation -->
+  <rect x="433" y="210" width="14" height="780" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+  <!-- ColabWorker activation -->
+  <rect x="783" y="240" width="14" height="735" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+  <!-- ModelSwapper activation -->
+  <rect x="1123" y="270" width="14" height="55" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+  <!-- InferenceEngine activation -->
+  <rect x="1443" y="355" width="14" height="600" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+
+  <!-- ========================================== -->
+  <!-- PHASE 1 : INITIALISATION & HANDSHAKE       -->
+  <!-- ========================================== -->
+
+  <!-- 1.1 POST /v1/chat/completions (Client -> Backend) -->
+  <path d="M137 210 L433 210" fill="none" stroke="#2C3E50" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="155" y="193" width="260" height="16" fill="#FFFFFF"/>
+  <text x="285" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#2C3E50">1: POST /v1/chat/completions (requestBody, stream=true)</text>
+
+  <!-- 1.2 forwardStreamRequest(payload) (Backend -> Worker) -->
+  <path d="M447 240 L783 240" fill="none" stroke="#2C3E50" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="495" y="223" width="240" height="16" fill="#FFFFFF"/>
+  <text x="615" y="235" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#2C3E50">2: forwardStreamRequest(payload)</text>
+
+  <!-- 1.3 ensureLoaded(modelId) (Worker -> ModelSwapper) -->
+  <path d="M797 270 L1123 270" fill="none" stroke="#2C3E50" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="850" y="253" width="210" height="16" fill="#FFFFFF"/>
+  <text x="955" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#2C3E50">3: ensureLoaded(modelId)</text>
+
+  <!-- 1.4 modelReady (ModelSwapper -> Worker retour) -->
+  <path d="M1123 320 L797 320" fill="none" stroke="#2C3E50" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="880" y="303" width="150" height="16" fill="#FFFFFF"/>
+  <text x="955" y="315" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">3.1: modelReady</text>
+
+  <!-- 1.5 startInference(messages, genParams) (Worker -> InferenceEngine) -->
+  <path d="M797 355 L1443 355" fill="none" stroke="#2C3E50" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="1000" y="338" width="240" height="16" fill="#FFFFFF"/>
+  <text x="1120" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#2C3E50">4: startInference(messages, genParams)</text>
+
+  <!-- 1.6 HTTP 200 chunked/stream (Worker -> Backend retour) -->
+  <path d="M783 390 L447 390" fill="none" stroke="#2C3E50" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="500" y="373" width="225" height="16" fill="#FFFFFF"/>
+  <text x="615" y="385" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">4.1: HTTP 200 (Transfer-Encoding: chunked)</text>
+
+  <!-- 1.7 HTTP 200 SSE stream opened (Backend -> Client retour) -->
+  <path d="M433 420 L137 420" fill="none" stroke="#2C3E50" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="180" y="403" width="210" height="16" fill="#FFFFFF"/>
+  <text x="285" y="415" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">4.2: HTTP 200 (Content-Type: text/event-stream)</text>
+
+  <!-- ========================================== -->
+  <!-- PHASE 2 : FRAGMENT ALT EXHAUSTIF (UML 2.5) -->
+  <!-- ========================================== -->
+
+  <!-- Fragment alt englobant pour l'arbitrage nominal vs annulation -->
+  <rect x="75" y="450" width="1455" height="540" fill="none" stroke="#126A78" stroke-width="1.8"/>
+  <!-- Cartouche alt -->
+  <path d="M75 450 L140 450 L140 472 L128 485 L75 485 Z" fill="#E8F4F5" stroke="#126A78" stroke-width="1.5"/>
+  <text x="96" y="471" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">alt</text>
+  <text x="155" y="470" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">[flux nominal : client connecté]</text>
+
+  <!-- ========================================== -->
+  <!-- BRANCHE 1 : FLUX NOMINAL (LOOP + CLÔTURE)  -->
+  <!-- ========================================== -->
+
+  <!-- Sous-fragment loop pour l'émission continue des tokens -->
+  <rect x="95" y="485" width="1415" height="135" fill="none" stroke="#126A78" stroke-width="1.4"/>
+  <!-- Cartouche loop -->
+  <path d="M95 485 L160 485 L160 505 L148 515 L95 515 Z" fill="#F0F9FA" stroke="#126A78" stroke-width="1.2"/>
+  <text x="114" y="503" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#126A78">loop</text>
+  <text x="175" y="502" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">[tant que génération active et tokens disponibles]</text>
+
+  <!-- 2.1 yieldTokenChunk (InferenceEngine -> Worker) -->
+  <path d="M1443 530 L797 530" fill="none" stroke="#2C3E50" stroke-width="1.5" marker-end="url(#openArrow)"/>
+  <rect x="1000" y="513" width="240" height="16" fill="#FFFFFF"/>
+  <text x="1120" y="525" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#2C3E50">5: yieldTokenChunk(deltaToken, finishReason=null)</text>
+
+  <!-- 2.2 chunk HTTP/1.1 (Worker -> Backend) -->
+  <path d="M783 560 L447 560" fill="none" stroke="#2C3E50" stroke-width="1.5" marker-end="url(#openArrow)"/>
+  <rect x="475" y="543" width="280" height="16" fill="#FFFFFF"/>
+  <text x="615" y="555" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#2C3E50">6: httpChunk("data: {\"choices\": [{\"delta\": {\"content\": \"...\"}}]}")</text>
+
+  <!-- 2.3 pushSSE (Backend -> Client) -->
+  <path d="M433 590 L137 590" fill="none" stroke="#2C3E50" stroke-width="1.5" marker-end="url(#openArrow)"/>
+  <rect x="145" y="573" width="280" height="16" fill="#FFFFFF"/>
+  <text x="285" y="585" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#2C3E50">7: sseEvent("data: {\"choices\": [{\"delta\": {\"content\": \"...\"}}]}")</text>
+
+  <!-- Clôture nominale après le loop de streaming -->
+  <!-- 2.4 finishStream (InferenceEngine -> Worker) -->
+  <path d="M1443 640 L797 640" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#openArrow)"/>
+  <rect x="1020" y="623" width="200" height="16" fill="#FFFFFF"/>
+  <text x="1120" y="635" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#2C3E50">8: finishStream(finishReason="stop")</text>
+
+  <!-- 2.5 data: [DONE] (Worker -> Backend) -->
+  <path d="M783 668 L447 668" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#openArrow)"/>
+  <rect x="525" y="651" width="180" height="16" fill="#FFFFFF"/>
+  <text x="615" y="663" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#2C3E50">9: httpChunk("data: [DONE]")</text>
+
+  <!-- 2.6 data: [DONE] (Backend -> Client) -->
+  <path d="M433 695 L137 695" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#openArrow)"/>
+  <rect x="200" y="678" width="170" height="16" fill="#FFFFFF"/>
+  <text x="285" y="690" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#2C3E50">10: sseEvent("data: [DONE]")</text>
+
+  <!-- Fermeture propre de la réponse SSE -->
+  <path d="M433 720 L137 720" fill="none" stroke="#2C3E50" stroke-width="1.2" stroke-dasharray="4 4" marker-end="url(#openArrow)"/>
+  <rect x="220" y="708" width="130" height="14" fill="#FFFFFF"/>
+  <text x="285" y="718" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">close SSE stream</text>
+
+  <!-- ========================================== -->
+  <!-- BRANCHE 2 : INTERRUPTION / ABORTSIGNAL     -->
+  <!-- ========================================== -->
+
+  <!-- Séparateur horizontal UML alt entre opérandes -->
+  <line x1="75" y1="745" x2="1530" y2="745" stroke="#A93226" stroke-width="1.6" stroke-dasharray="8 6"/>
+  <text x="95" y="768" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#A93226">[else : interruption client en cours de flux (request.is_disconnected() == true ou signal client Abort)]</text>
+
+  <!-- Signal d'interruption : Client ferme la connexion ou timeout -->
+  <path d="M137 800 L433 800" fill="none" stroke="#A93226" stroke-width="1.6" marker-end="url(#abortArrow)"/>
+  <rect x="175" y="784" width="220" height="15" fill="#FFF2F2"/>
+  <text x="285" y="795" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#A93226">abort(reason="client_disconnect")</text>
+
+  <!-- Backend propage l'annulation vers Colab Worker -->
+  <path d="M447 830 L783 830" fill="none" stroke="#A93226" stroke-width="1.6" marker-end="url(#abortArrow)"/>
+  <rect x="500" y="814" width="230" height="15" fill="#FFF2F2"/>
+  <text x="615" y="825" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#A93226">POST /v1/chat/cancel (requestId)</text>
+
+  <!-- Worker interrompt le moteur d'inférence -->
+  <path d="M797 860 L1443 860" fill="none" stroke="#A93226" stroke-width="1.6" marker-end="url(#abortArrow)"/>
+  <rect x="1000" y="844" width="240" height="15" fill="#FFF2F2"/>
+  <text x="1120" y="855" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#A93226">abortGeneration() [libération VRAM/GPU]</text>
+
+  <!-- Libération des sockets & clôture sans émettre [DONE] -->
+  <path d="M1443 890 L797 890" fill="none" stroke="#A93226" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#openArrow)"/>
+  <rect x="1045" y="875" width="150" height="15" fill="#FFF2F2"/>
+  <text x="1120" y="886" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#A93226">generationCancelled</text>
+
+  <path d="M783 920 L447 920" fill="none" stroke="#A93226" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#openArrow)"/>
+  <rect x="505" y="905" width="220" height="15" fill="#FFF2F2"/>
+  <text x="615" y="916" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#A93226">200 OK (socket fermée, VRAM libérée)</text>
+
+  <text x="285" y="955" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#A93226">Rupture immédiate de la boucle, fermeture socket côté Backend sans émettre [DONE]</text>
+
+  <!-- ========================================== -->
+  <!-- PRINCIPES D'INGÉNIERIE DU PROXY LLM       -->
+  <!-- ========================================== -->
+  <rect x="50" y="1035" width="1540" height="110" rx="5" fill="#F8FAFC" stroke="#BDC3C7" stroke-width="1.2"/>
+  <text x="65" y="1055" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#2C3E50">Principes d'ingénierie du proxy LLM et flux streaming :</text>
+
+  <text x="65" y="1075" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#126A78">• Double consommation :</text>
+  <text x="210" y="1075" font-family="Arial, sans-serif" font-size="11" fill="#2C3E50">Le point d'accès standard /v1/chat/completions dessert indifféremment un client API externe (IDE, scripts) ou l'interface web locale.</text>
+
+  <text x="65" y="1098" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#A93226">• Gestion d'interruption :</text>
+  <text x="220" y="1098" font-family="Arial, sans-serif" font-size="11" fill="#2C3E50">Structure alt exhaustive isolant le flux nominal complet (boucle de tokens et clôture [DONE]) de la branche d'annulation (request.is_disconnected() == true ou signal client Abort) avec libération GPU sans envoi sur socket rompue.</text>
+
+  <text x="65" y="1121" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#2C3E50">• Déport GPU distant :</text>
+  <text x="200" y="1121" font-family="Arial, sans-serif" font-size="11" fill="#596875">Relais asynchrone des blocs textuels générés et propagation du signal d'annulation vers le GPU distant via <tspan font-style="italic">POST /v1/chat/cancel</tspan>.</text>
+
+</svg>
