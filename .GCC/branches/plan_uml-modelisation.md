@@ -18,9 +18,11 @@ $ grep -c "^|" .modelisation/logiciel/README.md
 ```
 
 ### Step 2: Créer le README et les diagrammes SVG
+
 - [x] **Action**: Créer `.modelisation/logiciel/README.md` et les diagrammes choisis dans `.modelisation/logiciel/diagrammes/`.
 - [x] **Verify**: Vérifier que les vues couvrent acteurs, responsabilités, échanges et persistance sans redondance; relire les sources et confirmer que les comportements figurent comme spécifiés.
 - **Verification Proof**:
+
 ```text
 $ ls -la .modelisation/logiciel/diagrammes/*.svg | head -n 4
 -rw-rw-r-- 1 omni omni 15413 11 oct. 14:20 .modelisation/logiciel/diagrammes/01-perimetre-fonctionnel.svg
@@ -30,9 +32,11 @@ $ ls -la .modelisation/logiciel/diagrammes/*.svg | head -n 4
 ```
 
 ### Step 3: Rendre et vérifier les PNG
+
 - [x] **Action**: Convertir chaque SVG en PNG apparié via le convertisseur SVG/PNG local disponible; ajuster les règles de persistance / gitignore selon directives.
 - [x] **Verify**: Contrôler l’existence et la taille non nulle de chaque paire, les dimensions et le format; inspecter chaque image rendue individuellement.
 - **Verification Proof**:
+
 ```text
 $ ls -lh .modelisation/logiciel/diagrammes/*.png | head -n 4
 -rw-rw-r-- 1 omni omni 247K 11 oct. 15:10 .modelisation/logiciel/diagrammes/01-perimetre-fonctionnel.png
@@ -42,18 +46,22 @@ $ ls -lh .modelisation/logiciel/diagrammes/*.png | head -n 4
 ```
 
 ### Step 4: Revue contradictoire rigoureuse multi-agents & remédiation en boucle
+
 - [x] **Action**: Déployer un workflow multi-agents (`remediation-uml-worker-auditor-loop`) évaluant l'intégralité des artefacts face aux exigences du système Colab AI Studio. Boucler Worker -> Reviewer jusqu'à validation sans réserve sur l'ensemble des artefacts.
 - [x] **Verify**: Contrôler que 100% des anomalies sont résolues, que les 11 SVG sont valides et que les 11 PNG ont été régénérés et contrôlés.
 - **Verification Proof**:
+
 ```text
 $ python3 -c 'import xml.etree.ElementTree as ET, glob; files=sorted(glob.glob(".modelisation/logiciel/diagrammes/*.svg")); [ET.parse(f) for f in files]; print(f"Validated {len(files)}/11 SVGs: 100% valid XML")'
 Validated 11/11 SVGs: 100% valid XML
 ```
 
 ### Step 5: Vérifier le livrable et préserver le dépôt
+
 - [x] **Action**: Contrôler l'état Git, les formats et l'intégrité de l'arbre de travail.
 - [x] **Verify**: Aucun fichier système sensible touché, changements préexistants intacts.
 - **Verification Proof**:
+
 ```text
 $ git status --short .modelisation/logiciel/
  M .modelisation/logiciel/README.md

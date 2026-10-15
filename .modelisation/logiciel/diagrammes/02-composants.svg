@@ -80,7 +80,7 @@
 <text x="510" y="664" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">IChatCompletions</text>
 <text x="510" y="703" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">POST /v1/chat/completions</text>
 
-<!-- 3. SOUS-SYSTÈME BACKEND LOCAL FASTAPI (7 PARTIES CONFORMES PLAFOND MILLER) -->
+<!-- 3. SOUS-SYSTÈME BACKEND LOCAL FASTAPI (7 COMPOSANTS INTERNES MODULAIRES) -->
 <rect x="610" y="145" width="720" height="740" rx="8" fill="#FBFCFD" stroke="#126A78" stroke-width="2"/>
 <text x="635" y="178" text-anchor="start" font-family="Arial, sans-serif" font-size="18" font-weight="700" fill="#126A78">«subsystem» Backend local FastAPI</text>
 <text x="635" y="198" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="400" fill="#596875">Serveur asynchrone Python 3.10+ · Persistance documentaire atomique &amp; gestionnaire médias</text>

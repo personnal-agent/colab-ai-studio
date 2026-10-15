@@ -64,11 +64,11 @@ Scan de conformité textuelle diags 09-11 -> 0 résidu externe
 - [x] **Verify**: Relecture complète et scan de conformité.
 - **Verification Proof**:
 ```text
-$ python3 -c 'import re; txt = open(".modelisation/logiciel/README.md").read(); banned = ["OMG", "IEEE", "MIAGE", "Traor", "ISO", "CMMI"]; matches = [b for b in banned if re.search(r"\b" + b, txt, re.IGNORECASE)]; print("Scan .modelisation/logiciel/README.md:\nBanned patterns checked:", len(banned), "\nViolations found:", matches, "\nStatus: 100% CLEAN - 0 external/academic references detected")'
+$ python3 -c 'import re; txt = open(".modelisation/logiciel/README.md").read(); banned = ["OMG", "IEEE", "MIAGE", "Traor", "ISO", "CMMI", "Miller", "Demeter", "Déméter"]; matches = [b for b in banned if re.search(r"\b" + b, txt, re.IGNORECASE)]; print("Scan .modelisation/logiciel/README.md:\nBanned patterns checked:", len(banned), "\nViolations found:", matches, "\nStatus: 100% CLEAN - 0 external/academic/theory references detected")'
 Scan .modelisation/logiciel/README.md:
-Banned patterns checked: 6
+Banned patterns checked: 9
 Violations found: []
-Status: 100% CLEAN - 0 external/academic references detected
+Status: 100% CLEAN - 0 external/academic/theory references detected
 ```
 
 ### Step 6: Contrôle qualité global et validation zéro résidu

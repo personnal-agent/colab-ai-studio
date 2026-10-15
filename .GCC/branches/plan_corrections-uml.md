@@ -22,8 +22,8 @@ Dimensions: 1440x1100 -> PNG valide
 - **Verification Proof**:
 ```text
 XML OK
--rw-rw-r-- 1 omni omni 355K 11 oct. 16:13 .modelisation/logiciel/diagrammes/02-composants.png
-Canal Frontend <-> Backend élargi à 190px, 7 parties dans Backend (Plafond de Miller).
+-rw-rw-r-- 1 omni omni 346K 15 oct. 23:04 .modelisation/logiciel/diagrammes/02-composants.png
+Canal Frontend <-> Backend élargi à 190px, 7 parties dans Backend (modularisation bornée).
 ```
 
 ### Step 3: Corriger le Diagramme 03 (Déploiement) & Régénérer son PNG
@@ -72,8 +72,8 @@ Messages métier de domaine, persistance alignée sur :MediaFileStore.
 - **Verification Proof**:
 ```text
 XML OK
--rw-rw-r-- 1 omni omni 285K 11 oct. 16:25 .modelisation/logiciel/diagrammes/07-sequence-brand-context.png
-Médiation FastAPI respectée, Loi de Déméter appliquée, auto-appels protégés.
+-rw-rw-r-- 1 omni omni 280K 15 oct. 23:04 .modelisation/logiciel/diagrammes/07-sequence-brand-context.png
+Médiation FastAPI respectée, découplage direct appliqué, auto-appels protégés.
 ```
 
 ### Step 8: Corriger le Diagramme 08 (Séquence Proxy LLM) & Régénérer son PNG
@@ -82,8 +82,8 @@ Médiation FastAPI respectée, Loi de Déméter appliquée, auto-appels protég�
 - **Verification Proof**:
 ```text
 XML OK
--rw-rw-r-- 1 omni omni 258K 11 oct. 16:27 .modelisation/logiciel/diagrammes/08-sequence-proxy-llm.png
-Acteur système normé, alt exhaustif évitant toute émission parasite sur socket fermée.
+-rw-rw-r-- 1 omni omni 222K 15 oct. 23:04 .modelisation/logiciel/diagrammes/08-sequence-proxy-llm.png
+Acteur système normé, fragment alt exhaustif séparant le flux nominal de l'interruption sans envoi sur socket rompue.
 ```
 
 ### Step 9: Corriger le Diagramme 09 (États Dock) & Régénérer son PNG
@@ -126,7 +126,7 @@ $ grep -c "TaskStatus" .modelisation/logiciel/README.md && grep -c "MediaFileSto
 7
 $ head -n 45 .modelisation/logiciel/README.md | grep -E "MediaFileStore|TaskStatus"
 25:- Tous les états des automates (actifs comme terminaux nominaux, d’annulation ou d’échec) sont représentés par des rectangles à coins arrondis. Les états terminaux métier d'une tâche (`Terminee`, `Annulee`, `Echouee`) correspondent aux valeurs canoniques de l'énumération `TaskStatus` (`completed`, `cancelled`, `failed`) persistées dans `data/generations.json`. Ce sont des états stables sans transition sortante destructrice vers un état final, l'objet restant conservé en persistance documentaire (`data/generations.json`) et consultable dans la galerie.
-34:| 2 | **Composants — architecture logique** : quelles responsabilités et interfaces séparent SPA, API locale, compilateur, proxy, persistance binaire (`MediaFileStore`), JSON et worker distant? (Plafond de Miller respecté à 7 sous-systèmes, port `pLlmOut` vers composant LLM externe) | [SVG](diagrammes/02-composants.svg) · [PNG](diagrammes/02-composants.png) |
+34:| 2 | **Composants — architecture logique** : quelles responsabilités et interfaces séparent SPA, API locale, compilateur, proxy, persistance binaire (`MediaFileStore`), JSON et worker distant? (Modularisation bornée à 7 sous-systèmes principaux, port `pLlmOut` vers composant LLM externe) | [SVG](diagrammes/02-composants.svg) · [PNG](diagrammes/02-composants.png) |
 36:| 4 | **Classes — modèle de données métier** : quelles informations sont enregistrées pour une génération, un projet, un Brand Kit et la configuration? (Ajout de `«enumeration» TaskStatus`, attributs optionnels normés `[0..1]`, multiplicités dégagées) | [SVG](diagrammes/04-modele-de-donnees.svg) · [PNG](diagrammes/04-modele-de-donnees.png) |
 38:| 6 | **Séquence — génération asynchrone** : comment la requête, l’identifiant de tâche, le suivi SSE, l’annulation et le rapatriement s’enchaînent-ils? (Opérations de domaine `demanderGeneration` / `demanderAnnulation`, streaming métier, ligne de vie `:MediaFileStore`) | [SVG](diagrammes/06-sequence-generation.svg) · [PNG](diagrammes/06-sequence-generation.png) |
 42:| 10 | **États-transitions — tâche média** : quels sont les états actifs et terminaux d’une génération? (Suppression des disques `FinalState`, états terminaux stables alignés sur `TaskStatus` : `Terminee` [completed], `Annulee` [cancelled], `Echouee` [failed], temporisation `after(120 s)`, écriture atomique JSON) | [SVG](diagrammes/10-etats-tache-media.svg) · [PNG](diagrammes/10-etats-tache-media.png) |

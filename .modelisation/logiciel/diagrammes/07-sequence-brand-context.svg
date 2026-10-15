@@ -196,7 +196,7 @@
 <path d="M853 1015 L587 1015" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
 <text x="720" y="1007" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">compiledContext {enrichedPrompt, selectedRefs, modelParams}</text>
 
-<!-- 8. Transmission de la tâche compilée par le Backend au Worker Colab (Loi de Déméter) -->
+<!-- 8. Transmission de la tâche compilée par le Backend au Worker Colab (Découplage modulaire & médiation) -->
 <path d="M587 1045 L1693 1045" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <text x="1140" y="1037" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">POST /infer (taskSpec: compiledContext)</text>
 
@@ -218,7 +218,7 @@
 <!-- ========================================== -->
 <rect x="85" y="1225" width="1690" height="90" rx="4" fill="#FFF8E8" stroke="#8C6418" stroke-width="1.5" stroke-dasharray="5 4"/>
 <text x="105" y="1250" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#8C6418">RÈGLES D'INVARIANCE MÉTIER &amp; CONTRAT D'ARCHITECTURE :</text>
-<text x="105" y="1273" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">1. Loi de Déméter &amp; Symétrie réseau : La SPA React contacte le backend FastAPI. BrandContextCompiler est un service interne de domaine sans accès au réseau distant. Seul FastAPI émet POST /infer vers Colab.</text>
+<text x="105" y="1273" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">1. Découplage modulaire &amp; Symétrie réseau : La SPA React contacte le backend FastAPI. BrandContextCompiler est un service interne de domaine sans accès au réseau distant. Seul FastAPI émet POST /infer vers Colab.</text>
 <text x="105" y="1293" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">2. Déterminisme hors-ligne : La lecture de persistance Brand Kit s'exécute toujours en amont afin d'assurer l'injection des tokens même en cas de panne LLM.</text>
 <text x="105" y="1313" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">3. Arbitrage de quota d'images : Si userRefs.length &gt; maxImageRefs, les N premières références sont conservées par ordre de dépôt avec avertissement toast avant envoi.</text>
 
