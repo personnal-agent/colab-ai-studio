@@ -2,6 +2,7 @@
 <defs>
 <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0 0 L10 4 L0 8 Z" fill="#405364"/></marker>
 <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/></marker>
+<marker id="zigzagArrow" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto"><path d="M0 0 L12 5 L0 10 Z" fill="#BA3C2A"/></marker>
 </defs>
 
 <!-- Arrière-plan -->
@@ -9,10 +10,10 @@
 
 <!-- En-tête -->
 <text x="48" y="48" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#17212B">05 · Flux d’activité — génération média</text>
-<text x="50" y="77" font-family="Arial, sans-serif" font-size="15" fill="#596875">Diagramme d’activité UML 2.5.1 avec partitions actives · Orchestration, fusion, annulation et persistance</text>
+<text x="50" y="77" font-family="Arial, sans-serif" font-size="15" fill="#596875">Flux de processus métier · Orchestration asynchrone, région interruptible et persistance documentaire</text>
 <line x1="48" y1="96" x2="1852" y2="96" stroke="#D8E0E5" stroke-width="1.5"/>
 
-<!-- Partitions d'activité conformes (Responsables actifs) -->
+<!-- Partitions d'activité (Responsabilités d'exécution) -->
 <!-- Couloir 1 : Créateur de contenu (Humain) -->
 <rect x="55" y="140" width="370" height="1140" fill="#FCFDFD" stroke="#C8D3DB" stroke-width="1.2"/>
 <rect x="55" y="140" width="370" height="54" fill="#EDF5F6" stroke="#126A78" stroke-width="1.4"/>
@@ -39,21 +40,21 @@
 <circle cx="240" cy="225" r="9" fill="#17212B" stroke="#17212B" stroke-width="1"/>
 <path d="M240 234 L240 264" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 
-<!-- Action Créateur : Configurer la tâche média -->
+<!-- Action Créateur : Configurer la tâche média (termes métier normés) -->
 <rect x="90" y="264" width="300" height="74" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
 <text x="240" y="296" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
-  <tspan x="240" dy="0">Saisir prompt, sélectionner modèle,</tspan>
-  <tspan x="240" dy="20">paramètres et kit de marque</tspan>
+  <tspan x="240" dy="0">Définir paramètres, références</tspan>
+  <tspan x="240" dy="20">et kit de marque actif</tspan>
 </text>
 
 <!-- Flux vers React SPA -->
 <path d="M390 301 L475 301" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 
-<!-- Action React SPA : Émettre la demande -->
+<!-- Action React SPA : Émettre la demande (action métier normée sans geste d'IHM) -->
 <rect x="475" y="264" width="280" height="74" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
 <text x="615" y="296" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
-  <tspan x="615" dy="0">Transmettre requête POST</tspan>
-  <tspan x="615" dy="20">/api/generate/media</tspan>
+  <tspan x="615" dy="0">Transmettre la demande</tspan>
+  <tspan x="615" dy="20">de génération multimédia</tspan>
 </text>
 
 <!-- Flux vers FastAPI Backend -->
@@ -69,19 +70,19 @@
 <!-- Flux vers décision executionMode -->
 <path d="M1070 338 L1070 375" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 
-<!-- Décision executionMode -->
+<!-- Décision 1 : executionMode ? (Épurée sans texte parasite) -->
 <polygon points="1070,375 1096,401 1070,427 1044,401" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
 <text x="1104" y="396" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">executionMode ?</text>
 
 <!-- Branche [local] -> Erreur 501 -->
 <path d="M1044 401 L910 401 L910 445" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="940" y="380" width="55" height="18" fill="#FFFFFF"/>
-<text x="967" y="393" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">[local]</text>
+<rect x="940" y="385" width="60" height="20" fill="#FFFFFF"/>
+<text x="970" y="399" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[local]</text>
 
 <rect x="830" y="445" width="160" height="60" rx="12" fill="#FFF8E8" stroke="#8C6418" stroke-width="2"/>
 <text x="910" y="471" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
-  <tspan x="910" dy="0">Retourner 501</tspan>
-  <tspan x="910" dy="17">Not Implemented</tspan>
+  <tspan x="910" dy="0">Notifier refus :</tspan>
+  <tspan x="910" dy="17">mode local non géré</tspan>
 </text>
 
 <!-- Flux 501 vers SPA pour affichage puis terminaison -->
@@ -89,7 +90,7 @@
 <rect x="525" y="445" width="160" height="60" rx="12" fill="#FFF8E8" stroke="#8C6418" stroke-width="2"/>
 <text x="605" y="471" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
   <tspan x="605" dy="0">Afficher notification</tspan>
-  <tspan x="605" dy="17">erreur support local</tspan>
+  <tspan x="605" dy="17">support local indisponible</tspan>
 </text>
 
 <path d="M525 475 L480 475" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
@@ -98,19 +99,19 @@
 <line x1="450" y1="465" x2="470" y2="485" stroke="#17212B" stroke-width="2"/>
 <line x1="450" y1="485" x2="470" y2="465" stroke="#17212B" stroke-width="2"/>
 
-<!-- Branche [colab] -->
+<!-- Branche [colab] (Épurée sans lettre polluée) -->
 <path d="M1096 401 L1180 401 L1180 445" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="1110" y="380" width="55" height="18" fill="#FFFFFF"/>
-<text x="1137" y="393" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">[colab]</text>
+<rect x="1115" y="385" width="55" height="20" fill="#FFFFFF"/>
+<text x="1142" y="399" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[colab]</text>
 
-<!-- Décision Brand Kit actif ? -->
+<!-- Décision 2 : Brand Kit actif ? (Épurée sans texte parasite) -->
 <polygon points="1180,445 1205,470 1180,495 1155,470" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
 <text x="1215" y="465" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">Brand Kit actif ?</text>
 
 <!-- Branche [oui] -> Compilation Contexte Brand Kit -->
 <path d="M1155 470 L1070 470 L1070 515" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="1085" y="450" width="45" height="18" fill="#FFFFFF"/>
-<text x="1107" y="463" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">[oui]</text>
+<rect x="1085" y="455" width="45" height="20" fill="#FFFFFF"/>
+<text x="1107" y="469" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[oui]</text>
 
 <rect x="880" y="515" width="380" height="66" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
 <text x="1070" y="543" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
@@ -120,10 +121,10 @@
 
 <!-- Branche [non] contourne la compilation -->
 <path d="M1205 470 L1285 470 L1285 605" fill="none" stroke="#405364" stroke-width="1.8"/>
-<rect x="1225" y="450" width="45" height="18" fill="#FFFFFF"/>
-<text x="1247" y="463" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">[non]</text>
+<rect x="1225" y="455" width="45" height="20" fill="#FFFFFF"/>
+<text x="1247" y="469" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[non]</text>
 
-<!-- NŒUD DE FUSION (MergeNode 1) : Remarque 5.3 résolue -->
+<!-- NŒUD DE FUSION 1 (MergeNode 1) -->
 <path d="M1070 581 L1070 625 L1160 625" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <path d="M1285 605 L1285 625 L1200 625" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <polygon points="1180,612 1200,625 1180,638 1160,625" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
@@ -131,24 +132,24 @@
 <!-- Flux unique post-fusion vers soumission worker -->
 <path d="M1180 638 L1180 665" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 
-<!-- Action Backend : Soumettre au worker distant via tunnel -->
+<!-- Action Backend : Déléguer au worker distant via tunnel -->
 <rect x="880" y="665" width="400" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
 <text x="1080" y="694" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
-  <tspan x="1080" dy="0">Transmettre requête POST /infer</tspan>
-  <tspan x="1080" dy="18">au worker distant via tunnel HTTPS</tspan>
+  <tspan x="1080" dy="0">Déléguer la tâche d'inférence</tspan>
+  <tspan x="1080" dy="18">au worker distant via tunnel sécurisé</tspan>
 </text>
 
 <!-- Flux vers Colab Worker -->
 <path d="M1280 699 L1420 699" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 
-<!-- Décision Worker : Modèle déjà actif en VRAM ? -->
+<!-- Décision 3 : Modèle déjà actif en VRAM ? (Épurée sans texte parasite) -->
 <polygon points="1590,679 1615,704 1590,729 1565,704" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
-<text x="1625" y="699" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">Modèle déjà actif en VRAM ?</text>
+<text x="1625" y="699" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">Modèle actif en VRAM ?</text>
 
-<!-- Branche [non] : Model Swapper (éviction) -->
+<!-- Branche [non] : Model Swapper -->
 <path d="M1565 704 L1490 704 L1490 740" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="1500" y="685" width="45" height="18" fill="#FFFFFF"/>
-<text x="1522" y="698" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">[non]</text>
+<rect x="1500" y="688" width="45" height="20" fill="#FFFFFF"/>
+<text x="1522" y="702" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[non]</text>
 
 <rect x="1390" y="740" width="200" height="64" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
 <text x="1490" y="767" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
@@ -164,10 +165,10 @@
 
 <!-- Branche [oui] : conservation directe -->
 <path d="M1615 704 L1710 704 L1710 890" fill="none" stroke="#405364" stroke-width="1.8"/>
-<rect x="1630" y="685" width="60" height="18" fill="#FFFFFF"/>
-<text x="1660" y="698" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">[oui : actif]</text>
+<rect x="1630" y="688" width="60" height="20" fill="#FFFFFF"/>
+<text x="1660" y="702" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[oui : actif]</text>
 
-<!-- NŒUD DE FUSION (MergeNode 2) : Remarque 5.3 résolue -->
+<!-- NŒUD DE FUSION 2 (MergeNode 2) -->
 <path d="M1490 879 L1490 910 L1570 910" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <path d="M1710 890 L1710 910 L1610 910" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <polygon points="1590,897 1610,910 1590,923 1570,910" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
@@ -175,63 +176,71 @@
 <!-- Flux unique post-fusion vers exécution inférence -->
 <path d="M1590 923 L1590 945" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 
-<rect x="1410" y="945" width="360" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
-<text x="1590" y="974" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
+<!-- ========================================================================= -->
+<!-- RÉGION D'ACTIVITÉ INTERRUPTIBLE (Gestion de l'annulation asynchrone) -->
+<!-- ========================================================================= -->
+<rect x="1350" y="930" width="480" height="185" rx="16" fill="none" stroke="#BA3C2A" stroke-width="1.8" stroke-dasharray="6 4"/>
+<text x="1365" y="948" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">«interruptible activity region»</text>
+
+<rect x="1410" y="960" width="360" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1590" y="989" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="500" fill="#17212B">
   <tspan x="1590" dy="0">Exécuter inférence GPU asynchrone</tspan>
   <tspan x="1590" dy="18">et diffuser progression / statut</tspan>
 </text>
 
-<!-- Événements asynchrones : streaming et contrôle -->
-<path d="M1590 1013 L1590 1045" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-
-<!-- Décision Statut / Sortie d'inférence -->
-<polygon points="1590,1045 1615,1070 1590,1095 1565,1070" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
-<text x="1625" y="1065" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">Événement tâche ?</text>
+<!-- Décision 4 : Événement tâche ? -->
+<path d="M1590 1028 L1590 1055" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<polygon points="1590,1055 1615,1080 1590,1105 1565,1080" fill="#FFFFFF" stroke="#405364" stroke-width="2" stroke-linejoin="round"/>
+<text x="1625" y="1075" text-anchor="start" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">Statut tâche ?</text>
 
 <!-- Branche 1 : [progression en cours] vers Backend puis SPA -->
-<path d="M1565 1070 L1280 1070" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="1350" y="1052" width="130" height="18" fill="#FFFFFF"/>
-<text x="1415" y="1065" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">[en cours / progress]</text>
+<path d="M1565 1080 L1280 1080" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="1350" y="1065" width="130" height="20" fill="#FFFFFF"/>
+<text x="1415" y="1079" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[en cours / progress]</text>
 
-<rect x="880" y="1036" width="400" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
-<text x="1080" y="1065" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
-  <tspan x="1080" dy="0">Relayer événement SSE</tspan>
-  <tspan x="1080" dy="17">GET /api/tasks/{task_id}/status</tspan>
+<rect x="880" y="1046" width="400" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="1080" y="1075" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="1080" dy="0">Relayer événements de progression</tspan>
+  <tspan x="1080" dy="17">via le flux asynchrone SSE</tspan>
 </text>
 
-<path d="M880 1070 L730 1070" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="475" y="1036" width="255" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
-<text x="602" y="1065" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
-  <tspan x="602" dy="0">Afficher progression (pourcentage)</tspan>
-  <tspan x="602" dy="17">et écouter commande annulation</tspan>
+<path d="M880 1080 L730 1080" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="475" y="1046" width="255" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+<text x="602" y="1075" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+  <tspan x="602" dy="0">Afficher progression temps réel</tspan>
+  <tspan x="602" dy="17">et proposer l'annulation</tspan>
 </text>
 
-<!-- Boucle d'attente / mise à jour SSE -->
-<path d="M602 1104 L602 1125 L1430 1125 L1430 985 L1410 985" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
-<rect x="910" y="1115" width="200" height="18" fill="#FFFFFF"/>
-<text x="1010" y="1128" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#596875">itération de streaming jusqu'à état terminal</text>
+<!-- Action d'annulation intentionnelle Créateur (Bannissement du simple clic d'IHM) -->
+<path d="M475 1080 L390 1080" fill="none" stroke="#BA3C2A" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+<rect x="90" y="1046" width="300" height="68" rx="12" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.8"/>
+<text x="240" y="1075" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#BA3C2A">
+  <tspan x="240" dy="0">Demander l'annulation</tspan>
+  <tspan x="240" dy="17">de la génération en cours</tspan>
+</text>
 
-<!-- Branche 2 : [annulation demandée] -> Remarque 5.2 résolue -->
-<path d="M1615 1070 L1740 1070 L1740 1145" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="1635" y="1052" width="90" height="18" fill="#FFFFFF"/>
-<text x="1680" y="1065" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">[annulée]</text>
+<!-- Arc d'interruption en zigzag vers la sortie de région interruptible -->
+<path d="M 1830 1010 L 1860 1010 L 1845 1050 L 1860 1090 L 1840 1145" fill="none" stroke="#BA3C2A" stroke-width="2.2" marker-end="url(#zigzagArrow)"/>
+<rect x="1750" y="1055" width="105" height="20" fill="#FFFFFF"/>
+<text x="1802" y="1069" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">«interrupting»</text>
 
+<!-- Branche d'annulation : Marquer annulée et libérer ressources -->
 <rect x="1640" y="1145" width="200" height="60" rx="12" fill="#FFF8E8" stroke="#8C6418" stroke-width="2"/>
 <text x="1740" y="1171" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
-  <tspan x="1740" dy="0">Marquer tâche cancelled</tspan>
+  <tspan x="1740" dy="0">Marquer tâche annulée</tspan>
   <tspan x="1740" dy="17">(libérer buffers VRAM)</tspan>
 </text>
 
-<!-- Sortie formelle vers FlowFinalNode pour annulation (Remarque 5.2) -->
+<!-- Sortie formelle vers FlowFinalNode pour annulation -->
 <path d="M1740 1205 L1740 1235" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <circle cx="1740" cy="1250" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
 <line x1="1730" y1="1240" x2="1750" y2="1260" stroke="#17212B" stroke-width="2"/>
 <line x1="1730" y1="1260" x2="1750" y2="1240" stroke="#17212B" stroke-width="2"/>
 
-<!-- Branche 3 : [génération complétée] -> Rapatriement et écriture locale -->
-<path d="M1590 1095 L1590 1145" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="1515" y="1108" width="70" height="18" fill="#FFFFFF"/>
-<text x="1550" y="1121" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">[complétée]</text>
+<!-- Branche 2 : [génération complétée] -> Rapatriement et écriture locale -->
+<path d="M1590 1105 L1590 1145" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="1520" y="1115" width="70" height="20" fill="#FFFFFF"/>
+<text x="1555" y="1129" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[complétée]</text>
 
 <rect x="1410" y="1145" width="220" height="60" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
 <text x="1520" y="1171" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
@@ -249,7 +258,7 @@
   <tspan x="1080" dy="18">outputs/YYYY-MM-DD/ et persister métadonnées</tspan>
 </text>
 
-<!-- Nœud de Données / Datastore : Remarque 5.4 résolue -->
+<!-- Nœud de Données / Datastore -->
 <rect x="940" y="1235" width="280" height="42" fill="#F4F8FA" stroke="#126A78" stroke-width="1.5"/>
 <text x="1080" y="1252" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">«datastore»</text>
 <text x="1080" y="1267" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">data/generations.json &amp; outputs/</text>
@@ -275,15 +284,14 @@
   <tspan x="260" dy="17">dans la galerie locale</tspan>
 </text>
 
-<!-- Clôture formelle : Nœud final d'activité (ActivityFinalNode) : Remarque 5.1 résolue -->
+<!-- Clôture formelle : Nœud final d'activité (ActivityFinalNode) -->
 <path d="M260 1215 L260 1245" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <circle cx="260" cy="1255" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
 <circle cx="260" cy="1255" r="8" fill="#17212B" stroke="#17212B" stroke-width="1"/>
 
-<!-- Note informative conforme UML -->
-<rect x="55" y="1295" width="850" height="36" rx="4" fill="#F8FAFB" stroke="#C8D3DB" stroke-width="1"/>
+<!-- Note d'ingénierie système -->
+<rect x="55" y="1295" width="1300" height="36" rx="4" fill="#F8FAFB" stroke="#C8D3DB" stroke-width="1"/>
 <text x="65" y="1318" font-family="Arial, sans-serif" font-size="12" fill="#596875">
-  Conforme OMG UML 2.5.1 : partitions actives d'agents, nœuds de fusion (MergeNode) explicites, nœuds terminaux normés et flux d'objet datastore.
+  Colab AI Studio · Gestion asynchrone : région d'activité interruptible avec signal d'annulation immédiat vers le worker et persistance de statut.
 </text>
-
 </svg>

@@ -13,13 +13,13 @@
 <!-- Fond d'écran -->
 <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
 
-<!-- Cartouche de titre normalisé OMG UML 2.5.1 -->
+<!-- Cartouche de titre de séquence -->
 <rect x="48" y="24" width="360" height="32" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.5"/>
 <text x="60" y="46" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#126A78">sd</text>
 <text x="90" y="46" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#17212B">Génération Asynchrone Multimédia</text>
 
 <text x="48" y="80" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">06 · Diagramme de Séquence — Génération Asynchrone</text>
-<text x="50" y="104" font-family="Arial, sans-serif" font-size="13" fill="#596875">Conformité OMG UML 2.5.1 &amp; L3 MIAGE · Cycle de vie asynchrone, flux SSE unidirectionnel, barres d'activation et alt opérandes</text>
+<text x="50" y="104" font-family="Arial, sans-serif" font-size="13" fill="#596875">Cinématique d'exécution asynchrone · Déclenchement de génération, notifications SSE temps réel, annulation et persistance</text>
 <line x1="48" y1="118" x2="1852" y2="118" stroke="#D8E0E5" stroke-width="1.5"/>
 
 <!-- ========================================== -->
@@ -60,43 +60,35 @@
 <text x="1500" y="171" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:ModelSwapper</text>
 <line x1="1500" y1="187" x2="1500" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
 
-<!-- 7. Participant : :StorageManager (x = 1740) -->
-<rect x="1650" y="145" width="180" height="42" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
-<text x="1740" y="171" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:StorageManager</text>
-<line x1="1740" y1="187" x2="1740" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+<!-- 7. Participant : :MediaFileStore (HARMONISÉ AVEC LE DIAGRAMME 02 - Remarque 06.3) -->
+<rect x="1650" y="145" width="180" height="44" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+<text x="1740" y="164" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">:MediaFileStore</text>
+<text x="1740" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#596875">rôle : MediaAssetManager</text>
+<line x1="1740" y1="189" x2="1740" y2="1380" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
 
 <!-- ========================================== -->
 <!-- BARRES D'ACTIVATION (ExecutionSpecification) -->
 <!-- ========================================== -->
 
 <!-- :ReactSPA -->
-<!-- Activation 1 : Phase de soumission HTTP initiale -->
 <rect x="373" y="240" width="14" height="450" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
-<!-- Activation 2 : Phase de réception SSE et pilotage du cycle de vie -->
 <rect x="373" y="730" width="14" height="620" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
 
 <!-- :FastAPIBackend -->
-<!-- Activation 1 : Traitement de la requête POST de génération -->
 <rect x="673" y="270" width="14" height="400" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
-<!-- Activation 2 : Orchestration du flux SSE, rapatriement et persistance -->
 <rect x="673" y="750" width="14" height="580" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
 
 <!-- :BrandContextCompiler -->
-<!-- Activation lors de la compilation du prompt et tokens -->
 <rect x="953" y="325" width="14" height="65" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
 
 <!-- :ColabWorker -->
-<!-- Activation 1 : Réception de la tâche d'inférence, initialisation VRAM, enregistrement tâche -->
 <rect x="1233" y="445" width="14" height="205" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
-<!-- Activation 2 : Pipeline d'inférence GPU asynchrone et émission d'événements -->
 <rect x="1233" y="780" width="14" height="540" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
 
 <!-- :ModelSwapper -->
-<!-- Activation lors de l'éviction/chargement VRAM -->
 <rect x="1493" y="480" width="14" height="135" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
 
-<!-- :StorageManager -->
-<!-- Activation lors de l'écriture disque atomique et métadonnées -->
+<!-- :MediaFileStore -->
 <rect x="1733" y="1035" width="14" height="55" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
 
 <!-- ========================================== -->
@@ -105,7 +97,7 @@
 
 <!-- 1. Déclenchement de la génération par l'utilisateur -->
 <path d="M120 240 L373 240" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<text x="246" y="232" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">clickGenerate(prompt, config)</text>
+<text x="246" y="232" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">demanderGeneration(prompt, config)</text>
 
 <!-- 2. Requête HTTP synchrone vers le backend local -->
 <path d="M387 270 L673 270" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
@@ -123,7 +115,7 @@
 <path d="M953 380 L687 380" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
 <text x="820" y="372" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">compiledBrief</text>
 
-<!-- 4. Transmission directe de la tâche au Worker Colab (SANS faux participant Tunnel) -->
+<!-- 4. Transmission directe de la tâche au Worker Colab -->
 <path d="M687 445 L1233 445" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <text x="960" y="437" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">POST /infer (taskSpec)</text>
 
@@ -157,14 +149,14 @@
 <text x="375" y="812" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">loop</text>
 <text x="425" y="812" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">[tant que tâche active &amp;&amp; non terminée]</text>
 
-<!-- Événements asynchrones poussés (Push SSE, flèches à tête ouverte) -->
+<!-- Événements asynchrones poussés (signal métier normé) -->
 <path d="M1233 840 L687 840" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
-<text x="960" y="832" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">pushEvent("progress", {pct, step, eta})</text>
+<text x="960" y="832" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">notifierProgression(pct, step, eta)</text>
 
 <path d="M673 875 L387 875" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#openArrow)"/>
-<text x="530" y="867" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">sseEvent: progress {pct, step}</text>
+<text x="530" y="867" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">relayerProgression(pct, step)</text>
 
-<!-- Auto-appel (Self-call) normé UML pour la mise à jour UI -->
+<!-- Auto-appel pour mise à jour de jauge UI -->
 <path d="M387 895 L420 895 L420 925 L387 925" fill="none" stroke="#405364" stroke-width="1.4" marker-end="url(#arrow)"/>
 <text x="430" y="915" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-weight="400" fill="#17212B">updateProgressBar(pct)</text>
 
@@ -194,11 +186,12 @@
 <!-- LIGNE POINTILLÉE SÉPARATRICE D'OPÉRANDE 1 & 2 -->
 <line x1="80" y1="1140" x2="1820" y2="1140" stroke="#126A78" stroke-width="1.2" stroke-dasharray="6 4"/>
 
-<!-- BRANCHE 2 : Annulation par l'utilisateur -->
-<text x="155" y="1158" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">[annulation demandée par le Créateur]</text>
+<!-- BRANCHE 2 : Annulation par l'utilisateur (GARDE DÉGAGÉE ET GESTE D'IHM BANI) -->
+<rect x="85" y="1144" width="280" height="20" fill="#EDF5F6" stroke="#126A78" stroke-width="0.8"/>
+<text x="95" y="1158" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#126A78">[annulation demandée par le Créateur]</text>
 
 <path d="M120 1175 L373 1175" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<text x="246" y="1167" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">clickAnnuler()</text>
+<text x="246" y="1167" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">demanderAnnulation(taskId)</text>
 
 <path d="M387 1195 L673 1195" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <text x="530" y="1187" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">POST /api/tasks/{taskId}/cancel</text>
@@ -228,12 +221,12 @@
 <text x="246" y="1337" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#17212B">afficherNotificationErreur(errorMsg)</text>
 
 <!-- ========================================== -->
-<!-- NOTE EXPLICATIVE CONFORMITÉ ARCHITECTURE   -->
+<!-- PRINCIPES D'INGÉNIERIE DE LA SÉQUENCE      -->
 <!-- ========================================== -->
 <rect x="48" y="1395" width="1804" height="42" rx="4" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.2"/>
 <text x="62" y="1420" font-family="Arial, sans-serif" font-size="12" fill="#334155">
-  <tspan font-weight="700">Règle d'architecture : </tspan>
-  Le tunnel HTTP (ngrok / Cloudflare) est un médium réseau transparent et n'est pas une ligne de vie logicielle. Les flux SSE sont strictement unidirectionnels (serveur vers client via flèches ouvertes). Les blocs d'exécution (barres rectangulaires) isolent la sémantique de contrôle.
+  <tspan font-weight="700">Principes d'ingénierie de la séquence : </tspan>
+  Découplage asynchrone entre la SPA et le backend FastAPI · Flux d'événements SSE pour la progression en direct · Persistance atomique via :MediaFileStore et gestion d'abandon immédiat.
 </text>
 
 </svg>

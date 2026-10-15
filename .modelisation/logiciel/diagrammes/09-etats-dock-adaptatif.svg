@@ -6,11 +6,11 @@
 </defs>
 <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
 
-<!-- Cartouche officiel OMG UML 2.5.1 / Dr TRAORE -->
+<!-- Cartouche de machine à états -->
 <rect x="40" y="24" width="460" height="32" rx="0" fill="#E8F1F3" stroke="#126A78" stroke-width="1.5"/>
 <text x="50" y="46" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#126A78">stm [State Machine] FloatingPromptDock</text>
 <text x="515" y="47" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#17212B">09 · Cycle de vie dynamique du Dock adaptatif</text>
-<text x="50" y="78" font-family="Arial, sans-serif" font-size="14" fill="#596875">Classification OMG UML 2.5.1 §14 &amp; L3 MIAGE · Contexte formel : class FloatingPromptDock · Transitions internes et pseudo-état d'historique [H]</text>
+<text x="50" y="78" font-family="Arial, sans-serif" font-size="14" fill="#596875">Cycle de vie dynamique du dock adaptatif · Modes de création multimédia, persistance du contexte et réactivité UI</text>
 <line x1="40" y1="96" x2="1780" y2="96" stroke="#D8E0E5" stroke-width="1.5"/>
 
 <!-- État initial global -->
@@ -41,7 +41,7 @@
 <rect x="760" y="226" width="180" height="18" fill="#FFFDEB" stroke="#8C6418" stroke-width="0.8"/>
 <text x="850" y="239" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">défaut [si aucun historique]</text>
 
-<!-- Branches du Choice vers les 4 sous-états conformes (participes passés) -->
+<!-- Branches du Choice vers les 4 sous-états de mode -->
 <!-- 1. Branche Choice -> Image -->
 <path d="M305 295 L305 340" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
 <rect x="250" y="305" width="105" height="18" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="1"/>
@@ -66,7 +66,7 @@
 <rect x="175" y="340" width="265" height="235" rx="14" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
 <text x="307" y="365" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">ModeImageSelectionne</text>
 <line x1="175" y1="375" x2="440" y2="375" stroke="#405364" stroke-width="1.2"/>
-<!-- Compartiment des activités et transitions internes conformes (Remarque 9.2) -->
+<!-- Compartiment des activités et transitions internes -->
 <text x="185" y="395" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#126A78">entry / monterControlesImage()</text>
 <text x="185" y="415" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">do / ecouterSaisiePromptEtRefs()</text>
 <text x="185" y="435" text-anchor="start" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#8C6418">update_param / sauvegarderBrouillon()</text>
@@ -137,16 +137,16 @@
 
 <!-- Note explicative sur les transitions internes vs externes -->
 <rect x="175" y="660" width="1225" height="125" rx="6" fill="#FFF8E8" stroke="#8C6418" stroke-width="1.5" stroke-dasharray="5 4"/>
-<text x="190" y="682" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#8C6418">REGLE ARCHITECTURALE &amp; SEMANTIQUE DE L'ETAT COMPOSITE (OMG UML §14.2 &amp; REACT CONFORMITY) :</text>
+<text x="190" y="682" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#8C6418">RÈGLES D'ARCHITECTURE DU DOCK ADAPTATIF ET CYCLE DE VIE REACT :</text>
 <text x="190" y="702" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">1. Transitions Internes (update_param, set_ref, toggle_accordion) : Exécutées DANS l'état actif sans déclencher de cycle exit/entry.</text>
 <text x="190" y="720" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">   Elles maintiennent la persistance du DOM React et évitent le démontage/remontage destructif du formulaire et du prompt.</text>
 <text x="190" y="738" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">2. Pseudo-état d'Historique [H] : Lorsque le dock sort temporairement vers EnGenerationMedia (ou EnExecutionTache),</text>
 <text x="190" y="756" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">   la transition de retour générationTerminée pointe vers [H], restaurant instantanément le sous-état actif exact (ex: ModeVideoSelectionne) sans écrasement.</text>
 <text x="190" y="774" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">3. Ancrage sur la classe formelle : La machine à états gouverne exclusivement l'instance singleton du composant FloatingPromptDock.</text>
 
-<!-- ÉTAT HORS COMPOSITE 1 : ModeChatLLMSelectionne -->
+<!-- ÉTAT HORS COMPOSITE 1 : ModeLLMSelectionne -->
 <rect x="360" y="870" width="370" height="150" rx="16" fill="#F7F2E9" stroke="#8C6418" stroke-width="2.2"/>
-<text x="545" y="897" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#17212B">ModeChatLLMSelectionne</text>
+<text x="545" y="897" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#17212B">ModeLLMSelectionne</text>
 <line x1="360" y1="907" x2="730" y2="907" stroke="#8C6418" stroke-width="1.2"/>
 <text x="375" y="928" text-anchor="start" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">entry / afficherVueConversationnelle()</text>
 <text x="375" y="948" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#596875">do / masquerControlesMediaEtAccordion()</text>
@@ -164,14 +164,15 @@
 <text x="865" y="988" text-anchor="start" font-family="Arial, sans-serif" font-size="12" fill="#596875">exit / deverrouillerFormulaire()</text>
 <text x="865" y="1006" text-anchor="start" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">Empêche les doubles soumissions et les mutations concurrentes</text>
 
-<!-- Transitions entre ConfigurationActive et ModeChatLLMSelectionne -->
-<path d="M145 520 L95 520 L95 930 L360 930" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="110" y="910" width="220" height="20" fill="#FFFFFF" stroke="#405364" stroke-width="0.8"/>
-<text x="220" y="924" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#17212B">selectModel [type == LLM] / basculerMode()</text>
+<!-- Transitions entre ConfigurationActive et ModeLLMSelectionne -->
+<path d="M145 510 L95 510 L95 920 L360 920" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="115" y="905" width="225" height="20" fill="#FFFFFF" stroke="#405364" stroke-width="0.8"/>
+<text x="227" y="919" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#17212B">selectOnglet("LLM") / basculerMode()</text>
 
-<path d="M360 965 L125 965 L125 560 L145 560" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
-<rect x="135" y="740" width="200" height="20" fill="#FFFFFF" stroke="#405364" stroke-width="0.8"/>
-<text x="235" y="754" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#17212B">selectModel [type != LLM] / ouvrirStudio()</text>
+<!-- Transition retour déroutée largement à gauche (x=60) avec dégagement > 25px par rapport à la boîte jaune (x=175) -->
+<path d="M360 965 L60 965 L60 560 L145 560" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+<rect x="105" y="952" width="240" height="20" fill="#FFFFFF" stroke="#405364" stroke-width="0.8"/>
+<text x="225" y="966" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#17212B">selectOnglet(m != "LLM") / ouvrirStudio()</text>
 
 <!-- Transitions entre ConfigurationActive et DockVerrouillePendantGeneration -->
 <!-- Départ depuis le composite vers le verrouillage lors de la soumission de génération -->
@@ -191,10 +192,10 @@
 <rect x="1480" y="510" width="160" height="18" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="0.8"/>
 <text x="1560" y="523" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#17212B">quitterApplication()</text>
 
-<!-- Cartouche de traçabilité et conformité en bas -->
+<!-- Note d'ingénierie d'interface utilisateur -->
 <rect x="40" y="1055" width="1740" height="48" rx="6" fill="#F4F8F9" stroke="#A9C7CD" stroke-width="1"/>
-<text x="55" y="1076" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">Traçabilité &amp; Conformité Normative :</text>
-<text x="55" y="1092" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">OMG UML 2.5.1 §14.2.3 &amp; Cours L3 MIAGE Dr TRAORE · Résolution intégrale des Remarques d'Audit 9.1 (contexte formel &amp; nomenclature états), 9.2 (transitions internes non destructives) et 9.3 (pseudo-état d'historique [H]).</text>
-<text x="1760" y="1084" text-anchor="end" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#126A78">Conformité validée à 100%</text>
+<text x="55" y="1076" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">Comportement dynamique de l'interface :</text>
+<text x="55" y="1092" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">FloatingPromptDock maintient l'état des formulaires et mémorise le mode actif (Image, Vidéo, Lip-Sync, Upscale, LLM) lors des transitions vers les phases de génération ou de consultation.</text>
+<text x="1760" y="1084" text-anchor="end" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#126A78">Colab AI Studio · Interface Réactive</text>
 
 </svg>

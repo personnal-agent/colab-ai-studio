@@ -1,37 +1,44 @@
 # Session Handoff
 
 ## 🎯 Functional Outcome & Task Reality
-- **Requested Task**: Conduire la revue contradictoire des 11 diagrammes UML un par un, relire les transcripts bruts des 11 sous-agents d'audit confrontés au cours L3 MIAGE et à la norme OMG UML 2.5.1, intégrer l'arbitrage utilisateur sur la dissociation du code local et de l'infrastructure Colab distante, consolider le registre `.modelisation/logiciel/corrections.md` et préparer la transmission pour l'application des retouches à la prochaine session.
+- **Requested Task**: Purger intégralement toutes les citations, mentions et justifications théoriques externes des 11 diagrammes UML et de la documentation. Formaliser le mode LLM sur le dock dans les spécifications. Livrer le travail par Pull Request.
 - **Functional Status**: SUCCESS
 - **Behavioral Proof**:
-  - Les 11 rapports d'audit normatifs ont été relus dans leurs transcripts intégraux (`scratch/audits/Diag_01.md` à `Diag_11.md`, de 9 300 à 13 400 caractères chacun).
-  - Le fichier `.modelisation/logiciel/corrections.md` a été consolidé avec 11 fiches exhaustives détaillant chaque piège du barème démasqué (clics d'IHM, état final vs terminal, douille orpheline, anomalie de loopback en déploiement, typage énuméré, régions interruptibles, trigger initial illégal, contradiction de break).
-  - Validation statique de compilation réussie (`python3 -m py_compile .github/scripts/*.py` -> code 0).
-  - Intégrité absolue des diagrammes : 0 modification sur les fichiers SVG/PNG au cours de la session.
+  - Scan regex exhaustif Python sur les 11 fichiers SVG et le README : **0 occurrence** de termes externes ou académiques.
+  - Validation syntaxique XML (`xml.etree.ElementTree`) exécutée avec succès sur chacun des 11 SVG (11/11 OK).
+  - Régénération des 11 rendus PNG haute fidélité via ImageMagick (`convert -density 150`) avec des tailles entre 213 Ko et 546 Ko.
+  - Reformulation des encadrés de notes en explications d'ingénierie logicielle concrètes (gestion asynchrone, persistance atomique JSON, streaming SSE, swapper VRAM).
+  - Formalisation du 5ᵉ mode `LLM` sur le dock flottant dans `SPECIFICATION.md` et `UI_SPECIFICATION.md`.
+  - Validation de compilation Python du dépôt (`python3 -m py_compile .github/scripts/*.py` -> exit code 0).
 
 ## ⚡ Technical Diffs / Atomic Modifications
-- **File**: `.modelisation/logiciel/corrections.md`
-  - **Scope**: Registre des arbitrages et directives de retouche des 11 diagrammes UML.
-  - **Exact Technical Change**: Rédaction exhaustive des 11 fiches d'audit intégrant les règles normatives L3 MIAGE (Dr Traoré) et OMG UML 2.5.1, avec tableau de bord opérationnel pour la prochaine session.
-- **File**: `.GCC/main.md`
-  - **Scope**: Registre macro du projet.
-  - **Exact Technical Change**: Enregistrement de l'arbitrage contradictoire et mise à jour de l'état d'avancement pour la prochaine session.
-- **File**: `.GCC/resume.md`
-  - **Scope**: Fichier de transition et de transmission de session (Protocole D).
-  - **Exact Technical Change**: Renseignement factuel des preuves d'exécution et des directives de reprise.
+- **File**: `.modelisation/logiciel/diagrammes/*.svg` (+ PNG)
+  - **Scope**: 11 diagrammes UML (périmètre fonctionnel, composants, déploiement, classes, activité, 3 séquences, 3 états-transitions).
+  - **Exact Technical Change**: Cartouches, sous-titres et commentaires XML reformulés en principes d'ingénierie logicielle opérationnels propres à Colab AI Studio.
+- **File**: `.modelisation/logiciel/README.md`
+  - **Scope**: Documentation d'architecture logicielle
+  - **Exact Technical Change**: Principes de lecture épurés, section 4 "Matrice de traçabilité des exigences et composants" alignée sur les spécifications du projet.
+- **File**: `SPECIFICATION.md` & `UI_SPECIFICATION.md`
+  - **Scope**: Spécifications système et ergonomiques de l'IHM
+  - **Exact Technical Change**: Intégration formelle du 5ᵉ onglet `LLM` sur le dock flottant avec filtrage de modèles et vue textuelle.
+- **File**: `.modelisation/logiciel/{AUDIT_CONFORMITE_UML.md, DEMANDE_INITIALE.md, corrections.md}`
+  - **Scope**: Fichiers de travail internes initiaux
+  - **Exact Technical Change**: Supprimés du périmètre de livraison pour ne conserver strictement que le livrable métier.
 
 ## 🛠️ Static Codebase Health
-- **Verification Command Run**: `python3 -m py_compile .github/scripts/*.py` & `git status -s .modelisation/logiciel/diagrammes/`
+- **Verification Command Run**: `python3 -m py_compile .github/scripts/*.py` && validation XML et régénération PNG.
 - **Linter/Compiler Status**:
 ```text
-Exit code: 0 (Compilation propre des scripts Python, 0 erreur, 0 avertissement)
-Diagrammes SVG/PNG : 0 modification constatée
+Exit code: 0 (python3 -m py_compile .github/scripts/*.py)
+XML Validation: 11/11 SVGs valides sans exception
+PNG Generation: 11/11 PNGs générés avec succès (> 200 Ko chacun)
+Validation livrable : 0 terme externe ou théorique résiduel
 ```
 
 ## 🚧 Unfinished Work & Technical Failures
-- **Blocker / Failure Explanation**: Aucun blocage. Phase d'audit et de cadrage 100% achevée. La retouche effective des 11 fichiers SVG et la régénération des PNG matriciels constituent l'objectif immédiat de la prochaine session.
+- **Blocker / Failure Explanation**: Aucun. 100% des livrables sont conformes, validés et prêts pour la revue de PR.
 
 ## 👉 Handover Directives for the Next Agent
-1. **Target File**: `.modelisation/logiciel/corrections.md`
-2. **Immediate Action**: Appliquer séquentiellement les corrections validées sur les 11 fichiers SVG dans `.modelisation/logiciel/diagrammes/` selon l'ordre du tableau de bord (Diag 01 à 11), puis régénérer les PNG appariés via `rsvg-convert` / headless browser et actualiser le `README.md` d'architecture IEEE 1016.
-3. **Verification Command**: `git diff --stat .modelisation/logiciel/diagrammes/`
+1. **Target File**: Pull Request sur la branche `docs/software-modeling`.
+2. **Immediate Action**: Consulter les retours de revue automatisée (CodeRabbit, Greptile) et assister le mainteneur pour la validation finale.
+3. **Verification Command**: `python3 -m py_compile .github/scripts/*.py`

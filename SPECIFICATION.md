@@ -77,11 +77,11 @@ L'interface repose sur une modularité stricte : **aucun écran ou page n'est co
 * **Suivi de Génération & Galerie** :
   * Suivi temps réel par Server-Sent Events (SSE), lecteur vidéo HTML5 avec prévisualisation et téléchargement direct.
 
-### 3.2. Mode Chat LLM & Passerelle API
-
-Dès qu'un modèle de langage est sélectionné (ex. `Llama-3-8B`, `Mistral-7B`, `Qwen-2.5-7B`) :
-
-* **Masquage complet des contrôles vidéo/image** : L'interface se reconfigure instantanément en vue de messagerie conversationnelle.
+### 3.2. Mode LLM & Passerelle API
+ 
+Accessible directement via le 5ᵉ onglet **`[ LLM ]`** de la barre de mode du dock flottant (ou dès qu'un modèle de langage est sélectionné, ex. `Llama-3-8B`, `Mistral-7B`, `Qwen-2.5-7B`) :
+ 
+* **Masquage complet des contrôles vidéo/image** : L'interface se reconfigure instantanément en vue de messagerie textuelle.
 * **Fenêtre de Chat interactive** :
   * Historique des échanges, rendu Markdown complet, coloration syntaxique des blocs de code.
   * Streaming mot à mot des réponses (*Server-Sent Events*).

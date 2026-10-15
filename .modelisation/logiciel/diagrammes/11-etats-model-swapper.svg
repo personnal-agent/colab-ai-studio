@@ -19,7 +19,7 @@
 
   <!-- En-tête documentaire -->
   <text x="48" y="44" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#0F172A">11 · Machine à États-Transitions — Model Swapper (VRAM GPU)</text>
-  <text x="48" y="72" font-family="Arial, sans-serif" font-size="14" fill="#475569">Conformité OMG UML 2.5.1 &amp; L3 MIAGE · Cycle de vie dynamique de la classe contextuelle ModelSwapper (Worker Colab T4 16 Go)</text>
+  <text x="48" y="72" font-family="Arial, sans-serif" font-size="14" fill="#475569">Cycle de vie dynamique du Model Swapper · Gestion de la mémoire VRAM GPU T4 16 Go, permutation à chaud et reprise sur saturation CUDA</text>
   <line x1="48" y1="90" x2="1632" y2="90" stroke="#CBD5E1" stroke-width="1.5"/>
 
   <!-- Cadre global de la Machine à États (Frame / Cartouche UML) -->
@@ -32,7 +32,7 @@
   <!-- ==================== PSEUDO-ÉTAT INITIAL ==================== -->
   <circle cx="100" cy="380" r="10" fill="#0F172A"/>
   <path d="M110 380 L180 380" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="145" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">initialiser()</text>
+  <text x="145" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">/ initialiser()</text>
 
   <!-- ==================== ÉTAT 1 : EnVeilleVRAMLibre ==================== -->
   <g id="state-EnVeilleVRAMLibre">
@@ -75,13 +75,13 @@
     <text x="1165" y="380" font-family="Courier New, monospace" font-size="12" fill="#1E40AF">entry / armerTimerInactivite()</text>
     <text x="1165" y="402" font-family="Courier New, monospace" font-size="12" fill="#1E40AF">do / executerInferenceGPU()</text>
     <text x="1165" y="424" font-family="Courier New, monospace" font-size="12" font-weight="700" fill="#1E3A8A">requeteRecue(m) [m == active_model] /</text>
-    <text x="1178" y="444" font-family="Courier New, monospace" font-size="12" font-weight="700" fill="#1E3A8A">  reutiliserPipeline()</text>
+    <text x="1178" y="444" font-family="Courier New, monospace" font-size="12" font-weight="700" fill="#1E3A8A">  reutiliserPipeline(); rearmerTimer()</text>
   </g>
 
-  <!-- ==================== ÉTAT 4 : RecuperationSaturationMemoire (Remarque 11.3) ==================== -->
-  <g id="state-RecuperationSaturationMemoire">
+  <!-- ==================== ÉTAT 4 : EnRecuperationSaturation ==================== -->
+  <g id="state-EnRecuperationSaturation">
     <rect x="750" y="145" width="410" height="115" rx="16" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" filter="url(#cardShadow)"/>
-    <text x="955" y="172" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#991B1B">RecuperationSaturationMemoire</text>
+    <text x="955" y="172" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#991B1B">EnRecuperationSaturation</text>
     <line x1="750" y1="182" x2="1160" y2="182" stroke="#FECACA" stroke-width="1.5"/>
     <text x="765" y="202" font-family="Courier New, monospace" font-size="12" fill="#B91C1C">entry / log_error("CUDA Out of Memory")</text>
     <text x="765" y="222" font-family="Courier New, monospace" font-size="12" fill="#B91C1C">do / purgeVRAMUrgence(); gc.collect()</text>
@@ -94,17 +94,17 @@
   <text x="755" y="280" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="700" fill="#DC2626">erreurChargement</text>
   <text x="755" y="289" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#B91C1C">[exception OOM]</text>
 
-  <!-- Transition d'erreur OOM depuis ModeleActif -->
-  <path d="M1250 295 L1250 200 L1160 200" fill="none" stroke="#DC2626" stroke-width="1.8" marker-end="url(#arrowRed)"/>
-  <rect x="1175" y="208" width="150" height="24" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
-  <text x="1250" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#DC2626">erreurInference [CUDA OOM]</text>
-  <text x="1250" y="229" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#B91C1C">/ interrompreTache()</text>
+  <!-- Transition d'erreur OOM depuis ModeleActif (Cartouche décollée de 10px vers le haut) -->
+  <path d="M1250 295 L1250 195 L1160 195" fill="none" stroke="#DC2626" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <rect x="1175" y="198" width="150" height="24" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
+  <text x="1250" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#DC2626">erreurInference [CUDA OOM]</text>
+  <text x="1250" y="219" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#B91C1C">/ interrompreTache()</text>
 
-  <!-- Transition de sortie de RecuperationSaturationMemoire vers EnVeilleVRAMLibre -->
+  <!-- Transition de sortie de EnRecuperationSaturation vers EnVeilleVRAMLibre (garde épurée) -->
   <path d="M750 200 L335 200 L335 300" fill="none" stroke="#DC2626" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <rect x="420" y="188" width="230" height="24" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
-  <text x="535" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#991B1B">recuperationAchevee [cache_purge]</text>
-  <text x="535" y="209" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#B91C1C">/ reinitialiserContexte()</text>
+  <rect x="440" y="188" width="200" height="24" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
+  <text x="540" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#991B1B">recuperationAchevee</text>
+  <text x="540" y="209" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#B91C1C">/ reinitialiserContexte()</text>
 
   <!-- ==================== TRANSITIONS ModeleActif -> EvictionVRAMEnCours ==================== -->
   <!-- Transition 1 : Déclenchée par une nouvelle requête pour un modèle différent -->
@@ -112,10 +112,10 @@
   <rect x="1110" y="583" width="265" height="26" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
   <text x="1242" y="600" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0F172A">requeteRecue(m) [m != active_model] / demarrerEviction()</text>
 
-  <!-- Transition 2 : Déclenchée par l'expiration du timer d'inactivité (timeout) -->
+  <!-- Transition 2 : Déclenchée par l'expiration du timer d'inactivité (syntaxe after(delaiInactivite) normée) -->
   <path d="M1490 470 L1490 655 L1060 655" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
   <rect x="1110" y="642" width="265" height="26" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
-  <text x="1242" y="659" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#475569">timerInactiviteExpire [timeout] / demarrerEviction()</text>
+  <text x="1242" y="659" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#475569">after(delaiInactivite) / demarrerEviction()</text>
 
   <!-- ==================== ÉTAT 5 : EvictionVRAMEnCours ==================== -->
   <g id="state-EvictionVRAMEnCours">
@@ -133,11 +133,10 @@
   <rect x="600" y="618" width="95" height="18" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
   <text x="647" y="631" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#0F172A">evictionTerminee</text>
 
-  <!-- ==================== PSEUDO-ÉTAT DE CHOIX UML («choice») (Remarque 11.2) ==================== -->
+  <!-- ==================== PSEUDO-ÉTAT DE CHOIX UML (Épuré sans libellé parasite) ==================== -->
   <g id="pseudostate-choice">
     <!-- Losange vide officiel UML -->
     <polygon points="560,635 540,615 520,635 540,655" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
-    <text x="540" y="605" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#475569">«choice»</text>
   </g>
 
   <!-- Branche 1 du Choix : Vers ChargementEnCours (nouvelle requête en attente) -->
@@ -146,10 +145,10 @@
   <text x="535" y="528" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0369A1">[nouvelle_requete_disponible]</text>
   <text x="535" y="539" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#075985">/ preparerChargement(req.model_id)</text>
 
-  <!-- Branche 2 du Choix : Vers EnVeilleVRAMLibre (garde [else] mutuellement exclusive) -->
+  <!-- Branche 2 du Choix : Vers EnVeilleVRAMLibre (garde épurée en [else]) -->
   <path d="M520 635 L260 635 L260 455" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
-  <rect x="290" y="620" width="180" height="28" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
-  <text x="380" y="633" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#166534">[else] (aucune_requete)</text>
+  <rect x="320" y="620" width="120" height="28" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="380" y="633" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#166534">[else]</text>
   <text x="380" y="644" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#14532D">/ passerEnVeille()</text>
 
   <!-- ==================== PSEUDO-ÉTAT TERMINAL / FINAL ==================== -->
@@ -162,21 +161,21 @@
   <circle cx="140" cy="540" r="13" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
   <circle cx="140" cy="540" r="8" fill="#0F172A"/>
 
-  <!-- ==================== CADRE DE SYNTHÈSE ET RÈGLES DE CONFORMITÉ (Bas de page) ==================== -->
+  <!-- ==================== CADRE DE SYNTHÈSE D'INGÉNIERIE GPU ==================== -->
   <rect x="65" y="735" width="1550" height="100" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
 
-  <text x="80" y="756" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0F172A">Justification de Conformité &amp; Résolution des Remarques d'Audit (Section 11) :</text>
+  <text x="80" y="756" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0F172A">Principes d'ingénierie et gestion de la mémoire GPU (VRAM T4 16 Go) :</text>
 
   <text x="80" y="776" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
-    <tspan font-weight="700" fill="#0369A1">P0 (Remarque 11.1) :</tspan> Élimination stricte des états paramétrés mathématiquement « State(M) ». L'identité du modèle est une variable de contexte (<tspan font-family="Courier New, monospace">active_model: Optional[str]</tspan>). États formalisés par des participes/adjectifs normés (<tspan font-weight="600">EnVeilleVRAMLibre, ChargementEnCours, ModeleActif, EvictionVRAMEnCours</tspan>).
+    <tspan font-weight="700" fill="#0369A1">1. Variable de contexte :</tspan> L'identité du modèle actif est stockée dans <tspan font-family="Courier New, monospace">active_model: Optional[str]</tspan> (None, SDXL, Wan2.1, etc.). Le swapper évite tout rechargement redondant lorsque le modèle demandé est déjà en mémoire.
   </text>
   <text x="80" y="796" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
-    <tspan font-weight="700" fill="#D97706">P1 (Remarque 11.2) :</tspan> Déterminisme rigoureux en sortie d'éviction par insertion d'un pseudo-état de choix (<tspan font-weight="600">«choice»</tspan> : losange vide UML) articulant deux branches exclusives et exhaustives : <tspan font-weight="600">[nouvelle_requete_disponible]</tspan> vers ChargementEnCours et <tspan font-weight="600">[else]</tspan> vers EnVeilleVRAMLibre.
+    <tspan font-weight="700" fill="#D97706">2. Permutation et temporisation :</tspan> En sortie d'éviction, le choix arbitre immédiatement entre le chargement d'une nouvelle requête en attente (<tspan font-weight="600">[nouvelle_requete_disponible]</tspan>) ou la libération en veille (<tspan font-weight="600">[else]</tspan>).
   </text>
   <text x="80" y="816" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
-    <tspan font-weight="700" fill="#DC2626">P2 (Remarque 11.3) :</tspan> Modélisation de l'état autonome <tspan font-weight="600">RecuperationSaturationMemoire</tspan> pour parer aux pannes CUDA OOM sur la VRAM T4 16 Go, avec purge atomique (<tspan font-family="Courier New, monospace">torch.cuda.empty_cache()</tspan>) et réinitialisation vers l'état de veille.
+    <tspan font-weight="700" fill="#DC2626">3. Résilience et purge CUDA OOM :</tspan> L'état autonome <tspan font-weight="600">EnRecuperationSaturation</tspan> intercepte toute saturation mémoire, force un <tspan font-family="Courier New, monospace">torch.cuda.empty_cache()</tspan>, purge les tenseurs orphelins et réinitialise le worker en veille.
   </text>
 
-  <!-- Mentions légales de bas de page -->
-  <text x="48" y="962" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Colab AI Studio · Modélisation logicielle d'ingénierie UML 2.5.1 · Conforme aux standards académiques L3 MIAGE (Dr TRAORE O. E.)</text>
+  <!-- Mentions de bas de page -->
+  <text x="48" y="962" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Colab AI Studio · Gestion de l'allocation VRAM et permutation dynamique des pipelines d'inférence (Worker Google Colab)</text>
 </svg>
