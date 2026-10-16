@@ -7,7 +7,7 @@
 - **Behavioral Proof**:
   - Chaîne de **5 plans séquentiels** dans `.GCC/branches/` couvrant 100% de `UC-01` à `UC-08`, des spécifications et des 11 diagrammes UML.
   - **Finding Greptile #1 résolu** (`plan_01`, `plan_04`, `test_todo.md`) : spécification de `app/services/brand_extractor.py`, de l'extraction d'actifs sur `POST /api/brand-kits` (`Brand files` [PDF, images, `.fig`] et `Website` [URL]), du raccordement au bouton `[ Continue ]` de `BrandKitCreateModal.tsx` vers `BrandKitInspectorModal.tsx`, et des tests vérifiant les actifs extraits (logos, couleurs hex, polices, `overview`).
-  - **Finding Greptile #2 résolu** (`plan_05`, `test_todo.md`) : séparation entre `tests/e2e/test_full_pipeline.py` (worker Colab simulé pour les parcours `UC-01`–`UC-08`) et `tests/e2e/test_memory_footprint.py` (démarrage du backend FastAPI seul dans un sous-processus OS dédié `subprocess.Popen` sans worker ni `pytest` chargés dedans pour mesurer son RSS exclusif `< 80 Mo RAM`).
+  - **Finding Greptile #2 & #3 résolus** (`plan_01`, `plan_05`, `test_todo.md`) : séparation entre `tests/e2e/test_full_pipeline.py` (worker Colab simulé pour les parcours `UC-01`–`UC-08`) et `tests/e2e/test_memory_footprint.py` (démarrage du backend FastAPI seul dans un sous-processus OS dédié `subprocess.Popen` sans worker ni `pytest` chargés dedans, et mesure portable multi-OS de son RSS exclusif `< 80 Mo RAM` via `psutil.Process(proc.pid).memory_info().rss`).
   - Validation intégrale des Quality Gates locales (`python3 -m py_compile .github/scripts/*.py && .githooks/pre-push`).
 
 ## ⚡ Technical Diffs / Atomic Modifications

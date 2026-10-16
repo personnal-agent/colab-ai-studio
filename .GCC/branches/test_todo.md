@@ -50,5 +50,5 @@
   - Verification: Vérifier le chargement à la demande, la réutilisation sans rechargement, l'éviction complète (`del`, `gc.collect()`, `torch.cuda.empty_cache()`, `torch.cuda.ipc_collect()`), l'éviction par inactivité et la récupération sur `OutOfMemoryError`.
 - [ ] **Scenario**: API du Worker Colab et structure `colab_worker.ipynb` (`tests/api/test_colab_worker_api.py`, `tests/unit/test_notebook_structure.py`)
   - Verification: Vérifier les routes distantes (`/infer`, `/tasks/{id}/cancel`, `/v1/chat/completions`) et la validité JSON/cellules du notebook Colab.
-- [ ] **Scenario**: Parcours E2E (`UC-01` à `UC-08`) et mesure RSS dans un sous-processus backend isolé (< 80 Mo) (`tests/e2e/test_full_pipeline.py`, `tests/e2e/test_memory_footprint.py`)
-  - Verification: Valider le parcours complet avec worker simulé, mesurer le RSS exclusif du processus backend FastAPI séparé (sans worker ni lanceur de tests chargé dedans), et exécuter `.githooks/pre-push`.
+- [ ] **Scenario**: Parcours E2E (`UC-01` à `UC-08`) et mesure RSS portable dans un sous-processus backend isolé (< 80 Mo) (`tests/e2e/test_full_pipeline.py`, `tests/e2e/test_memory_footprint.py`)
+  - Verification: Valider le parcours complet avec worker simulé, mesurer de façon portable (`psutil.Process(proc.pid).memory_info().rss` compatible Linux/macOS/Windows) le RSS exclusif du processus backend FastAPI séparé (sans worker ni lanceur de tests chargé dedans), et exécuter `.githooks/pre-push`.

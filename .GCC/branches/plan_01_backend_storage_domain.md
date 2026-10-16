@@ -9,7 +9,7 @@
 
 ### Step 1: Initialisation du projet Python et configuration de test pytest
 
-- [ ] **Action**: Créer `requirements.txt` (ou `pyproject.toml` avec `fastapi`, `uvicorn`, `pydantic>=2.0`, `httpx`, `pytest`, `pytest-asyncio`), initialiser l'arborescence `app/{__init__,api,models,services,storage}/` et `tests/{unit,api,e2e}/`, ainsi que `app/config.py` pour la résolution des chemins (`data/`, `outputs/`).
+- [ ] **Action**: Créer `requirements.txt` (ou `pyproject.toml` avec `fastapi`, `uvicorn`, `pydantic>=2.0`, `httpx`, `pytest`, `pytest-asyncio`, `psutil`), initialiser l'arborescence `app/{__init__,api,models,services,storage}/` et `tests/{unit,api,e2e}/`, ainsi que `app/config.py` pour la résolution des chemins (`data/`, `outputs/`).
 - [ ] **Verify**: `pytest tests/ -q && python3 -m py_compile app/config.py`
 - **Verification Proof**:
 
