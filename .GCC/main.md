@@ -1,16 +1,20 @@
 # Current Project Context — Colab AI Studio
 
 ## 🏆 Major Milestones (Archived Epics)
+
 - **2026-10-09** : Déploiement complet du socle de gouvernance et qualité des 6 piliers (`coding-stuff` v3.0).
 - **2026-10-11** : Consolidation et validation formelle du corpus de modélisation logicielle sous `.modelisation/logiciel/` (11 diagrammes UML SVG + PNG, README d'architecture système et matrice de traçabilité des exigences).
 - **2026-10-11** : Harmonisation technique des 11 diagrammes SVG, régénération et validation des 11 rendus PNG, README d'architecture et matrice de traçabilité synchronisés à 100%.
 - **2026-10-15** : Purge intégrale de toutes les citations et justifications théoriques externes dans les diagrammes UML et la documentation d'architecture, recentrage 100% sur le domaine métier et l'ingénierie concrète de Colab AI Studio, formalisation du 5ᵉ mode LLM sur le dock dans les spécifications.
-- **2026-10-15** : Approbation formelle à 100% de la Pull Request #6 par Greptile (score 5/5, 0 issue bloquante) et CodeRabbit (statut `APPROVED`, 0 finding résiduel, 16/16 review threads résolus).
+- **2026-10-15** : Approbation formelle à 100% de la Pull Request #6 par Greptile (score 5/5, 0 issue bloquante) et CodeRabbit (statut `APPROVED`, 0 finding résiduel, 16/16 review threads résolus), puis fusion sur `main` (`90f8dcb`).
+- **2026-10-16** : Séquencement complet de l'implémentation logicielle et du backlog de tests TDD en une chaîne de 5 plans d'exécution sous `.GCC/branches/`.
 
 ## 🎯 Objective
-Livraison et validation par Pull Request [#6](https://github.com/personnal-agent/colab-ai-studio/pull/6) des 11 diagrammes UML finalisés, de la documentation d'architecture synchronisée et des spécifications enrichies du mode LLM.
+
+Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d'implémentation de **Colab AI Studio** (Backend FastAPI & stockage atomique, Compilateur Brand Kit & orchestrateur SSE / Proxy LLM, Socle Frontend React SPA & Galerie, Floating Prompt Dock modulaire & Mode LLM, Worker Google Colab `ModelSwapper` & tests E2E).
 
 ## 🧠 Decisions Made
+
 - **2026-10-09** : Adoption du socle de gouvernance à 6 piliers avec agent cible Antigravity 2.0 / IDE.
 - **2026-10-09** : Suivi de `.GCC/` sous contrôle de version Git pour synchroniser la mémoire des décisions d'architecture entre les sessions.
 - **2026-10-09** : Conception de hooks Git hybrides scope-aware (`pre-commit`, `commit-msg`, `pre-push`) prenant en charge Python (FastAPI/Colab) et TypeScript/JavaScript (React/Vite).
@@ -32,17 +36,30 @@ Livraison et validation par Pull Request [#6](https://github.com/personnal-agent
 - **2026-10-15** : Formalisation du 5ᵉ mode `LLM` sur la barre d'onglets du dock flottant dans `SPECIFICATION.md` et `UI_SPECIFICATION.md` avec masquage dynamique des contrôles multimédia et activation de la vue textuelle conversationnelle.
 - **2026-10-15** : Restructuration du diagramme de séquence proxy LLM (`08-sequence-proxy-llm.svg`) en opérateur `alt` exhaustif UML 2.5 séparant strictement le flux nominal (boucle de streaming et clôture `[DONE]`) de la branche d'annulation client (`request.is_disconnected() == true` ou signal client `Abort`) avec libération GPU sans envoi parasite sur socket rompue.
 - **2026-10-15** : Remplacement des dénominations théoriques résiduelles (*Plafond de Miller*, *Loi de Déméter*) par des descriptions concrètes du modèle modulaire (*modularisation bornée à 7 composants*, *découplage direct et médiation FastAPI*) dans `02-composants.svg`, `07-sequence-brand-context.svg` et `README.md`.
+- **2026-10-16** : Découpage de l'implémentation du code et des tests en une chaîne séquentielle de 5 plans (`.GCC/branches/plan_01` à `plan_05`) alignés sur les budgets de Pull Request (≤ 500 lignes recommandées) et le cycle TDD par tranches verticales.
+  - **Context** : Les spécifications (`SPECIFICATION.md`, `UI_SPECIFICATION.md`, `DESIGN_SPECIFICATION.md`) et les 11 diagrammes UML sont validés et fusionnés sur `main` ; l'écriture du code doit être séquencée proprement avec ses suites de tests.
+  - **Discarded Options** : Plan monolithique unique couvrant Backend + Frontend + Colab (rejeté car il dépasserait la limite de 1000 lignes par PR et retarderait la validation unitaire de chaque couche).
+  - **Rationale** : Une chaîne de 5 plans ordonnés par dépendances (1. Stockage & Modèles $\rightarrow$ 2. Services Backend & SSE/Proxy $\rightarrow$ 3. Socle Frontend & Galerie $\rightarrow$ 4. Dock Modulaire, Brand Kit & Mode LLM $\rightarrow$ 5. Worker Colab `ModelSwapper` & E2E) garantit que chaque étape est immédiatement testable et livrable en PR atomique.
 
 ## 🌿 Active Branches / Plans
-- [`docs/ui-system-specifications`](https://github.com/personnal-agent/colab-ai-studio/pull/4) : Consolidation des spécifications UI/système, design tokens, suivi des maquettes et revue Greptile / CodeRabbit (PR #4 ouverte).
-- [`docs/software-modeling`](https://github.com/personnal-agent/colab-ai-studio/pull/6) : Modélisation logicielle sous `.modelisation/logiciel/` ; Pull Request #6 approuvée (`APPROVED` par CodeRabbit et Greptile).
+
+- **Chaîne d'implémentation logicielle & TDD (5 plans séquentiels)** :
+  1. [`.GCC/branches/plan_01_backend_storage_domain.md`](branches/plan_01_backend_storage_domain.md) : Socle Backend FastAPI, Modèles de Domaine Pydantic v2 (`TaskStatus`, `Generation`, `BrandKit`, `Project`, `StudioConfig`), `JSONDocumentStore` atomique (`asyncio.Lock` + `os.replace`), `MediaFileStore` (isolation `storagePath`) et routes CRUD.
+  2. [`.GCC/branches/plan_02_backend_brand_compiler_orchestrator.md`](branches/plan_02_backend_brand_compiler_orchestrator.md) : `BrandContextCompiler` (repli déterministe anglais & priorité des fentes), `TaskOrchestrator` SSE & annulation idempotente, garde-fou mode Local (`501`), et Proxy LLM streaming OpenAI (`/v1/chat/completions`).
+  3. [`.GCC/branches/plan_03_frontend_foundation_gallery.md`](branches/plan_03_frontend_foundation_gallery.md) : Socle Frontend React 18 / Vite 5 / Tailwind v3 / Radix UI, Barre supérieure (Favoris, Ask, Projets `storagePath`, Notifications, Avatar Colab/Local), Galerie à 6 types de cartes et modale d'inspection avec **Remix**.
+  4. [`.GCC/branches/plan_04_frontend_dock_brandkit_llm.md`](branches/plan_04_frontend_dock_brandkit_llm.md) : `FloatingPromptDock` modulaire piloté par `capabilities` (1 fichier par contrôle, règle de subsomption vidéo, durée `range`/`discrete`), Système Brand Kit complet et 5ᵉ onglet `LLM` conversationnel.
+  5. [`.GCC/branches/plan_05_colab_worker_e2e.md`](branches/plan_05_colab_worker_e2e.md) : Worker GPU Google Colab (`ModelSwapper` VRAM T4 16 Go, `colab_worker.ipynb`), intégration E2E (`UC-01` à `UC-08`) et validation du budget mémoire (< 80 Mo RAM).
+- **Plans de modélisation complétés (PR #6 fusionnée sur `main`)** :
   - [`.GCC/branches/plan_uml-modelisation.md`](branches/plan_uml-modelisation.md) : Corpus UML et architecture cible sous `.modelisation/logiciel/`.
   - [`.GCC/branches/plan_corrections-uml.md`](branches/plan_corrections-uml.md) : Correction et consolidation des 11 diagrammes UML et du README.
   - [`.GCC/branches/plan_purge_academique.md`](branches/plan_purge_academique.md) : Purge des références externes et théoriques dans les diagrammes UML et le README.
 
 ## 📈 Current Status
-- ✅ Terminé : Approbation formelle 100% de la Pull Request [#6](https://github.com/personnal-agent/colab-ai-studio/pull/6) par Greptile (`APPROVED`) et CodeRabbit (`APPROVED`). 16/16 review threads résolus (`Unresolved: 0`). 11 paires SVG/PNG validées.
-- ⏳ Prêt pour merge : Présentation du bilan d'approbation au mainteneur humain pour décision de fusion.
+
+- ✅ Terminé : Phase 1 (Socle de gouvernance, Spécifications système/UI/Design et Modélisation UML fusionnés sur `main`). Chaîne des 5 plans d'implémentation et backlog de tests (`test_todo.md`) établis dans `.GCC/`.
+- 🔄 En cours : Préparation de l'exécution du **Plan 01/05** (`plan_01_backend_storage_domain.md`).
+- ⏳ En attente : Plans 02/05 à 05/05.
 
 ## 👉 Next Session Direction
-Accompagner le mainteneur pour la fusion de la Pull Request #6 et clôture de l'étape de modélisation logicielle.
+
+Démarrer l'exécution TDD du **Plan 01/05** ([`.GCC/branches/plan_01_backend_storage_domain.md`](branches/plan_01_backend_storage_domain.md)) à partir de la Step 1 (initialisation de `app/`, `tests/`, modèles Pydantic v2 et persistance atomique JSON/médias).
