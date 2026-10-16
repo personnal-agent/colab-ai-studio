@@ -202,7 +202,7 @@ def collect_anchors(lines: list[str]) -> dict[str, set[str]]:
         triggers: set[str] = set()
         for child in child_lines(lines, idx):
             stripped = child.strip()
-            if stripped.startswith("-") or stripped.startswith("*"):
+            if stripped.startswith(("-", "*")):
                 triggers.update(resolve_token(stripped, anchors))
             else:
                 key = flow_pair_key(stripped)
@@ -238,7 +238,7 @@ def parse_triggers(lines: list[str]) -> set[str]:
         triggers: set[str] = set()
         for child in child_lines(lines, idx):
             stripped = child.strip()
-            if stripped.startswith("-") or stripped.startswith("*"):
+            if stripped.startswith(("-", "*")):
                 triggers.update(resolve_token(stripped, anchors))
                 continue
             key = flow_pair_key(stripped)
@@ -304,7 +304,6 @@ def validate_permissions_block(
 def check_workflow(path: Path) -> int:
     errors = 0
     lines = path.read_text(encoding="utf-8").splitlines()
-    text = "\n".join(strip_comment(line) for line in lines)
 
     # 1. Untrusted triggers: pull_request_target exposes secrets to PR code.
     triggers = parse_triggers(lines)
@@ -382,7 +381,7 @@ def check_workflow(path: Path) -> int:
         if not match:
             continue
         action, ref, comment = match.groups()
-        if action.startswith("./") or action.startswith("docker://"):
+        if action.startswith(("./", "docker://")):
             continue
         action = action.strip("\"'")
         ref = ref.strip("\"'")

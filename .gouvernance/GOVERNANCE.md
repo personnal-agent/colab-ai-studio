@@ -4,12 +4,14 @@ Ce document régit les règles d'automatisation, le cycle de vie des signalement
 
 ---
 
-## 1. Workflows d'Automatisation GitHub Actions
+## 1. Workflows d'Automatisation GitHub Actions & Gates Cloud
 
-| Workflow | Fichier | Déclencheur | Rôle & Pipeline |
+| Workflow / Gate | Fichier | Déclencheur | Rôle & Pipeline |
 |---|---|---|---|
 | **Intégration Continue (CI)** | `.github/workflows/ci.yml` | `pull_request`, `push` sur `main`, `workflow_dispatch` | Vérification des 3 volets : qualité backend Python (syntaxe, ruff, tests pytest), qualité frontend Node.js (lint, tests, build) et intégrité des workflows GitHub. |
-| **Gouvernance des PR** | `.github/workflows/governance.yml` | Événements `pull_request` | Contrôle du format Conventional Commits du titre et des commits, respect du budget de taille (alerte > 500 lignes, rejet strict > 1000 lignes) et publication du commentaire d'audit. |
+| **Gouvernance des PR** | `.github/workflows/governance.yml` | Événements `pull_request` | Contrôle du format Conventional Commits du titre et des commits, respect du budget de taille de code (alerte > 1000 lignes de code, rejet strict > 2500 lignes de code, hors documentation/assets) et publication du commentaire d'audit. |
+| **CodeRabbit Quality Gate** | `.coderabbit.yaml` | `pull_request` (y compris brouillons) | Barrière de fusion bloquante (*fail-closed*) exigeant un score de qualité exact de `5/5` ET exactement `0 finding` (code + documentation synchronisée). |
+| **Couverture de Tests (Codecov)** | `codecov.yml` | `pull_request`, `push` sur `main` | Exigence stricte de couverture : `90 %` sur le projet global et `100 %` sur le patch de la PR (`threshold: 0%`, zéro tolérance). |
 | **Revue des Dépendances** | `.github/workflows/security.yml` | `pull_request` | Revue des dépendances ajoutées ou modifiées sur PR (gravité élevée, filtrage des licences AGPL/GPL). |
 | **Hygiène des Workflows** | `.github/workflows/workflow-hygiene.yml` | `pull_request`, `push` sur `main`, hebdo | Vérifie le verrouillage par hash SHA complet (40 caractères) de toutes les actions tierces et le principe de moindre privilège des jetons. |
 | **Triage des Issues** | `.github/workflows/issue-triage.yml` | `issues` (opened, reopened, edited), `workflow_dispatch` | Qualification et étiquetage initial des signalements selon les formulaires d'issues. |
@@ -34,16 +36,16 @@ Les agents IA ne créent pas d'issues de façon autonome sans validation préala
 
 ## 3. Règles des Pull Requests
 
-- **Mode de livraison** : Toute modification substantielle transite par une branche dédiée et une Pull Request — voir `AGENTS.md` §4 (mode Strict Review).
+- **Mode de livraison** : Toute modification transite par une branche dédiée et une Pull Request — voir `AGENTS.md` §4 (mode Strict Review unique actif ; le mode Light Review est désactivé).
 - **Titres et commits** : Respect impératif de la norme **Conventional Commits** (`type(scope): description`). Types autorisés : `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `perf`, `build`, `style`, `revert`.
-- **Budget de taille** : ≤ 500 lignes recommandées pour faciliter la relecture, rejet automatique au-delà de 1000 lignes (exception unique restreinte à l'initialisation du socle sur la PR #1).
+- **Budget de taille** : ≤ 1000 lignes de code recommandées pour faciliter la relecture, rejet automatique au-delà de 2500 lignes de code (les fichiers `.md`, `.markdown`, `.txt`, `.pdf`, `.svg`, `.png` sont exclus du décompte ; exception historique sur la PR #1).
 - **Gabarit obligatoire** : `.github/PULL_REQUEST_TEMPLATE.md` doit être intégralement complété (cause racine, description synthétique, commandes de test exécutées, risques résiduels).
 - **Revues de code & Approbation** :
   - **L'agent IA n'approuve JAMAIS son propre code.**
-  - 100 % des retours des bots d'audit et des revues humaines doivent être lus et résolus avant fusion.
+  - 100 % des retours des bots d'audit (CodeRabbit `5/5 + 0 findings`, Greptile `5/5`, Codex) et des revues humaines doivent être lus et résolus avant fusion.
   - La décision de fusion (*merge*) appartient exclusivement aux mainteneurs humains.
 - **Chemins sanctuarisés (protection stricte)** :
-  Aucun agent ne peut modifier sans validation humaine explicite : `AGENTS.md`, `.gouvernance/**`, `.github/workflows/**`, `.github/scripts/**`, `.githooks/**`, `.GCC/PROTOCOL.md`.
+  Aucun agent ne peut modifier sans validation humaine explicite : `AGENTS.md`, `CLAUDE.md`, `.coderabbit.yaml`, `.gitleaks.toml`, `codecov.yml`, `.dependency-cruiser.cjs`, `.gouvernance/**`, `.github/workflows/**`, `.github/scripts/**`, `.githooks/**`, `.GCC/PROTOCOL.md`.
 
 ---
 

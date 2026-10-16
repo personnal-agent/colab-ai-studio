@@ -1,0 +1,9 @@
+# Configuration gitleaks de la Quality Gate locale.
+# Invoquée par .githooks/_common/detect-secrets.sh, lui-même appelé par
+# .githooks/pre-commit (index) et .githooks/pre-push (historique).
+#
+# `useDefault = true` conserve l'intégralité des règles natives de gitleaks :
+# ce fichier n'en désactive aucune.
+
+[extend]
+useDefault = true

@@ -7,25 +7,21 @@
 
 ---
 
-## 1. Operational Review Modes
+## 1. Operational Review Mode (Active: Strict Review)
 
-### Mode A: Light Review (Local Development)
-- **Use Case**: Fast local iterations, everyday developer tasks on local branches.
+### Mode: Strict Review (Dual-Layer Defense)
+- **Active Mode**: Enforced across all branches and pull requests.
 - **Workflow**:
-  1. Implement changes within minimal scope.
-  2. Run local tests, linters, and formatters.
-  3. Trigger local AI review (via CLI e.g. `greptile review` or dedicated reviewer sub-agent).
-  4. Fix 100% of actionable defects in a single batch before committing.
-  5. Propose clean Conventional Commit message for human approval.
-
-### Mode B: Strict Review (Dual-Layer Defense for PRs)
-- **Use Case**: Pull requests, multi-module refactorings, security-sensitive features.
-- **Workflow**:
-  1. **Layer 1 (Local Pre-Delivery)**: Run local test suite and local reviewer agent. Fix all local findings.
+  1. **Layer 1 (Local Pre-Delivery)**: Run local test suite and local reviewer agent (`greptile review` / reviewer sub-agent). Fix all local findings in a single batch before committing.
   2. **Layer 2 (Cloud PR Review)**: Push dedicated branch and open PR using `PULL_REQUEST_TEMPLATE.md`.
   3. **Mandatory Full-Text Reading**: Read 100% of full-text comments from review bots (CodeRabbit, Greptile, Codex). Never rely solely on green CI checkmarks.
   4. **Thread Resolution**: Address and resolve 100% of review threads with follow-up commits.
   5. **Human Maintainer Sign-Off**: The human maintainer conducts final approval and performs the merge.
+
+---
+
+### Mode Reference: Light Review (Inactive)
+- *Light Review mode is disabled in favor of strict two-layer review policy.*
 
 ---
 

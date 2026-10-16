@@ -51,15 +51,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git diff --name-only --no-renames -z "$BASE_SHA...$HEAD_SHA" > "$CHANGED_FILES_FILE"
-          git diff --numstat "$BASE_SHA...$HEAD_SHA" > "${CHANGED_FILES_FILE}.numstat"
-          added=$(awk '{ sum += $1 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")
-          deleted=$(awk '{ sum += $2 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")
+          git -c core.quotePath=false diff --name-only --no-renames -z "$BASE_SHA...$HEAD_SHA" > "$CHANGED_FILES_FILE"
+          git -c core.quotePath=false diff --numstat --no-renames "$BASE_SHA...$HEAD_SHA" > "${CHANGED_FILES_FILE}.numstat"
+          # Exclude documentation and static asset files (.md, .markdown, .txt, .pdf, .svg, .png) from the code size budget
+          added=$(awk '$1 ~ /^[0-9]+$/ && tolower($0) !~ /\.(md|markdown|txt|pdf|svg|png)$/ { sum += $1 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")
+          deleted=$(awk '$2 ~ /^[0-9]+$/ && tolower($0) !~ /\.(md|markdown|txt|pdf|svg|png)$/ { sum += $2 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")
           total=$((added + deleted))
           protected=false
           while IFS= read -r -d '' path; do
             case "$path" in
-              .github/workflows/*|.github/scripts/*|.github/CODEOWNERS|AGENTS.md|.gouvernance/*|.GCC/PROTOCOL.md|AUTONOMY.md|agent-control-plane/*|.claude/*|.cursor/*|.agents/*|.devin/*|.windsurf/*|.githooks/*|setup.sh|setup.ps1)
+              .github/workflows/*|.github/scripts/*|.github/CODEOWNERS|AGENTS.md|CLAUDE.md|.coderabbit.yaml|.gitleaks.toml|codecov.yml|.dependency-cruiser.cjs|.gouvernance/*|.GCC/PROTOCOL.md|AUTONOMY.md|agent-control-plane/*|.claude/*|.cursor/*|.agents/*|.devin/*|.windsurf/*|.githooks/*|setup.sh|setup.ps1)
                 protected=true
                 ;;
             esac
@@ -70,13 +71,13 @@ jobs:
           if [ "${{ github.event.pull_request.number }}" = "1" ]; then
             is_initial_governance=true
           fi
-          if (( total > 1000 )) && [ "$is_initial_governance" != "true" ]; then
+          if (( total > 2500 )) && [ "$is_initial_governance" != "true" ]; then
             echo 'status=fail' >> "$GITHUB_OUTPUT"
-            echo "Pull request too large: $total changed lines (maximum 1000)." >&2
+            echo "Pull request too large: $total changed lines of code (maximum 2500, docs/assets excluded)." >&2
             exit 1
-          elif (( total > 500 )) && [ "$is_initial_governance" != "true" ]; then
+          elif (( total > 1000 )) && [ "$is_initial_governance" != "true" ]; then
             echo 'status=warning' >> "$GITHUB_OUTPUT"
-            echo "Pull request is large: $total changed lines. Consider splitting it." >&2
+            echo "Pull request is large: $total changed lines of code. Consider splitting it." >&2
           else
             echo 'status=pass' >> "$GITHUB_OUTPUT"
           fi
@@ -119,7 +120,7 @@ jobs:
             echo ""
             echo "- PR title: **${{ steps.title.outputs.status || 'fail' }}**"
             echo "- Commit messages: **${{ steps.commits.outputs.status || 'fail' }}**"
-            echo "- Size: **${{ steps.diff.outputs.status || 'fail' }}** (${{ steps.diff.outputs.total || 'unknown' }} changed lines)"
+            echo "- Size: **${{ steps.diff.outputs.status || 'fail' }}** (${{ steps.diff.outputs.total || 'unknown' }} changed lines of code, docs/assets excluded)"
             echo "- Sensitive automation files changed: **${{ steps.diff.outputs.protected == 'true' && 'yes — require Code Owner review' || 'no' }}**"
             echo ""
             echo "Branch protection and CODEOWNERS must enforce approval for sensitive paths."
@@ -147,7 +148,7 @@ jobs:
               '',
               `- PR title: **${title}**`,
               `- Commit messages: **${commits}**`,
-              `- Size: **${size}** (${process.env.TOTAL_CHANGES} changed lines)`,
+              `- Size: **${size}** (${process.env.TOTAL_CHANGES} changed lines of code, docs/assets excluded)`,
               `- Sensitive automation files changed: **${protectedPaths ? 'yes — require Code Owner review' : 'no'}**`,
               '',
               'Branch protection and CODEOWNERS must enforce approval for sensitive paths.'
