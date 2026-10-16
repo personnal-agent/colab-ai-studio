@@ -37,9 +37,9 @@
 [Pending execution — paste raw pytest output here]
 ```
 
-### Step 4: Tests d'intégration de bout en bout (E2E) et vérification des budgets mémoire
+### Step 4: Tests d'intégration de bout en bout (E2E) et mesure isolée du budget mémoire
 
-- [ ] **Action**: Écrire `tests/e2e/test_full_pipeline.py` raccordant le backend local FastAPI au serveur worker Colab en mémoire pour valider les 8 Cas d'Utilisation de la matrice de traçabilité (`UC-01` à `UC-08` : génération avec Brand Kit et rapatriement dans `outputs/YYYY-MM-DD/` et dans un `storagePath` de projet isolé, suivi SSE, annulation de tâche en cours, favoris/remix, proxy LLM streaming + interruption client, et mesure RSS du processus backend local < 80 Mo RAM). Servir le build statique `frontend/dist` depuis FastAPI.
+- [ ] **Action**: (1) Écrire `tests/e2e/test_full_pipeline.py` raccordant le backend local FastAPI au worker Colab simulé pour valider les 8 Cas d'Utilisation de la matrice de traçabilité (`UC-01` à `UC-08` : génération avec Brand Kit et rapatriement dans `outputs/YYYY-MM-DD/` et dans un `storagePath` de projet isolé, suivi SSE, annulation de tâche en cours, favoris/remix, proxy LLM streaming + interruption client). (2) Écrire `tests/e2e/test_memory_footprint.py` qui démarre le backend local FastAPI (`uvicorn app.main:app` servant `frontend/dist`) dans un **processus OS séparé** (`subprocess.Popen`), sans charger le worker Colab ni le lanceur de tests `pytest` dans ce processus, et mesure directement le RSS exclusif du processus backend (`/proc/<pid>/status` `VmRSS`) pour vérifier la contrainte `< 80 Mo RAM`.
 - [ ] **Verify**: `pytest tests/ -q && npm --prefix frontend test -- --run && .githooks/pre-push`
 - **Verification Proof**:
 

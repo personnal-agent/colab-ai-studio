@@ -47,9 +47,9 @@
 [Pending execution — paste raw pytest output here]
 ```
 
-### Step 5: Point d'entrée FastAPI et routes CRUD documentaires (TDD)
+### Step 5: Point d'entrée FastAPI, extraction d'identité Brand Kit et routes CRUD documentaires (TDD)
 
-- [ ] **Action**: Écrire `tests/api/test_crud_routes.py` puis implémenter `app/main.py` et `app/api/routes_crud.py` exposant : `GET /api/generations` (filtres `favorite`, `mediaType`, `projectId`, `q`), `PATCH /api/generations/{id}/favorite`, `DELETE /api/generations/{id}` (suppression atomique JSON + fichier via `MediaFileStore`), `GET /api/brand-kits`, `POST /api/brand-kits`, `GET /api/projects`, `POST /api/projects`, et `POST /api/config/colab-url`.
+- [ ] **Action**: Écrire `tests/api/test_crud_routes.py` puis implémenter `app/main.py`, `app/services/brand_extractor.py` et `app/api/routes_crud.py` exposant : `GET /api/generations` (filtres `favorite`, `mediaType`, `projectId`, `q`), `PATCH /api/generations/{id}/favorite`, `DELETE /api/generations/{id}` (suppression atomique JSON + fichier via `MediaFileStore`), `GET /api/brand-kits`, `POST /api/brand-kits` (supportant l'initialisation `Blank` ainsi que l'extraction automatique d'identité depuis `Brand files` [PDF, images, `.fig`] et `Website` [URL] : stockage des actifs extraits sous `data/assets/` et peuplement des logos, palette hex, polices, images de référence et `overview`), `GET /api/projects`, `POST /api/projects`, et `POST /api/config/colab-url`.
 - [ ] **Verify**: `pytest tests/ -q && .githooks/pre-push`
 - **Verification Proof**:
 

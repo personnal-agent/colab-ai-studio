@@ -30,13 +30,13 @@
 [Pending execution — paste raw vitest output here]
 ```
 
-### Step 3: Système Brand Kit complet (Popover, Hover Card, Chip atomique, Modale & Inspection) (TDD)
+### Step 3: Système Brand Kit complet (Popover, Hover Card, Chip atomique, Extraction & Inspection) (TDD)
 
-- [ ] **Action**: Écrire `frontend/src/__tests__/brand_kit.test.tsx` puis implémenter sous `frontend/src/components/brand-kit/` :
+- [ ] **Action**: Écrire `frontend/src/__tests__/brand_kit.test.tsx` (couvrant le popover, le chip atomique et la vérification des actifs extraits — logos, couleurs hex, polices, `overview` — après validation des parcours `Brand files` et `Website`) puis implémenter sous `frontend/src/components/brand-kit/` :
   - `BrandKitSelectorPopover.tsx` : état vide initial (*« Aucun brand kit... »* + bouton *« Create brand kit »*), liste triée par `lastUsedAt`, et `BrandKitHoverCard.tsx` (logo HD, compteur d'actifs, fraîcheur, nuancier).
   - `PromptEditorWithChip.tsx` : zone de saisie avec déclencheur `@`, insertion d'un unique chip atomique `[@NomDuKit]` (remplace le précédent) et suppression en un bloc par `Backspace`.
-  - `BrandKitCreateModal.tsx` : 3 méthodes d'initialisation (`Blank`, `Brand files` drag-and-drop, `Website` URL) et bouton `[ Continue ]`.
-  - `BrandKitInspectorModal.tsx` : navigation latérale à 8 sections (`Overview`, `Logos`, `Colors`, `Fonts`, `Reference images`, `Voices`, `Captions`, `Guidelines`) et bouton `[ Use this brand kit ]`.
+  - `BrandKitCreateModal.tsx` : 3 méthodes d'initialisation (`Blank`, `Brand files` drag-and-drop de PDF/images/`.fig`, `Website` saisie d'URL) raccordées au bouton `[ Continue ]` qui déclenche l'extraction d'identité (`POST /api/brand-kits` avec fichiers ou URL), récupère les actifs extraits (logos, nuancier CSS/hex, polices, résumé d'activité) et ouvre directement `BrandKitInspectorModal.tsx` pré-rempli avec ces actifs.
+  - `BrandKitInspectorModal.tsx` : navigation latérale à 8 sections (`Overview`, `Logos`, `Colors`, `Fonts`, `Reference images`, `Voices`, `Captions`, `Guidelines`) inspectant les actifs extraits ou saisis, et bouton `[ Use this brand kit ]`.
 - [ ] **Verify**: `npm --prefix frontend test -- --run src/__tests__/brand_kit.test.tsx`
 - **Verification Proof**:
 

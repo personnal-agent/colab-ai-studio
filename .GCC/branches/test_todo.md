@@ -10,8 +10,8 @@
   - Verification: Exécuter `asyncio.gather` avec 4 insertions simultanées + `PATCH` favori + `DELETE` sur `generations.json` sans perte de mise à jour ni corruption JSON (`asyncio.Lock` + `os.replace`).
 - [ ] **Scenario**: Isolation physique de stockage dans `MediaFileStore` (`tests/unit/test_media_store.py`)
   - Verification: Vérifier que `project.storagePath` stocke exclusivement les médias dans le dossier cible (0 fichier dupliqué dans `outputs/`), `outputs/projects/<id>/` par défaut pour un projet, et `outputs/YYYY-MM-DD/` hors projet.
-- [ ] **Scenario**: Endpoints CRUD documentaires (`tests/api/test_crud_routes.py`)
-  - Verification: Tester `GET/DELETE /api/generations`, `PATCH /api/generations/{id}/favorite`, `GET/POST /api/brand-kits`, `GET/POST /api/projects`, `POST /api/config/colab-url`.
+- [ ] **Scenario**: Endpoints CRUD documentaires et extraction d'identité Brand Kit (`tests/api/test_crud_routes.py`)
+  - Verification: Tester `GET/DELETE /api/generations`, `PATCH /api/generations/{id}/favorite`, `GET/POST /api/brand-kits` (création `Blank` + extraction d'actifs depuis `Brand files` [PDF, images, `.fig`] et `Website` [URL]), `GET/POST /api/projects`, `POST /api/config/colab-url`.
 
 ### Plan 02/05 — BrandContextCompiler, TaskOrchestrator SSE & LLM Proxy (`plan_02_backend_brand_compiler_orchestrator.md`)
 
@@ -39,8 +39,8 @@
   - Verification: Vérifier l'injection systématique des contrôles universels (`⚏ 1`–`4`, `🪄 On`, `seed`) et le montage conditionnel des pilules spécifiques, notamment la durée `range` (curseur continu) vs `discrete` (pilules).
 - [ ] **Scenario**: Règle de subsomption obligatoire du conditionnement vidéo (`frontend/src/__tests__/video_subsumption.test.tsx`)
   - Verification: Vérifier qu'un modèle supportant le mode complet (`Start frame` + `End frame` + `Ingredients`) active toutes les combinaisons partielles et unitaires, et affiche un avertissement en cas de dépassement de `maxImageRefs`.
-- [ ] **Scenario**: Système Brand Kit et chip atomique `[@NomDuKit]` (`frontend/src/__tests__/brand_kit.test.tsx`)
-  - Verification: Vérifier le popover, la Hover Card, l'unicité et la suppression atomique du chip `[@NomDuKit]`, la modale à 3 sources (`Blank`, `Brand files`, `Website`) et l'inspecteur à 8 sections.
+- [ ] **Scenario**: Système Brand Kit, extraction d'identité et chip atomique `[@NomDuKit]` (`frontend/src/__tests__/brand_kit.test.tsx`)
+  - Verification: Vérifier le popover, la Hover Card, l'unicité et la suppression atomique du chip `[@NomDuKit]`, le raccordement de `[ Continue ]` sur les 3 sources (`Blank`, `Brand files`, `Website`) et la présence effective des actifs extraits (logos, couleurs hex, polices, `overview`) dans l'inspecteur à 8 sections.
 - [ ] **Scenario**: Bascule du 5ᵉ onglet `LLM` et mémoire d'état `[H]` (`frontend/src/__tests__/llm_mode.test.tsx`)
   - Verification: Vérifier le masquage des contrôles média, le filtrage sur les modèles LLM, le bandeau `http://localhost:8000/v1/chat/completions`, le streaming SSE avec bouton Stop, et la restauration intacte du brouillon au retour sur un onglet média.
 
@@ -50,5 +50,5 @@
   - Verification: Vérifier le chargement à la demande, la réutilisation sans rechargement, l'éviction complète (`del`, `gc.collect()`, `torch.cuda.empty_cache()`, `torch.cuda.ipc_collect()`), l'éviction par inactivité et la récupération sur `OutOfMemoryError`.
 - [ ] **Scenario**: API du Worker Colab et structure `colab_worker.ipynb` (`tests/api/test_colab_worker_api.py`, `tests/unit/test_notebook_structure.py`)
   - Verification: Vérifier les routes distantes (`/infer`, `/tasks/{id}/cancel`, `/v1/chat/completions`) et la validité JSON/cellules du notebook Colab.
-- [ ] **Scenario**: Parcours E2E complet (`UC-01` à `UC-08`), budget RAM (< 80 Mo) et Quality Gate (`.githooks/pre-push`) (`tests/e2e/test_full_pipeline.py`)
-  - Verification: Exécuter `pytest tests/ -q && npm --prefix frontend test -- --run && .githooks/pre-push`.
+- [ ] **Scenario**: Parcours E2E (`UC-01` à `UC-08`) et mesure RSS dans un sous-processus backend isolé (< 80 Mo) (`tests/e2e/test_full_pipeline.py`, `tests/e2e/test_memory_footprint.py`)
+  - Verification: Valider le parcours complet avec worker simulé, mesurer le RSS exclusif du processus backend FastAPI séparé (sans worker ni lanceur de tests chargé dedans), et exécuter `.githooks/pre-push`.
