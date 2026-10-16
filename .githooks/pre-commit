@@ -93,10 +93,26 @@ while IFS= read -r -d '' staged_path; do
     esac
 done < <(git -c core.quotePath=false diff --cached --name-only -z --diff-filter=ACMR)
 
+staged_grep_files() {
+    local pattern="$1"
+    shift
+    local out rc=0
+    out=$(git grep -I --cached -l -E -e "$pattern" -- "$@") || rc=$?
+    if [ "$rc" -eq 0 ]; then
+        printf '%s\n' "$out"
+        return 0
+    elif [ "$rc" -eq 1 ]; then
+        return 0
+    else
+        echo -e "${RED}❌ Erreur interne lors de l'inspection de l'index via git grep (code $rc).${NC}" >&2
+        exit 1
+    fi
+}
+
 # B. Détection de motifs de secrets dans le contenu indexé des fichiers de code
 SECRET_PATTERN='(PRIVATE KEY|AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}|ghp_[a-zA-Z0-9]{36})'
 if [ ${#STAGED_CODE_CANDIDATES[@]} -gt 0 ]; then
-    STAGED_SECRETS=$(git grep -I --cached -l -E "$SECRET_PATTERN" -- "${STAGED_CODE_CANDIDATES[@]}" 2>/dev/null || true)
+    STAGED_SECRETS=$(staged_grep_files "$SECRET_PATTERN" "${STAGED_CODE_CANDIDATES[@]}")
     if [ -n "$STAGED_SECRETS" ]; then
         echo -e "${RED}❌ Motif de clé privée ou jeton d'accès identifié dans l'index :${NC}"
         echo -e "${YELLOW}$STAGED_SECRETS${NC}"
@@ -108,7 +124,7 @@ fi
 # C. En-tête de bloc PEM dans le contenu indexé, sans AUCUNE exemption de format (y compris markdown)
 PEM_PATTERN='-----BEGIN (RSA |DSA |EC |OPENSSH |ENCRYPTED |PGP )?PRIVATE KEY'
 if [ ${#STAGED_PEM_CANDIDATES[@]} -gt 0 ]; then
-    STAGED_PEM=$(git grep -I --cached -l -E "$PEM_PATTERN" -- "${STAGED_PEM_CANDIDATES[@]}" 2>/dev/null || true)
+    STAGED_PEM=$(staged_grep_files "$PEM_PATTERN" "${STAGED_PEM_CANDIDATES[@]}")
     if [ -n "$STAGED_PEM" ]; then
         echo -e "${RED}❌ Bloc de clé privée PEM présent dans l'index :${NC}"
         echo -e "${YELLOW}$STAGED_PEM${NC}"
@@ -119,7 +135,7 @@ fi
 # D. Commentaires d'inhibition interdits dans le contenu indexé des fichiers de code
 SUPPRESSION_PATTERN='(#\s*(noqa|ruff:\s*noqa|type:\s*ignore|pylint:\s*disable|pyright:\s*ignore)|eslint-disable|@ts-ignore|@ts-nocheck|@ts-expect-error)'
 if [ ${#STAGED_CODE_CANDIDATES[@]} -gt 0 ]; then
-    STAGED_SUPPRESSIONS=$(git grep -I --cached -l -E "$SUPPRESSION_PATTERN" -- "${STAGED_CODE_CANDIDATES[@]}" 2>/dev/null || true)
+    STAGED_SUPPRESSIONS=$(staged_grep_files "$SUPPRESSION_PATTERN" "${STAGED_CODE_CANDIDATES[@]}")
     if [ -n "$STAGED_SUPPRESSIONS" ]; then
         echo -e "${RED}❌ Commentaires de masquage détectés dans l'index (# noqa, # type: ignore, eslint-disable, @ts-ignore, @ts-nocheck) :${NC}"
         echo -e "${YELLOW}$STAGED_SUPPRESSIONS${NC}"
@@ -249,15 +265,18 @@ if [ -n "$JS_FILES" ]; then
     echo "  Fichiers Frontend ciblés :"
     echo "$JS_FILES" | sed 's/^/   • /'
 
-    STAGED_JS_FILES=()
+    STAGED_JS_RELPATHS=()
+    STAGED_JS_SOURCES=()
     if [ "$SCOPE" = "staged" ]; then
         while IFS= read -r -d '' jf; do
             if [ -f "$TMP_STAGED/$jf" ]; then
-                STAGED_JS_FILES+=("$TMP_STAGED/$jf")
+                STAGED_JS_RELPATHS+=("$jf")
+                STAGED_JS_SOURCES+=("$TMP_STAGED/$jf")
                 CODE_FILES+=("$TMP_STAGED/$jf")
             elif [ -L "$TMP_STAGED/$jf" ]; then
                 if [ -f "$jf" ]; then
-                    STAGED_JS_FILES+=("$REPO_ROOT/$jf")
+                    STAGED_JS_RELPATHS+=("$jf")
+                    STAGED_JS_SOURCES+=("$REPO_ROOT/$jf")
                     CODE_FILES+=("$jf")
                 else
                     echo -e "${RED}❌ Lien symbolique Frontend rompu (cible introuvable) : $jf${NC}"
@@ -324,11 +343,15 @@ if [ -n "$JS_FILES" ]; then
                 echo -e "${RED}❌ eslint est introuvable dans frontend/node_modules/.bin/eslint.${NC}"
                 exit 1
             fi
-            echo "  Exécution d'ESLint sur la version indexée (zéro warning toléré)..."
-            (cd frontend && ./node_modules/.bin/eslint --max-warnings=0 "${STAGED_JS_FILES[@]}") || {
-                echo -e "${RED}❌ Erreurs de linting frontend détectées dans la version indexée.${NC}"
-                exit 1
-            }
+            echo "  Exécution d'ESLint sur la version indexée via --stdin-filename (zéro warning toléré)..."
+            for idx in "${!STAGED_JS_RELPATHS[@]}"; do
+                rel_jf="${STAGED_JS_RELPATHS[$idx]}"
+                src_jf="${STAGED_JS_SOURCES[$idx]}"
+                (cd frontend && ./node_modules/.bin/eslint --max-warnings=0 --stdin --stdin-filename "$REPO_ROOT/$rel_jf" < "$src_jf") || {
+                    echo -e "${RED}❌ Erreurs de linting frontend détectées dans la version indexée : $rel_jf${NC}"
+                    exit 1
+                }
+            done
         fi
     fi
     echo -e "${GREEN}  ✓ Contrôles Frontend validés.${NC}"

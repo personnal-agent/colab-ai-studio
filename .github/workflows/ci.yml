@@ -89,18 +89,23 @@ jobs:
       - name: Install & Validate Frontend
         run: |
           if [ -f frontend/package.json ]; then
-            cd frontend
-            if [ -f package-lock.json ]; then
-              npm ci --ignore-scripts
-            else
-              npm install
+            (
+              cd frontend
+              if [ -f package-lock.json ]; then
+                npm ci --ignore-scripts
+              else
+                npm install
+              fi
+              npm run lint
+            )
+            if [ -f .dependency-cruiser.cjs ] && [ -d frontend/src ]; then
+              npx --prefix frontend depcruise --validate .dependency-cruiser.cjs frontend/src
             fi
-            npm run lint
-            if [ -f ../.dependency-cruiser.cjs ] && [ -d src ]; then
-              npx depcruise --validate ../.dependency-cruiser.cjs src
-            fi
-            npm test -- --run --coverage
-            npm run build
+            (
+              cd frontend
+              npm test -- --run --coverage
+              npm run build
+            )
           else
             echo "No frontend package.json present yet."
           fi
