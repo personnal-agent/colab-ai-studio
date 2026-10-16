@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Git Hook: pre-push
 # Barrière avant synchronisation vers origin pour Colab AI Studio :
-#   1. Exécution des tests unitaires (timeout 5 min)
-#   2. Quality Gate complète sur le dépôt entier : QUALITY_GATE_SCOPE=full .githooks/pre-commit
+#   1. Scan gitleaks de l'historique complet (_common/detect-secrets.sh, mode history)
+#   2. Exécution des tests unitaires (timeout 5 min) via _common/run-tests.sh
+#   3. Quality Gate complète sur le dépôt entier : QUALITY_GATE_SCOPE=full .githooks/pre-commit
 # Bloque le push à la première étape en échec.
 
 set -e
@@ -24,12 +25,20 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${BLUE}🚀 PRE-PUSH — Validation Globale & Tests Unitaires${NC}"
+echo -e "${BLUE}🚀 PRE-PUSH — Validation Globale, Secrets Historique & Tests Unitaires${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
-# Étape 1 : Exécution des tests unitaires
+# Étape 1 : Scan de secrets sur l'historique complet du dépôt (gitleaks)
 echo ""
-echo -e "${BLUE}[1/2] Tests unitaires (timeout : 5 minutes)...${NC}"
+echo -e "${BLUE}[1/3] Détection de secrets sur l'historique complet (gitleaks)...${NC}"
+if ! bash "$SCRIPTS_DIR/detect-secrets.sh" history; then
+    echo -e "${RED}❌ Push interrompu : des secrets ont été détectés dans l'historique du dépôt.${NC}"
+    exit 1
+fi
+
+# Étape 2 : Exécution des tests unitaires
+echo ""
+echo -e "${BLUE}[2/3] Tests unitaires (timeout : 5 minutes)...${NC}"
 if [ -f "$SCRIPTS_DIR/run-tests.sh" ]; then
     bash "$SCRIPTS_DIR/run-tests.sh" || {
         echo -e "${RED}❌ Push interrompu : des tests unitaires échouent.${NC}"
@@ -40,9 +49,9 @@ else
     exit 1
 fi
 
-# Étape 2 : Quality Gate complète sur l'ensemble du dépôt
+# Étape 3 : Quality Gate complète sur l'ensemble du dépôt
 echo ""
-echo -e "${BLUE}[2/2] Quality Gate intégrale (dépôt entier)...${NC}"
+echo -e "${BLUE}[3/3] Quality Gate intégrale (dépôt entier)...${NC}"
 if [ ! -x "$HOOK_DIR/pre-commit" ]; then
     echo -e "${RED}❌ Le hook .githooks/pre-commit est introuvable ou non exécutable.${NC}"
     exit 1
@@ -55,6 +64,6 @@ QUALITY_GATE_SCOPE=full "$HOOK_DIR/pre-commit" || {
 
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${GREEN}✅ Pré-push validé. Envoi vers origin autorisé.${NC}"
+echo -e "${GREEN}✅ Pré-push validé (gitleaks history + tests + Quality Gate full). Envoi vers origin autorisé.${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 exit 0
