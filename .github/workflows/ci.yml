@@ -38,7 +38,7 @@ jobs:
           if [ -f pyproject.toml ]; then
             python -m pip install -e .
           fi
-          python -m pip install pytest ruff
+          python -m pip install pytest pytest-cov ruff
 
       - name: Syntax & Lint Check
         run: |
@@ -50,13 +50,26 @@ jobs:
             echo "No Python files present yet."
           fi
 
-      - name: Run Backend Tests
+      - name: Run Backend Tests with Coverage
         run: |
           if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -not -path "*/.[!.]*/*" -print -quit | grep -q .; then
-            pytest -q
+            if [ -d app ]; then
+              pytest -q --cov=app --cov-report=xml:coverage.xml
+            else
+              pytest -q --cov=. --cov-report=xml:coverage.xml
+            fi
           else
             echo "No Python test suite detected."
           fi
+
+      - name: Upload Backend Coverage to Codecov
+        if: hashFiles('coverage.xml') != ''
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          flags: backend
+          fail_ci_if_error: false
 
   frontend-validation:
     name: Frontend Quality Gate (Node.js)
@@ -82,27 +95,44 @@ jobs:
             else
               npm install
             fi
-            npm run lint --if-present
-            npm test --if-present
-            npm run build --if-present
+            npm run lint
+            if [ -f ../.dependency-cruiser.cjs ] && [ -d src ]; then
+              npx depcruise --validate ../.dependency-cruiser.cjs src
+            fi
+            npm test -- --run --coverage
+            npm run build
           else
             echo "No frontend package.json present yet."
           fi
 
+      - name: Upload Frontend Coverage to Codecov
+        if: hashFiles('frontend/coverage/lcov.info', 'frontend/coverage/coverage-final.json') != ''
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./frontend/coverage/lcov.info,./frontend/coverage/coverage-final.json
+          flags: frontend
+          fail_ci_if_error: false
+
   hygiene-validation:
     name: Workflow & Security Hygiene
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Set up Python for validator
+      - name: Set up Python for validator & SAST
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
 
       - name: Validate GitHub Actions Invariants
         run: python3 .github/scripts/verify_workflows.py .github/workflows
+
+      - name: Run Semgrep SAST Scan
+        run: |
+          python -m pip install --upgrade pip semgrep
+          semgrep scan --config p/default --metrics=off --disable-version-check --error .

@@ -2,50 +2,50 @@
 
 ## 🎯 Functional Outcome & Task Reality
 
-- **Requested Task**: Analyser la gouvernance anti-mauvais-code de `/home/omni/Code/HIVE-MIND` et mettre à niveau l'ensemble de la gouvernance de `/home/omni/Code/colab-ai-studio` afin que l'implémentation du code par `Gemini 3.8 Flash` soit encadrée par des barrières automatisées strictes (locales et cloud).
+- **Requested Task**: Analyser la gouvernance anti-mauvais-code de `/home/omni/Code/HIVE-MIND`, mettre à niveau l'ensemble de la gouvernance de `/home/omni/Code/colab-ai-studio`, et résoudre les 5 retours de revue Greptile sur la Pull Request [#8](https://github.com/personnal-agent/colab-ai-studio/pull/8) afin d'atteindre un score de confiance de `5/5`.
 - **Functional Status**: SUCCESS
 - **Behavioral Proof**:
-  - Déploiement de `.coderabbit.yaml` imposant la barrière bloquante *CodeRabbit Quality Gate* (`5/5` + `0 findings`, fail-closed, revue des brouillons activée).
-  - Déploiement de `codecov.yml` imposant `100 %` de couverture sur le patch et `90 %` sur le projet global (`threshold: 0%`).
-  - Déploiement de `.gitleaks.toml` et `.githooks/_common/detect-secrets.sh` (scan `gitleaks` fail-closed sur l'index stagé dans `pre-commit` et sur l'historique complet dans `pre-push`).
-  - Déploiement de `.dependency-cruiser.cjs` interdisant les dépendances circulaires (`no-circular: error`) dans `frontend/src`, ainsi que de `CONTRIBUTING.md` et `CODE_OF_CONDUCT.md`.
-  - Durcissement de `.githooks/pre-commit` et `.githooks/pre-push` : filtrage `DOC_FILTER` évitant les faux positifs documentaires sur les motifs littéraux, contrôle PEM sans exemption de chemin, interdiction étendue des commentaires d'inhibition Python/TS (`# noqa`, `# ruff: noqa`, `# type: ignore`, `# pylint: disable`, `# pyright: ignore`, `eslint-disable`, `@ts-ignore`, `@ts-nocheck`, `@ts-expect-error`), verrou `ALLOW_CONFIG_EDIT=1` sur les fichiers de configuration de qualité, audit `npm audit` + `tsc --noEmit` + `depcruise` en mode `full`, et scan SAST `Semgrep` via `uv`.
-  - Mise à jour de `.github/workflows/governance.yml`, `.gouvernance/GOVERNANCE.md` et `.gouvernance/review-policy.md` (désactivation du mode *Light Review*, exclusion des fichiers `.md/.markdown/.txt/.pdf/.svg/.png` du budget de taille de code 1000/2500 lignes, protection des nouveaux fichiers de gouvernance).
-  - Synchronisation de `AGENTS.md` et `CLAUDE.md` avec la carte d'architecture `<layer_map>` à 5 couches, les contraintes d'écriture atomique `JSONDocumentStore`/`MediaFileStore`, le verrou `ALLOW_CONFIG_EDIT=1`, la dépendance obligatoire `gitleaks` et le bloc `codebase-memory-mcp`.
+  - **Finding #1 (P1 — `Couverture jamais évaluée`) résolu** (`.github/workflows/ci.yml`) : génération des rapports de couverture backend (`pytest -q --cov=app --cov-report=xml:coverage.xml`) et frontend (`npm test --if-present -- --run --coverage`), envoi vers Codecov via `codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1`, et ajout de `dependency-cruiser` ainsi que du scan SAST `Semgrep` dans la CI.
+  - **Finding #2 (P1 — `Semgrep vérifie une autre version`) résolu** (`.githooks/pre-commit`) : en mode `staged`, extraction de tous les fichiers de code indexés (`.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.cjs`) dans `$TMP_STAGED` via `git checkout-index` et passage des chemins extraits `$TMP_STAGED/$f` à `CODE_FILES` afin que `Semgrep` (`--no-git-ignore`) analyse exactement la version indexée du commit.
+  - **Finding #3 (P2 — `Contrôles ignorés sans leurs outils`) résolu** (`.githooks/pre-commit`, `.github/workflows/ci.yml`, `.github/scripts/verify_workflows.py`) : exécution *fail-closed* de `ruff` (`run_ruff`), `dependency-cruiser` (`frontend/node_modules/.bin/depcruise`) et `Semgrep` (`run_semgrep`) avec blocage immédiat (`exit 1`) si l'outil requis est absent lorsque des fichiers cibles existent ; correction des 4 erreurs `ruff` (`PIE810`, `F841`) dans `.github/scripts/verify_workflows.py`.
+  - **Finding #4 (P2 — `Le nettoyage est aussi bloqué`) résolu** (`.githooks/pre-commit`) : remplacement de `git diff --cached -G` (qui bloquait aussi la suppression de lignes contenant un `# noqa`, un secret ou un en-tête PEM) par `git grep -I --cached -l -E` sur les fichiers indexés (`ACMR`), permettant les commits de nettoyage tout en bloquant toute présence résiduelle dans l'index.
+  - **Finding #5 (P2 — `Documentation renommée comptée comme code`) résolu** (`.github/workflows/governance.yml`) : ajout de `--no-renames` à `git -c core.quotePath=false diff --numstat --no-renames "$BASE_SHA...$HEAD_SHA"` pour éviter la syntaxe `{ancien.md => nouveau.md}` qui contournait le filtre d'extensions documentaires.
 
 ## ⚡ Technical Diffs / Atomic Modifications
 
-- **File**: `AGENTS.md` & `CLAUDE.md`
-  - **Scope**: Point d'entrée des règles agents IA (synchronisés)
-  - **Exact Technical Change**: Ajout de `<layer_map>` (§1), durcissement de `<constraint id="filesystem">` et `<constraint id="host">` (§2), ajout des 4 `<validation_commands>` (§2), mise à jour de `<git_hygiene>` (§6) avec `<protected_files>` (`ALLOW_CONFIG_EDIT=1`) et `<tool_dependency name="gitleaks">`, et intégration de `codebase-memory-mcp`.
-- **File**: `.coderabbit.yaml` & `codecov.yml`
-  - **Scope**: Barrières de qualité Cloud PR
-  - **Exact Technical Change**: Ajout de la *CodeRabbit Quality Gate* fail-closed (`5/5 + 0 findings`) et des seuils Codecov (`100%` patch / `90%` projet, tolérance `0%`).
-- **File**: `.gitleaks.toml`, `.githooks/_common/detect-secrets.sh`, `.githooks/pre-commit`, `.githooks/pre-push`
+- **File**: `.github/workflows/ci.yml`
+  - **Scope**: Pipeline CI (Backend, Frontend, Hygiene/SAST)
+  - **Exact Technical Change**: Collecte de couverture `pytest-cov` (`coverage.xml`) et `vitest`/`npm test --coverage`, envoi via `codecov/codecov-action` (SHA épinglé `303a32d7a59b442fa8d48b6a1cc6825c09c847a5`), validation `depcruise` et scan `semgrep scan --config p/default`.
+- **File**: `.githooks/pre-commit`
   - **Scope**: Quality Gate locale Git
-  - **Exact Technical Change**: Intégration de `gitleaks` (staged & history), verrou `ALLOW_CONFIG_EDIT=1`, blocage étendu des suppressions de linter Python/TS, et scan SAST `Semgrep`.
-- **File**: `.dependency-cruiser.cjs`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`
-  - **Scope**: Gouvernance architecturale et communautaire
-  - **Exact Technical Change**: Interdiction des cycles d'imports dans `frontend/src` et formalisation des standards de contribution zéro-slop.
-- **File**: `.github/workflows/governance.yml`, `.gouvernance/GOVERNANCE.md`, `.gouvernance/review-policy.md`
-  - **Scope**: Gouvernance GitHub Actions et politique de revue
-  - **Exact Technical Change**: Exclusion des fichiers documentaires et d'assets du calcul de lignes de code (seuil 1000/2500 LoC), ajout des nouveaux fichiers protégés et passage exclusif en *Strict Review*.
+  - **Exact Technical Change**: Fonctions *fail-closed* `run_ruff` et `run_semgrep`, vérification du contenu indexé via `git grep -I --cached`, extraction unifiée `$TMP_STAGED` pour Python/JS/Semgrep en mode `staged`, et vérification *fail-closed* de `depcruise` en mode `full`.
+- **File**: `.github/workflows/governance.yml`
+  - **Scope**: Calcul du budget de lignes de code PR
+  - **Exact Technical Change**: Ajout de `--no-renames` sur `git -c core.quotePath=false diff --numstat --no-renames`.
+- **File**: `.github/scripts/verify_workflows.py`
+  - **Scope**: Validateur des workflows GitHub Actions
+  - **Exact Technical Change**: Correction des 4 erreurs `ruff` (`PIE810` fusion des appels `startswith` en tuples aux lignes 205, 240, 382 et `F841` suppression de la variable locale inutilisée `text` à la ligne 305).
+- **File**: `AGENTS.md` & `CLAUDE.md`
+  - **Scope**: Documentation des règles agents IA
+  - **Exact Technical Change**: Mise à jour de la description de `<hook name="pre-commit">` (`git grep --cached`, analyse `$TMP_STAGED`, comportement *fail-closed*).
 
 ## 🛠️ Static Codebase Health
 
-- **Verification Command Run**: `python3 -m py_compile .github/scripts/*.py && python3 .github/scripts/verify_workflows.py .github/workflows && .githooks/pre-push`
+- **Verification Command Run**: `diff -u AGENTS.md CLAUDE.md && python3 .github/scripts/verify_workflows.py .github/workflows && .githooks/pre-push`
 - **Linter/Compiler Status**:
 
 ```text
 Validation succeeded: 7 workflow(s) compliant.
 [1/3] Détection de secrets sur l'historique complet (gitleaks)...
-  36 commits scanned — no leaks found (✅ Aucun secret détecté)
+  37 commits scanned — no leaks found (✅ Aucun secret détecté)
 [2/3] Tests unitaires (timeout : 5 minutes)...
   Aucune suite de tests active pour le moment (dépôt au stade de spécification).
 [3/3] Quality Gate intégrale (dépôt entier - full)...
   [1/5] Vérification de sécurité (fichiers sensibles, secrets et configs) : OK
   [1b/5] Scan gitleaks de l'index : OK (no leaks found)
-  [2/5] Validation Backend Python (.github/scripts/verify_workflows.py) : OK
+  [2/5] Validation Backend Python (.github/scripts/verify_workflows.py) :
+    Exécution de Ruff... All checks passed!
+    ✓ Contrôles Python validés.
   [3/5] Validation Frontend TypeScript/React : OK
   [4/5] Scan SAST sécurité (Semgrep) : OK (0 vulnérabilité)
   [5/5] Validation des invariants d'architecture et workflows : OK
@@ -59,5 +59,5 @@ Validation succeeded: 7 workflow(s) compliant.
 ## 👉 Handover Directives for the Next Agent
 
 1. **Target File**: `.GCC/branches/plan_01_backend_storage_domain.md`
-2. **Immediate Action**: Démarrer l'implémentation TDD du Plan 01/05 (`feat/backend-storage-domain`), étape par étape, sous le contrôle de la nouvelle Quality Gate.
+2. **Immediate Action**: Après approbation 5/5 et fusion de la PR #8, créer la branche `feat/backend-storage-domain` et exécuter les Steps 1 à 5 du Plan 01/05 en TDD.
 3. **Verification Command**: `pytest tests/ -q && .githooks/pre-push`

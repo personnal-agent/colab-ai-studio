@@ -52,7 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           git -c core.quotePath=false diff --name-only --no-renames -z "$BASE_SHA...$HEAD_SHA" > "$CHANGED_FILES_FILE"
-          git -c core.quotePath=false diff --numstat "$BASE_SHA...$HEAD_SHA" > "${CHANGED_FILES_FILE}.numstat"
+          git -c core.quotePath=false diff --numstat --no-renames "$BASE_SHA...$HEAD_SHA" > "${CHANGED_FILES_FILE}.numstat"
           # Exclude documentation and static asset files (.md, .markdown, .txt, .pdf, .svg, .png) from the code size budget
           added=$(awk '$1 ~ /^[0-9]+$/ && tolower($0) !~ /\.(md|markdown|txt|pdf|svg|png)$/ { sum += $1 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")
           deleted=$(awk '$2 ~ /^[0-9]+$/ && tolower($0) !~ /\.(md|markdown|txt|pdf|svg|png)$/ { sum += $2 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")

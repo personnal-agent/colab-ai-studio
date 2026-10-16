@@ -2,7 +2,7 @@
 # Git Hook: pre-commit
 # Quality Gate de Colab AI Studio (Python FastAPI & React TypeScript)
 # Périmètre dynamique (Scope-Aware) :
-#   - par défaut SCOPE=staged : contrôle du diff indexé uniquement (rapide)
+#   - par défaut SCOPE=staged : contrôle de la version indexée uniquement (rapide)
 #   - QUALITY_GATE_SCOPE=full : audit complet du dépôt (appelé par pre-push)
 
 set -e -o pipefail
@@ -14,6 +14,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$HOOK_DIR/.." && pwd)"
 
 SCOPE="${QUALITY_GATE_SCOPE:-staged}"
 if [ "$SCOPE" != "staged" ] && [ "$SCOPE" != "full" ]; then
@@ -25,13 +26,51 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${BLUE}🛡️  QUALITY GATE — Périmètre : ${SCOPE}${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 
+# Résolution des exécutables d'analyse statique (Ruff & Semgrep via binaire direct ou uv)
+UV_BIN=""
+if command -v uv >/dev/null 2>&1; then
+    UV_BIN="$(command -v uv)"
+elif [ -x "$HOME/.local/bin/uv" ]; then
+    UV_BIN="$HOME/.local/bin/uv"
+fi
+
+run_ruff() {
+    local ruff_cfg=()
+    if [ -f "$REPO_ROOT/ruff.toml" ]; then
+        ruff_cfg=(--config "$REPO_ROOT/ruff.toml")
+    elif [ -f "$REPO_ROOT/pyproject.toml" ]; then
+        ruff_cfg=(--config "$REPO_ROOT/pyproject.toml")
+    fi
+    if command -v ruff >/dev/null 2>&1; then
+        ruff check "${ruff_cfg[@]}" "$@"
+    elif [ -n "$UV_BIN" ]; then
+        "$UV_BIN" run --with ruff ruff check "${ruff_cfg[@]}" "$@"
+    else
+        echo -e "${RED}❌ Ruff (ou uv) est introuvable : le linting Python ne peut pas s'exécuter.${NC}"
+        echo -e "${YELLOW}   La gate ne se dégrade pas silencieusement. Installez ruff ou uv.${NC}"
+        return 1
+    fi
+}
+
+run_semgrep() {
+    if command -v semgrep >/dev/null 2>&1; then
+        semgrep scan --no-git-ignore --config p/default --metrics=off --disable-version-check --error --quiet "$@"
+    elif [ -n "$UV_BIN" ]; then
+        "$UV_BIN" run --with semgrep semgrep scan --no-git-ignore --config p/default --metrics=off --disable-version-check --error --quiet "$@"
+    else
+        echo -e "${RED}❌ Semgrep (ou uv) est introuvable : le scan SAST ne peut pas s'exécuter.${NC}"
+        echo -e "${YELLOW}   La gate ne se dégrade pas silencieusement. Installez semgrep ou uv.${NC}"
+        return 1
+    fi
+}
+
 # ==============================================================================
 # 1. Contrôle Anti-Fuite de Secrets et Fichiers Protégés (Toujours sur l'index)
 # ==============================================================================
 echo -e "${BLUE}[1/5] Vérification de sécurité (fichiers sensibles, secrets et configs)...${NC}"
 
 # A. Détection de fichiers .env ou jetons de tunnel dans l'index
-STAGED_SENSITIVE=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^(\.env(\.|$)|ngrok\.token|secrets/|.*\.pem$|.*\.key$)' | grep -v '\.env\.example' || true)
+STAGED_SENSITIVE=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR | grep -E '^(\.env(\.|$)|ngrok\.token|secrets/|.*\.pem$|.*\.key$)' | grep -v '\.env\.example' || true)
 if [ -n "$STAGED_SENSITIVE" ]; then
     echo -e "${RED}❌ Tentative de validation de fichier confidentiel sensible :${NC}"
     echo -e "${YELLOW}$STAGED_SENSITIVE${NC}"
@@ -39,42 +78,59 @@ if [ -n "$STAGED_SENSITIVE" ]; then
     exit 1
 fi
 
-# Périmètre des motifs littéraux : la documentation (.md/.markdown) peut citer ces
-# directives dans les règles de gouvernance ou journaux .GCC/ sans déclencher de faux positif.
-# Elle reste intégralement couverte par le contrôle PEM ci-dessous et par gitleaks (étape 1F).
-DOC_FILTER='\.(md|markdown)$'
+# Collecte des fichiers indexés (ACMR) pour inspecter le contenu RÉEL de l'index (git grep --cached)
+# Cela garantit qu'un commit de nettoyage supprimant un # noqa, un jeton ou une clé PEM n'est jamais bloqué.
+STAGED_CODE_CANDIDATES=()
+STAGED_PEM_CANDIDATES=()
+while IFS= read -r -d '' staged_path; do
+    if [ "$staged_path" = ".githooks/pre-commit" ]; then
+        continue
+    fi
+    STAGED_PEM_CANDIDATES+=("$staged_path")
+    case "$staged_path" in
+        *.md|*.markdown) ;;
+        *) STAGED_CODE_CANDIDATES+=("$staged_path") ;;
+    esac
+done < <(git -c core.quotePath=false diff --cached --name-only -z --diff-filter=ACMR)
 
-# B. Détection de motifs de secrets dans les fichiers de code indexés
+# B. Détection de motifs de secrets dans le contenu indexé des fichiers de code
 SECRET_PATTERN='(PRIVATE KEY|AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}|ghp_[a-zA-Z0-9]{36})'
-STAGED_SECRETS=$(git diff --cached --diff-filter=ACMR -G "$SECRET_PATTERN" --name-only 2>/dev/null | grep -v '^\.githooks/pre-commit$' | grep -vE "$DOC_FILTER" || true)
-if [ -n "$STAGED_SECRETS" ]; then
-    echo -e "${RED}❌ Motif de clé privée ou jeton d'accès identifié dans :${NC}"
-    echo -e "${YELLOW}$STAGED_SECRETS${NC}"
-    echo -e "${YELLOW}👉 Supprimez le secret du code et utilisez les variables d'environnement.${NC}"
-    exit 1
+if [ ${#STAGED_CODE_CANDIDATES[@]} -gt 0 ]; then
+    STAGED_SECRETS=$(git grep -I --cached -l -E "$SECRET_PATTERN" -- "${STAGED_CODE_CANDIDATES[@]}" 2>/dev/null || true)
+    if [ -n "$STAGED_SECRETS" ]; then
+        echo -e "${RED}❌ Motif de clé privée ou jeton d'accès identifié dans l'index :${NC}"
+        echo -e "${YELLOW}$STAGED_SECRETS${NC}"
+        echo -e "${YELLOW}👉 Supprimez le secret du fichier et ré-indexez-le.${NC}"
+        exit 1
+    fi
 fi
 
-# C. En-tête de bloc PEM, sans AUCUNE exemption de chemin (y compris markdown)
-STAGED_PEM=$(git diff --cached --diff-filter=ACMR -G "-----BEGIN (RSA |DSA |EC |OPENSSH |ENCRYPTED |PGP )?PRIVATE KEY" --name-only 2>/dev/null | grep -v '^\.githooks/pre-commit$' || true)
-if [ -n "$STAGED_PEM" ]; then
-    echo -e "${RED}❌ Bloc de clé privée PEM indexé dans :${NC}"
-    echo -e "${YELLOW}$STAGED_PEM${NC}"
-    exit 1
+# C. En-tête de bloc PEM dans le contenu indexé, sans AUCUNE exemption de format (y compris markdown)
+PEM_PATTERN='-----BEGIN (RSA |DSA |EC |OPENSSH |ENCRYPTED |PGP )?PRIVATE KEY'
+if [ ${#STAGED_PEM_CANDIDATES[@]} -gt 0 ]; then
+    STAGED_PEM=$(git grep -I --cached -l -E "$PEM_PATTERN" -- "${STAGED_PEM_CANDIDATES[@]}" 2>/dev/null || true)
+    if [ -n "$STAGED_PEM" ]; then
+        echo -e "${RED}❌ Bloc de clé privée PEM présent dans l'index :${NC}"
+        echo -e "${YELLOW}$STAGED_PEM${NC}"
+        exit 1
+    fi
 fi
 
-# D. Commentaires d'inhibition interdits (linter/type-check à corriger à la source)
+# D. Commentaires d'inhibition interdits dans le contenu indexé des fichiers de code
 SUPPRESSION_PATTERN='(#\s*(noqa|ruff:\s*noqa|type:\s*ignore|pylint:\s*disable|pyright:\s*ignore)|eslint-disable|@ts-ignore|@ts-nocheck|@ts-expect-error)'
-STAGED_SUPPRESSIONS=$(git diff --cached --diff-filter=ACMR -G "$SUPPRESSION_PATTERN" --name-only 2>/dev/null | grep -v '^\.githooks/pre-commit$' | grep -vE "$DOC_FILTER" || true)
-if [ -n "$STAGED_SUPPRESSIONS" ]; then
-    echo -e "${RED}❌ Commentaires de masquage détectés (# noqa, # type: ignore, eslint-disable, @ts-ignore, @ts-nocheck) dans :${NC}"
-    echo -e "${YELLOW}$STAGED_SUPPRESSIONS${NC}"
-    echo -e "${YELLOW}👉 Corrigez l'erreur de typage ou de linter à la source au lieu d'inhiber le contrôle.${NC}"
-    exit 1
+if [ ${#STAGED_CODE_CANDIDATES[@]} -gt 0 ]; then
+    STAGED_SUPPRESSIONS=$(git grep -I --cached -l -E "$SUPPRESSION_PATTERN" -- "${STAGED_CODE_CANDIDATES[@]}" 2>/dev/null || true)
+    if [ -n "$STAGED_SUPPRESSIONS" ]; then
+        echo -e "${RED}❌ Commentaires de masquage détectés dans l'index (# noqa, # type: ignore, eslint-disable, @ts-ignore, @ts-nocheck) :${NC}"
+        echo -e "${YELLOW}$STAGED_SUPPRESSIONS${NC}"
+        echo -e "${YELLOW}👉 Corrigez l'erreur de typage ou de linter à la source au lieu d'inhiber le contrôle.${NC}"
+        exit 1
+    fi
 fi
 
 # E. Fichiers de configuration de qualité protégés : modification bloquée sauf ALLOW_CONFIG_EDIT=1
 PROTECTED_CONFIG_PATTERN='^(\.githooks/pre-commit|\.gitleaks\.toml|\.coderabbit\.yaml|codecov\.yml|\.dependency-cruiser\.cjs|pyproject\.toml|requirements\.txt|ruff\.toml|frontend/package\.json|frontend/package-lock\.json|frontend/tsconfig(\..+)?\.json|frontend/eslint\.config\.(js|mjs|cjs))$'
-PROTECTED_MODIFIED=$(git diff --cached --name-only | grep -E "$PROTECTED_CONFIG_PATTERN" || true)
+PROTECTED_MODIFIED=$(git -c core.quotePath=false diff --cached --name-only | grep -E "$PROTECTED_CONFIG_PATTERN" || true)
 if [ -n "$PROTECTED_MODIFIED" ] && [ "${ALLOW_CONFIG_EDIT:-0}" != "1" ]; then
     echo -e "${RED}❌ [Quality Gate Protection] Fichier de configuration protégé modifié :${NC}"
     echo -e "${YELLOW}$PROTECTED_MODIFIED${NC}"
@@ -95,6 +151,11 @@ if [ "$SCOPE" = "full" ]; then
 else
     PY_FILES=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*' || true)
     JS_FILES=$(git -c core.quotePath=false diff --cached --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs' ':(exclude).githooks/*' ':(exclude).dependency-cruiser.cjs' || true)
+    if [ -n "$PY_FILES" ] || [ -n "$JS_FILES" ]; then
+        TMP_STAGED=$(mktemp -d)
+        trap 'rm -rf "$TMP_STAGED"' EXIT
+        git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs' ':(exclude).githooks/*' ':(exclude).dependency-cruiser.cjs' | git checkout-index --prefix="$TMP_STAGED/" -z --stdin
+    fi
 fi
 
 # ==============================================================================
@@ -107,10 +168,6 @@ if [ -n "$PY_FILES" ]; then
     echo "$PY_FILES" | sed 's/^/   • /'
 
     if [ "$SCOPE" = "staged" ]; then
-        TMP_STAGED=$(mktemp -d)
-        trap 'rm -rf "$TMP_STAGED"' EXIT
-        git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*' | git checkout-index --prefix="$TMP_STAGED/" -z --stdin
-
         STAGED_PY_FILES=()
         while IFS= read -r -d '' f; do
             if [ -f "$TMP_STAGED/$f" ]; then
@@ -119,19 +176,17 @@ if [ -n "$PY_FILES" ]; then
                     exit 1
                 }
                 STAGED_PY_FILES+=("$f")
-                CODE_FILES+=("$f")
+                CODE_FILES+=("$TMP_STAGED/$f")
             elif [ -L "$TMP_STAGED/$f" ]; then
                 if [ -f "$f" ]; then
                     python3 -m py_compile "$f" 2>&1 || {
                         echo -e "${RED}❌ Erreur de syntaxe Python dans la cible du lien symbolique : $f${NC}"
                         exit 1
                     }
-                    if command -v ruff >/dev/null 2>&1; then
-                        ruff check "$f" || {
-                            echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la cible du lien symbolique : $f${NC}"
-                            exit 1
-                        }
-                    fi
+                    run_ruff "$f" || {
+                        echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la cible du lien symbolique : $f${NC}"
+                        exit 1
+                    }
                     CODE_FILES+=("$f")
                 else
                     echo -e "${RED}❌ Lien symbolique Python rompu (cible introuvable) : $f${NC}"
@@ -143,14 +198,12 @@ if [ -n "$PY_FILES" ]; then
             fi
         done < <(git diff --cached -z --name-only --diff-filter=ACMR -- '*.py' ':(exclude).githooks/*')
 
-        if command -v ruff >/dev/null 2>&1; then
-            if [ ${#STAGED_PY_FILES[@]} -gt 0 ]; then
-                echo "  Exécution de Ruff sur la version indexée..."
-                (cd "$TMP_STAGED" && ruff check "${STAGED_PY_FILES[@]}") || {
-                    echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la version indexée.${NC}"
-                    exit 1
-                }
-            fi
+        if [ ${#STAGED_PY_FILES[@]} -gt 0 ]; then
+            echo "  Exécution de Ruff sur la version indexée..."
+            (cd "$TMP_STAGED" && run_ruff "${STAGED_PY_FILES[@]}") || {
+                echo -e "${RED}❌ Erreurs de linter Ruff détectées dans la version indexée.${NC}"
+                exit 1
+            }
         fi
     else
         FULL_PY_FILES=()
@@ -175,14 +228,12 @@ if [ -n "$PY_FILES" ]; then
             fi
         done < <(git ls-files -z -- '*.py' ':(exclude).githooks/*')
 
-        if command -v ruff >/dev/null 2>&1; then
-            if [ ${#FULL_PY_FILES[@]} -gt 0 ]; then
-                echo "  Exécution de Ruff..."
-                ruff check "${FULL_PY_FILES[@]}" || {
-                    echo -e "${RED}❌ Erreurs de linter Ruff détectées.${NC}"
-                    exit 1
-                }
-            fi
+        if [ ${#FULL_PY_FILES[@]} -gt 0 ]; then
+            echo "  Exécution de Ruff..."
+            run_ruff "${FULL_PY_FILES[@]}" || {
+                echo -e "${RED}❌ Erreurs de linter Ruff détectées.${NC}"
+                exit 1
+            }
         fi
     fi
     echo -e "${GREEN}  ✓ Contrôles Python validés.${NC}"
@@ -198,11 +249,41 @@ if [ -n "$JS_FILES" ]; then
     echo "  Fichiers Frontend ciblés :"
     echo "$JS_FILES" | sed 's/^/   • /'
 
-    while IFS= read -r jf; do
-        if [ -n "$jf" ] && [ -f "$jf" ]; then
-            CODE_FILES+=("$jf")
-        fi
-    done <<< "$JS_FILES"
+    STAGED_JS_FILES=()
+    if [ "$SCOPE" = "staged" ]; then
+        while IFS= read -r -d '' jf; do
+            if [ -f "$TMP_STAGED/$jf" ]; then
+                STAGED_JS_FILES+=("$TMP_STAGED/$jf")
+                CODE_FILES+=("$TMP_STAGED/$jf")
+            elif [ -L "$TMP_STAGED/$jf" ]; then
+                if [ -f "$jf" ]; then
+                    STAGED_JS_FILES+=("$REPO_ROOT/$jf")
+                    CODE_FILES+=("$jf")
+                else
+                    echo -e "${RED}❌ Lien symbolique Frontend rompu (cible introuvable) : $jf${NC}"
+                    exit 1
+                fi
+            else
+                echo -e "${RED}❌ Fichier Frontend indexé introuvable dans la version extraite : $jf${NC}"
+                exit 1
+            fi
+        done < <(git diff --cached -z --name-only --diff-filter=ACMR -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs' ':(exclude).githooks/*' ':(exclude).dependency-cruiser.cjs')
+    else
+        while IFS= read -r -d '' jf; do
+            if [ -n "$jf" ]; then
+                if [ ! -f "$jf" ] && [ ! -L "$jf" ]; then
+                    echo -e "${RED}❌ Fichier Frontend suivi introuvable sur le disque : $jf${NC}"
+                    exit 1
+                fi
+                if [ -f "$jf" ]; then
+                    CODE_FILES+=("$jf")
+                elif [ -L "$jf" ]; then
+                    echo -e "${RED}❌ Lien symbolique Frontend rompu (cible introuvable) : $jf${NC}"
+                    exit 1
+                fi
+            fi
+        done < <(git ls-files -z -- '*.ts' '*.tsx' '*.js' '*.jsx' '*.mjs' '*.cjs' ':(exclude).githooks/*' ':(exclude).dependency-cruiser.cjs')
+    fi
 
     if [ -f "frontend/package.json" ]; then
         if [ ! -d "frontend/node_modules" ]; then
@@ -221,19 +302,34 @@ if [ -n "$JS_FILES" ]; then
                 echo -e "${RED}❌ Échec de la compilation TypeScript stricte.${NC}"
                 exit 1
             }
-            if [ -f ".dependency-cruiser.cjs" ] && [ -d "frontend/src" ] && [ -x "frontend/node_modules/.bin/depcruise" ]; then
+            if [ -f ".dependency-cruiser.cjs" ] && [ -d "frontend/src" ]; then
+                if [ ! -x "frontend/node_modules/.bin/depcruise" ]; then
+                    echo -e "${RED}❌ dependency-cruiser est introuvable dans frontend/node_modules/.bin/depcruise.${NC}"
+                    echo -e "${YELLOW}👉 La gate ne se dégrade pas silencieusement. Installez dependency-cruiser dans frontend/.${NC}"
+                    exit 1
+                fi
                 echo "  Analyse d'architecture et cycles de dépendances (dependency-cruiser)..."
                 npx --prefix frontend depcruise --validate .dependency-cruiser.cjs frontend/src || {
                     echo -e "${RED}❌ Violation d'architecture ou dépendance circulaire détectée par dependency-cruiser !${NC}"
                     exit 1
                 }
             fi
+            echo "  Exécution du linter Frontend (zéro warning toléré)..."
+            (cd frontend && npm run lint) || {
+                echo -e "${RED}❌ Erreurs de linting frontend détectées.${NC}"
+                exit 1
+            }
+        else
+            if [ ! -x "frontend/node_modules/.bin/eslint" ]; then
+                echo -e "${RED}❌ eslint est introuvable dans frontend/node_modules/.bin/eslint.${NC}"
+                exit 1
+            fi
+            echo "  Exécution d'ESLint sur la version indexée (zéro warning toléré)..."
+            (cd frontend && ./node_modules/.bin/eslint --max-warnings=0 "${STAGED_JS_FILES[@]}") || {
+                echo -e "${RED}❌ Erreurs de linting frontend détectées dans la version indexée.${NC}"
+                exit 1
+            }
         fi
-        echo "  Exécution du linter Frontend (zéro warning toléré)..."
-        (cd frontend && npm run lint --if-present) || {
-            echo -e "${RED}❌ Erreurs de linting frontend détectées.${NC}"
-            exit 1
-        }
     fi
     echo -e "${GREEN}  ✓ Contrôles Frontend validés.${NC}"
 else
@@ -241,21 +337,15 @@ else
 fi
 
 # ==============================================================================
-# 5. Scan SAST Sécurité (Semgrep)
+# 5. Scan SAST Sécurité (Semgrep — fail-closed)
 # ==============================================================================
 echo -e "${BLUE}[4/5] Scan SAST sécurité (Semgrep)...${NC}"
 if [ ${#CODE_FILES[@]} -gt 0 ]; then
-    UV_BIN="$HOME/.local/bin/uv"
-    if [ -x "$UV_BIN" ] || command -v uv >/dev/null 2>&1; then
-        EXECUTABLE=$(command -v uv 2>/dev/null || echo "$UV_BIN")
-        "$EXECUTABLE" run --with semgrep semgrep scan "${CODE_FILES[@]}" --config p/default --metrics=off --disable-version-check --error --quiet || {
-            echo -e "${RED}❌ Semgrep a identifié une vulnérabilité SAST dans le code !${NC}"
-            exit 1
-        }
-        echo -e "${GREEN}  ✓ Scan SAST Semgrep validé (0 vulnérabilité).${NC}"
-    else
-        echo "  Semgrep non configuré (uv absent)."
-    fi
+    run_semgrep "${CODE_FILES[@]}" || {
+        echo -e "${RED}❌ Semgrep a identifié une vulnérabilité SAST ou est indisponible !${NC}"
+        exit 1
+    }
+    echo -e "${GREEN}  ✓ Scan SAST Semgrep validé (0 vulnérabilité).${NC}"
 else
     echo "  Aucun fichier de code à scanner par Semgrep."
 fi
