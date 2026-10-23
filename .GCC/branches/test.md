@@ -33,3 +33,22 @@
   - ruff check app tests : 0 erreur, 0 avertissement
   - .githooks/pre-push : PASSED (Gitleaks 0 fuite, 66/66 tests, Ruff 0 erreur, Semgrep SAST 0 vulnérabilité, workflows valides)
   ```
+
+### Run: 2026-10-23 — Plan 03/05 Frontend Foundation, Navigation, Projects & Gallery
+- **Date**: 2026-10-23
+- **Target**: Plan 03/05 (`frontend/src/__tests__/smoke.test.tsx`, `api_client.test.ts`, `header_projects.test.tsx`, `gallery.test.tsx`, `media_modal.test.tsx`)
+- **Status**: PASSED
+- **Output / Evidence**:
+  ```text
+  Test Files  5 passed (5)
+  Tests  22 passed (22)
+  - smoke.test.tsx : 1 passed (montage minimal App)
+  - api_client.test.ts : 7 passed (health, generations, favorites toggle, task cancellation, projects CRUD, brand kits CRUD, SSE EventSource streaming)
+  - header_projects.test.tsx : 5 passed (TopNavBar composition, WorkerStatusAvatar Colab/Local hot-switch, ProjectsDrawer avec custom storagePath, FavoriteFilterToggle, NotificationsPopover)
+  - gallery.test.tsx : 6 passed (SearchAndFilterBar loupe & pills cumulatives, TaskProgressCard SSE & annulation, MediaCard 6 variantes & loop muet hover & favori, MediaGallery)
+  - media_modal.test.tsx : 3 passed (MediaPlayerModal plein écran HTML5, rendu métadonnées & snapshot Brand Kit, action Remix avec réinjection complète du contexte)
+  - Vite build : dist/ généré proprement en 16.55s (0 erreur, 0 avertissement bloquant)
+  - Python tests : 66 passed in 1.15s
+  - Total : 88 tests passés avec succès
+  - Staged pre-commit : Gitleaks 0 fuite, ESLint 0 warning, Semgrep 0 vulnérabilité
+  ```

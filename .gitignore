@@ -30,6 +30,11 @@ cache/
 !ui-specifications/
 !ui-specifications/**
 
+# Frontend (Node / Vite / Vitest)
+frontend/node_modules/
+frontend/dist/
+frontend/.cache/
+
 # OS / Editor
 .DS_Store
 Thumbs.db
