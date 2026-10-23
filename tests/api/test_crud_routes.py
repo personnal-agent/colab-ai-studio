@@ -138,6 +138,7 @@ async def test_projects_crud_and_storage_path_validation(test_env):
     )
     assert res_custom.status_code == 201
     assert custom_dir.exists()
+    assert res_custom.json()["storagePath"] == str(custom_dir.resolve())
 
     # 3. Create project with malicious forbidden path
     res_bad = await client.post(
@@ -146,6 +147,13 @@ async def test_projects_crud_and_storage_path_validation(test_env):
     )
     assert res_bad.status_code == 422
     assert "interdit" in res_bad.json()["detail"].lower()
+
+    res_bad_githooks = await client.post(
+        "/api/projects",
+        json={"name": "Bad Hooks", "storagePath": ".githooks"},
+    )
+    assert res_bad_githooks.status_code == 422
+    assert "interdit" in res_bad_githooks.json()["detail"].lower()
 
     # 4. List projects
     res_list = await client.get("/api/projects")
@@ -191,6 +199,15 @@ async def test_brand_kits_crud_blank_and_files(test_env):
     res_list = await client.get("/api/brand-kits")
     assert res_list.status_code == 200
     assert len(res_list.json()) == 3
+
+    # 5. Aggregate file upload exceeding 50 MB cap returns 413
+    oversized_chunk = b"X" * (51 * 1024 * 1024)
+    res_oversized = await client.post(
+        "/api/brand-kits",
+        data={"name": "Oversized Kit"},
+        files=[("files", ("huge.bin", oversized_chunk, "application/octet-stream"))],
+    )
+    assert res_oversized.status_code == 413
 
 
 async def test_config_colab_url_update(test_env):

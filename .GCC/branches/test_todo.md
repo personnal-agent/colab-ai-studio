@@ -7,18 +7,18 @@
 - [x] **Scenario**: Validation des schémas Pydantic v2 (`tests/unit/test_models.py`)
   - Verification: Couverture complète de `TaskStatus` (`pending`, `running`, `completed`, `cancelled`, `failed`), `Generation`, `GenerationParameters`, `GenerationReferences`, `BrandKitSnapshot`, `BrandKit`, `Project`, `StudioConfig`.
 - [x] **Scenario**: Concurrence et écriture atomique POSIX sur `JSONDocumentStore` (`tests/unit/test_json_store.py`)
-  - Verification: Exécuter `asyncio.gather` avec 4 insertions simultanées + `PATCH` favori + `DELETE` sur `generations.json` sans perte de mise à jour ni corruption JSON (`asyncio.Lock` + `os.replace`).
+  - Verification: Exécuter `asyncio.gather` avec 10 écritures concurrentes sur `generations.json` sans perte de mise à jour ni corruption JSON (`asyncio.Lock` + `os.replace`).
 - [x] **Scenario**: Isolation physique de stockage dans `MediaFileStore` (`tests/unit/test_media_store.py`)
   - Verification: Vérifier que `project.storagePath` stocke exclusivement les médias dans le dossier cible (0 fichier dupliqué dans `outputs/`), `outputs/projects/<id>/` par défaut pour un projet, et `outputs/YYYY-MM-DD/` hors projet.
 - [x] **Scenario**: Endpoints CRUD documentaires et extraction d'identité Brand Kit (`tests/api/test_crud_routes.py`)
-  - Verification: Tester `GET/DELETE /api/generations`, `PATCH /api/generations/{id}/favorite`, `GET/POST /api/brand-kits` (création `Blank` + extraction d'actifs depuis `Brand files` [PDF, images, `.fig`] et `Website` [URL]), `GET/POST /api/projects`, `POST /api/config/colab-url`.
+  - Verification: Tester `GET/DELETE /api/generations`, `PATCH /api/generations/{id}/favorite`, `GET/POST /api/brand-kits` (création `Blank` + extraction d'actifs depuis fichiers [SVG, images, texte, CSS, JSON] et `Website` [URL]), `GET/POST /api/projects`, `POST /api/config/colab-url`.
 
 ### Plan 02/05 — BrandContextCompiler, TaskOrchestrator SSE & LLM Proxy (`plan_02_backend_brand_compiler_orchestrator.md`)
 
 - [ ] **Scenario**: Compilation de contexte de marque et repli déterministe anglais (`tests/unit/test_brand_compiler.py`)
   - Verification: Vérifier la synthèse LLM, le basculement automatique sur le gabarit anglais en cas d'erreur/absence de clé, la priorité stricte des fentes (`1. userRefs` sanctuarisés et tronqués aux $N$ premiers si dépassement de `maxImageRefs`, `2. kit referenceImages`, `3. logo`), et le repli texte seul si `maxImageRefs == 0`.
-- [ ] **Scenario**: Garde-fou du mode Local et diagnostic Colab (`tests/api/test_health_and_models.py`)
-  - Verification: Vérifier que `executionMode: "local"` renvoie `501 Not Implemented` sur les routes d'inférence (Issue #2), et valider `GET /api/health`, `GET /api/models`, `POST /api/models/switch`.
+- [ ] **Scenario**: Routage multi-worker et diagnostic Colab (`tests/api/test_health_and_models.py`)
+  - Verification: Vérifier le routage `WorkerGateway` pour `executionMode: "local"` (Issue #2) et `executionMode: "colab"`, et valider `GET /api/health`, `GET /api/models`, `POST /api/models/switch`.
 - [ ] **Scenario**: Cycle de vie de tâche asynchrone, streaming SSE et annulation idempotente (`tests/unit/test_task_orchestrator.py`, `tests/api/test_generation_sse.py`)
   - Verification: Tester `POST /api/generate/media`, le flux SSE `GET /api/tasks/{task_id}/status`, le rapatriement binaire à l'achèvement (`completed`), le timeout 120s (`failed`), et l'annulation `POST /api/tasks/{task_id}/cancel` (`cancelled`).
 - [ ] **Scenario**: Proxy LLM streaming OpenAI et interruption client (`tests/api/test_llm_proxy.py`)

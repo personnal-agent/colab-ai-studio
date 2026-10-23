@@ -86,12 +86,12 @@ async def list_generations(
 @router.patch("/generations/{generation_id}/favorite", response_model=dict[str, Any])
 async def toggle_favorite(generation_id: str) -> dict[str, Any]:
     async with _json_store.lock_for("generations.json"):
-        items = await _json_store.read_list("generations.json")
+        items = await _json_store.read_list_unlocked("generations.json")
         for item in items:
             if item.get("id") == generation_id:
                 current_fav = bool(item.get("isFavorite", False))
                 item["isFavorite"] = not current_fav
-                await _json_store.write_list("generations.json", items)
+                await _json_store.write_list_unlocked("generations.json", items)
                 return item
     raise HTTPException(status_code=404, detail="Génération introuvable")
 
@@ -100,7 +100,7 @@ async def toggle_favorite(generation_id: str) -> dict[str, Any]:
 async def delete_generation(generation_id: str) -> dict[str, Any]:
     target_item: dict[str, Any] | None = None
     async with _json_store.lock_for("generations.json"):
-        items = await _json_store.read_list("generations.json")
+        items = await _json_store.read_list_unlocked("generations.json")
         remaining: list[dict[str, Any]] = []
         for item in items:
             if item.get("id") == generation_id:
@@ -109,7 +109,7 @@ async def delete_generation(generation_id: str) -> dict[str, Any]:
                 remaining.append(item)
         if target_item is None:
             raise HTTPException(status_code=404, detail="Génération introuvable")
-        await _json_store.write_list("generations.json", remaining)
+        await _json_store.write_list_unlocked("generations.json", remaining)
 
     # Suppression physique sur disque
     await _media_store.delete_media(
@@ -137,10 +137,20 @@ async def create_brand_kit(
     if websiteUrl and websiteUrl.strip():
         new_kit = await _extractor.extract_from_website(name=name, website_url=websiteUrl)
     elif files:
+        total_size = 0
+        max_upload_size = 50 * 1024 * 1024  # 50 Mo aggregate cap
         file_tuples: list[tuple[str, bytes]] = []
         for f in files:
-            content = await f.read()
-            file_tuples.append((f.filename or "upload", content))
+            chunks = []
+            while chunk := await f.read(1024 * 1024):
+                total_size += len(chunk)
+                if total_size > max_upload_size:
+                    raise HTTPException(
+                        status_code=413,
+                        detail="Taille cumulée des fichiers supérieure à 50 Mo",
+                    )
+                chunks.append(chunk)
+            file_tuples.append((f.filename or "upload", b"".join(chunks)))
         new_kit = await _extractor.extract_from_files(
             name=name, files=file_tuples, overview=overview
         )
@@ -148,9 +158,9 @@ async def create_brand_kit(
         new_kit = _extractor.create_blank(name=name, overview=overview)
 
     async with _json_store.lock_for(BRAND_KITS_FILE.name):
-        kits = await _json_store.read_list(BRAND_KITS_FILE.name)
+        kits = await _json_store.read_list_unlocked(BRAND_KITS_FILE.name)
         kits.append(new_kit.model_dump())
-        await _json_store.write_list(BRAND_KITS_FILE.name, kits)
+        await _json_store.write_list_unlocked(BRAND_KITS_FILE.name, kits)
 
     return new_kit.model_dump()
 
@@ -165,27 +175,33 @@ async def list_projects() -> list[dict[str, Any]]:
 
 @router.post("/projects", response_model=dict[str, Any], status_code=201)
 async def create_project(payload: ProjectCreate) -> dict[str, Any]:
+    import asyncio
     import uuid
 
     proj_id = f"proj_{uuid.uuid4().hex[:8]}"
+    storage_path = payload.storagePath
+    if storage_path:
+        dummy_project = Project(id=proj_id, name=payload.name, storagePath=storage_path)
+        try:
+            resolved_dest = await asyncio.to_thread(
+                _media_store.resolve_destination_dir, project=dummy_project
+            )
+            storage_path = str(resolved_dest)
+        except ValueError as e:
+            raise HTTPException(status_code=422, detail=str(e)) from e
+
     project = Project(
         id=proj_id,
         name=payload.name,
         description=payload.description,
         colorTag=payload.colorTag,
-        storagePath=payload.storagePath,
+        storagePath=storage_path,
     )
-    # Valider le chemin si renseigné
-    if project.storagePath:
-        try:
-            _media_store.resolve_destination_dir(project=project)
-        except ValueError as e:
-            raise HTTPException(status_code=422, detail=str(e)) from e
 
     async with _json_store.lock_for(PROJECTS_FILE.name):
-        projects = await _json_store.read_list(PROJECTS_FILE.name)
+        projects = await _json_store.read_list_unlocked(PROJECTS_FILE.name)
         projects.append(project.model_dump())
-        await _json_store.write_list(PROJECTS_FILE.name, projects)
+        await _json_store.write_list_unlocked(PROJECTS_FILE.name, projects)
 
     return project.model_dump()
 
@@ -196,11 +212,11 @@ async def create_project(payload: ProjectCreate) -> dict[str, Any]:
 @router.post("/config/colab-url", response_model=dict[str, Any])
 async def update_colab_url(payload: ColabUrlUpdate) -> dict[str, Any]:
     async with _json_store.lock_for(CONFIG_FILE.name):
-        raw_config = await _json_store.read_dict(
+        raw_config = await _json_store.read_dict_unlocked(
             CONFIG_FILE.name, default=StudioConfig().model_dump()
         )
         if "colab" not in raw_config:
             raw_config["colab"] = {}
         raw_config["colab"]["tunnelUrl"] = payload.tunnelUrl.strip()
-        await _json_store.write_dict(CONFIG_FILE.name, raw_config)
+        await _json_store.write_dict_unlocked(CONFIG_FILE.name, raw_config)
     return {"updated": True, "tunnelUrl": payload.tunnelUrl.strip()}

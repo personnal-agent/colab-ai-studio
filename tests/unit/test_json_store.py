@@ -34,13 +34,9 @@ async def test_atomic_write_and_read_roundtrip(store: JSONDocumentStore):
 async def test_concurrent_writes_are_serialized(store: JSONDocumentStore):
     async def append_item(idx: int) -> None:
         async with store.lock_for("generations.json"):
-            target = store._resolve("generations.json")
-            current = []
-            if target.exists():
-                import json
-                current = json.loads(target.read_text(encoding="utf-8"))
+            current = await store.read_list_unlocked("generations.json")
             current.append({"id": f"gen_{idx}", "order": idx})
-            await store.write_list("generations.json", current)
+            await store.write_list_unlocked("generations.json", current)
 
     await asyncio.gather(*(append_item(i) for i in range(10)))
     final = await store.read_list("generations.json")

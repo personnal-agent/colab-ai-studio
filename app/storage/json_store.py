@@ -40,14 +40,14 @@ class JSONDocumentStore:
         return target
 
     async def read_list(self, filename: str) -> list[dict[str, Any]]:
+        async with self.lock_for(filename):
+            return await self.read_list_unlocked(filename)
+
+    async def read_list_unlocked(self, filename: str) -> list[dict[str, Any]]:
         target = self._resolve(filename)
         if not target.exists():
             return []
-        lock = self.lock_for(filename)
-        if lock.locked():
-            return self._perform_read_list(target)
-        async with lock:
-            return self._perform_read_list(target)
+        return self._perform_read_list(target)
 
     def _perform_read_list(self, target: Path) -> list[dict[str, Any]]:
         try:
@@ -62,23 +62,27 @@ class JSONDocumentStore:
             return []
 
     async def write_list(self, filename: str, data: list[dict[str, Any]]) -> None:
+        async with self.lock_for(filename):
+            await self.write_list_unlocked(filename, data)
+
+    async def write_list_unlocked(self, filename: str, data: list[dict[str, Any]]) -> None:
         await self._write_json_atomic(filename, data)
 
     async def read_dict(
         self, filename: str, default: dict[str, Any] | None = None
     ) -> dict[str, Any]:
+        async with self.lock_for(filename):
+            return await self.read_dict_unlocked(filename, default)
+
+    async def read_dict_unlocked(
+        self, filename: str, default: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         target = self._resolve(filename)
         if not target.exists():
             return dict(default or {})
-        lock = self.lock_for(filename)
-        if lock.locked():
-            return self._perform_read_dict(target, default)
-        async with lock:
-            return self._perform_read_dict(target, default)
+        return self._perform_read_dict(target, default)
 
-    def _perform_read_dict(
-        self, target: Path, default: dict[str, Any] | None
-    ) -> dict[str, Any]:
+    def _perform_read_dict(self, target: Path, default: dict[str, Any] | None) -> dict[str, Any]:
         try:
             content = target.read_text(encoding="utf-8")
             if not content.strip():
@@ -91,19 +95,16 @@ class JSONDocumentStore:
             return dict(default or {})
 
     async def write_dict(self, filename: str, data: dict[str, Any]) -> None:
+        async with self.lock_for(filename):
+            await self.write_dict_unlocked(filename, data)
+
+    async def write_dict_unlocked(self, filename: str, data: dict[str, Any]) -> None:
         await self._write_json_atomic(filename, data)
 
     async def _write_json_atomic(self, filename: str, payload: Any) -> None:
         target = self._resolve(filename)
         serialized = json.dumps(payload, indent=2, ensure_ascii=False)
-
-        lock = self.lock_for(filename)
-        # Si le verrou est déjà détenu par la coroutine courante, on ne ré-acquiert pas
-        if lock.locked():
-            await self._perform_atomic_write(target, serialized)
-        else:
-            async with lock:
-                await self._perform_atomic_write(target, serialized)
+        await self._perform_atomic_write(target, serialized)
 
     async def _perform_atomic_write(self, target: Path, serialized: str) -> None:
         tmp_fd, tmp_path_str = tempfile.mkstemp(
@@ -118,6 +119,12 @@ class JSONDocumentStore:
                 f.flush()
                 os.fsync(f.fileno())
             os.replace(tmp_path, target)
+            if os.name == "posix":
+                dir_fd = os.open(self.data_dir, os.O_RDONLY)
+                try:
+                    os.fsync(dir_fd)
+                finally:
+                    os.close(dir_fd)
         except Exception:
             with contextlib.suppress(OSError):
                 os.unlink(tmp_path_str)

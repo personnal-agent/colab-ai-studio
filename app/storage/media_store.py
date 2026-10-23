@@ -10,26 +10,20 @@ Règles strictes de destination (SPECIFICATION.md §4.2.3 et Plan 01 Step 4) :
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import os
 from datetime import datetime, timezone
 from pathlib import Path
 
+from app.config import REPO_ROOT
 from app.models.domain import Project
 
-FORBIDDEN_PREFIXES = (
-    "/etc",
-    "/proc",
-    "/sys",
-    "/dev",
-    "/bin",
-    "/sbin",
-    "/usr",
-    "/var",
-    ".git",
-    ".githooks",
-    ".gouvernance",
-    ".GCC",
+_SYSTEM_DIRS = ("/etc", "/proc", "/sys", "/dev", "/bin", "/sbin", "/usr", "/var")
+_REPO_DIRS = (".git", ".githooks", ".gouvernance", ".GCC")
+FORBIDDEN_PATHS = (
+    *(Path(path).resolve() for path in _SYSTEM_DIRS),
+    *((REPO_ROOT / path).resolve() for path in _REPO_DIRS),
 )
 
 
@@ -43,14 +37,11 @@ class MediaFileStore:
             raw_path = Path(project.storagePath)
             # Sécurité anti-traversée
             resolved = raw_path.expanduser().resolve()
-            resolved_str = str(resolved)
-            for prefix in FORBIDDEN_PREFIXES:
-                if resolved_str == prefix or resolved_str.startswith(f"{prefix}/"):
-                    msg = (
-                        "Chemin storagePath interdit pour raisons de sécurité : "
-                        f"{project.storagePath}"
-                    )
-                    raise ValueError(msg)
+            if any(resolved.is_relative_to(path) for path in FORBIDDEN_PATHS):
+                msg = (
+                    f"Chemin storagePath interdit pour raisons de sécurité : {project.storagePath}"
+                )
+                raise ValueError(msg)
             resolved.mkdir(parents=True, exist_ok=True)
             return resolved
 
@@ -73,25 +64,50 @@ class MediaFileStore:
         thumbnail_content: bytes | None = None,
     ) -> tuple[str, str | None]:
         dest_dir = self.resolve_destination_dir(project)
-        media_path = dest_dir / Path(filename).name
 
-        # Écriture atomique avec synchro disque
-        tmp_media = media_path.with_suffix(f"{media_path.suffix}.tmp")
-        tmp_media.write_bytes(content)
-        os.replace(tmp_media, media_path)
+        def _sync_save() -> tuple[str, str | None]:
+            media_path = dest_dir / Path(filename).name
 
-        thumb_path_str: str | None = None
-        if thumbnail_content is not None:
-            thumb_dir = dest_dir / "thumbnails"
-            thumb_dir.mkdir(parents=True, exist_ok=True)
-            stem = media_path.stem
-            thumb_path = thumb_dir / f"{stem}.jpg"
-            tmp_thumb = thumb_path.with_suffix(".tmp")
-            tmp_thumb.write_bytes(thumbnail_content)
-            os.replace(tmp_thumb, thumb_path)
-            thumb_path_str = str(thumb_path.resolve())
+            # Écriture atomique avec synchro disque
+            tmp_media = media_path.with_suffix(f"{media_path.suffix}.tmp")
+            with open(tmp_media, "wb") as f:
+                f.write(content)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp_media, media_path)
 
-        return str(media_path.resolve()), thumb_path_str
+            if os.name == "posix":
+                dir_fd = os.open(dest_dir, os.O_RDONLY)
+                try:
+                    os.fsync(dir_fd)
+                finally:
+                    os.close(dir_fd)
+
+            thumb_path_str: str | None = None
+            if thumbnail_content is not None:
+                thumb_dir = dest_dir / "thumbnails"
+                thumb_dir.mkdir(parents=True, exist_ok=True)
+                stem = media_path.stem
+                thumb_path = thumb_dir / f"{stem}.jpg"
+                tmp_thumb = thumb_path.with_suffix(".tmp")
+                with open(tmp_thumb, "wb") as f:
+                    f.write(thumbnail_content)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp_thumb, thumb_path)
+
+                if os.name == "posix":
+                    thumb_dir_fd = os.open(thumb_dir, os.O_RDONLY)
+                    try:
+                        os.fsync(thumb_dir_fd)
+                    finally:
+                        os.close(thumb_dir_fd)
+
+                thumb_path_str = str(thumb_path.resolve())
+
+            return str(media_path.resolve()), thumb_path_str
+
+        return await asyncio.to_thread(_sync_save)
 
     async def delete_media(
         self,
@@ -111,7 +127,5 @@ class MediaFileStore:
                         os.unlink(thumbnail_path)
                         deleted_any = True
             return deleted_any
-
-        import asyncio
 
         return await asyncio.to_thread(_sync_delete)

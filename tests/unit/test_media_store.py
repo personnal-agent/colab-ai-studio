@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pytest
 
+from app.config import REPO_ROOT
 from app.models.domain import Project
 from app.storage.media_store import MediaFileStore
 
@@ -108,13 +109,25 @@ async def test_delete_media_removes_both_files(base_dirs):
     assert not Path(thumb_path).exists()
 
 
-def test_storage_path_traversal_rejection(base_dirs):
+@pytest.mark.parametrize(
+    "forbidden_path",
+    [
+        "/etc/malicious",
+        ".githooks",
+        ".githooks/sub",
+        str(REPO_ROOT / ".GCC"),
+        str(REPO_ROOT / ".GCC" / "branches"),
+        ".gouvernance",
+        ".git",
+    ],
+)
+def test_storage_path_traversal_rejection(base_dirs, forbidden_path):
     outputs, _ = base_dirs
     store = MediaFileStore(outputs_dir=outputs)
     malicious = Project(
         id="p_bad",
         name="Bad",
-        storagePath="/etc/malicious",
+        storagePath=forbidden_path,
     )
     with pytest.raises(ValueError, match="Chemin storagePath interdit"):
         store.resolve_destination_dir(project=malicious)
