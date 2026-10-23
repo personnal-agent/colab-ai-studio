@@ -38,6 +38,7 @@ async def test_concurrent_writes_are_serialized(store: JSONDocumentStore):
             current = []
             if target.exists():
                 import json
+
                 current = json.loads(target.read_text(encoding="utf-8"))
             current.append({"id": f"gen_{idx}", "order": idx})
             await store.write_list("generations.json", current)

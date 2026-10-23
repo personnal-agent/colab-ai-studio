@@ -17,12 +17,13 @@ import shutil
 import subprocess
 import tempfile
 import uuid
+from collections.abc import AsyncIterator
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 DEFAULT_MANIFEST_PATH = Path(__file__).resolve().parent / "local_models.example.json"
@@ -195,6 +196,68 @@ def create_worker_app(
         if not is_file:
             raise HTTPException(status_code=404, detail="Fichier introuvable")
         return FileResponse(path_str)
+
+    @app.post("/v1/chat/completions")
+    async def local_chat_completions(request: Request) -> Response:
+        try:
+            body = await request.json()
+        except Exception as exc:
+            raise HTTPException(status_code=400, detail="Corps JSON invalide") from exc
+
+        is_stream = bool(body.get("stream", False))
+        chat_id = f"chatcmpl_{uuid.uuid4().hex[:12]}"
+        now = int(datetime.now(timezone.utc).timestamp())
+        model_name = body.get("model", active_model_id or "default")
+
+        if is_stream:
+
+            async def _stream_tokens() -> AsyncIterator[str]:
+                tokens = ["Bonjour", " !", " Je", " suis", " le", " modèle", " local", "."]
+                for tok in tokens:
+                    chunk = {
+                        "id": chat_id,
+                        "object": "chat.completion.chunk",
+                        "created": now,
+                        "model": model_name,
+                        "choices": [{"index": 0, "delta": {"content": tok}, "finish_reason": None}],
+                    }
+                    yield f"data: {json.dumps(chunk)}\n\n"
+                    await asyncio.sleep(0.01)
+                final_chunk = {
+                    "id": chat_id,
+                    "object": "chat.completion.chunk",
+                    "created": now,
+                    "model": model_name,
+                    "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                }
+                yield f"data: {json.dumps(final_chunk)}\n\n"
+                yield "data: [DONE]\n\n"
+
+            return StreamingResponse(_stream_tokens(), media_type="text/event-stream")
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "id": chat_id,
+                "object": "chat.completion",
+                "created": now,
+                "model": model_name,
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {
+                            "role": "assistant",
+                            "content": "Bonjour ! Je suis le modèle local.",
+                        },
+                        "finish_reason": "stop",
+                    }
+                ],
+            },
+        )
+
+    @app.post("/v1/chat/cancel")
+    async def cancel_chat(payload: dict[str, Any]) -> dict[str, Any]:
+        return {"cancelled": True, "requestId": payload.get("requestId")}
 
     return app
 

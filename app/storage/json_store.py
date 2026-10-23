@@ -76,9 +76,7 @@ class JSONDocumentStore:
         async with lock:
             return self._perform_read_dict(target, default)
 
-    def _perform_read_dict(
-        self, target: Path, default: dict[str, Any] | None
-    ) -> dict[str, Any]:
+    def _perform_read_dict(self, target: Path, default: dict[str, Any] | None) -> dict[str, Any]:
         try:
             content = target.read_text(encoding="utf-8")
             if not content.strip():

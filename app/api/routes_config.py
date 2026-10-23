@@ -36,9 +36,7 @@ def _mask_sensitive_config(config_dict: dict[str, Any]) -> dict[str, Any]:
 
 @router.get("", response_model=dict[str, Any])
 async def get_config() -> dict[str, Any]:
-    raw_config = await _json_store.read_dict(
-        CONFIG_FILE.name, default=StudioConfig().model_dump()
-    )
+    raw_config = await _json_store.read_dict(CONFIG_FILE.name, default=StudioConfig().model_dump())
     return _mask_sensitive_config(raw_config)
 
 
@@ -47,11 +45,7 @@ async def switch_execution_mode(payload: ExecutionModeUpdate) -> Any:
     # 1. Vérification des tâches en vol (pending ou running)
     generations = await _json_store.read_list("generations.json")
     active_statuses = {TaskStatus.PENDING.value, TaskStatus.RUNNING.value}
-    active_ids = [
-        str(gen.get("id"))
-        for gen in generations
-        if gen.get("status") in active_statuses
-    ]
+    active_ids = [str(gen.get("id")) for gen in generations if gen.get("status") in active_statuses]
 
     if active_ids:
         return JSONResponse(

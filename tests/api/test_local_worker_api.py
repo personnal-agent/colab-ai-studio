@@ -115,3 +115,38 @@ async def test_worker_download_file(worker_client):
     # Fichier inexistant
     res_404 = await client.get("/files/missing.mp4")
     assert res_404.status_code == 404
+
+
+async def test_worker_chat_completions_sync_and_stream(worker_client):
+    client, _ = worker_client
+
+    # Synchrone
+    res_sync = await client.post(
+        "/v1/chat/completions",
+        json={"messages": [{"role": "user", "content": "Hello"}], "stream": False},
+    )
+    assert res_sync.status_code == 200
+    data = res_sync.json()
+    assert "choices" in data
+    assert data["choices"][0]["message"]["content"] == "Bonjour ! Je suis le modèle local."
+
+    # Streaming
+    async with client.stream(
+        "POST",
+        "/v1/chat/completions",
+        json={"messages": [{"role": "user", "content": "Hello"}], "stream": True},
+    ) as res_stream:
+        assert res_stream.status_code == 200
+        lines = []
+        async for line in res_stream.aiter_lines():
+            clean = line.strip()
+            if clean:
+                lines.append(clean)
+
+    assert len(lines) > 2
+    assert lines[-1] == "data: [DONE]"
+
+    # Annulation
+    res_cancel = await client.post("/v1/chat/cancel", json={"requestId": "req_123"})
+    assert res_cancel.status_code == 200
+    assert res_cancel.json()["cancelled"] is True

@@ -16,3 +16,20 @@
   - ruff check app tests : 0 erreur, 0 avertissement
   - psutil RSS : 47.63 Mo (< 80 Mo max)
   ```
+
+### Run: 2026-10-23 — Plan 02/05 BrandContextCompiler, TaskOrchestrator SSE & Proxy LLM
+- **Date**: 2026-10-23
+- **Target**: Plan 02/05 (`tests/unit/test_brand_compiler.py`, `tests/unit/test_task_orchestrator.py`, `tests/api/test_generation_sse.py`, `tests/api/test_llm_proxy.py`, `tests/api/test_health_and_models.py`, `tests/api/test_local_worker_api.py`)
+- **Status**: PASSED
+- **Output / Evidence**:
+  ```text
+  ============================== 66 passed in 1.06s ==============================
+  - tests/unit/test_brand_compiler.py : 4 passed (gabarit déterministe anglais, priorité des slots userRefs > kitRefs > logo, fallback texte seul, synthèse LLM)
+  - tests/unit/test_task_orchestrator.py : 2 passed (cycle de vie nominal pending->running->completed, annulation idempotente)
+  - tests/api/test_generation_sse.py : 3 passed (soumission asynchrone, 404 sur tâche inconnue, flux streaming SSE de progression)
+  - tests/api/test_llm_proxy.py : 5 passed (streaming nominal OpenAI clôturé par [DONE], synchrone non-streaming, branche interruption client avec annulation amont sans [DONE], garde-fou proxy désactivé 503, worker inaccessible 503)
+  - tests/api/test_health_and_models.py : 3 passed (diagnostic santé enrichi, relais liste modèles, changement de modèle)
+  - tests/api/test_local_worker_api.py : 5 passed (health, switch, lifecycle, download, completions sync & stream + cancel)
+  - ruff check app tests : 0 erreur, 0 avertissement
+  - .githooks/pre-push : PASSED (Gitleaks 0 fuite, 66/66 tests, Ruff 0 erreur, Semgrep SAST 0 vulnérabilité, workflows valides)
+  ```

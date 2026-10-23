@@ -57,9 +57,7 @@ class ComfyUIBackend:
     async def queue_prompt(self, workflow_prompt: dict[str, Any]) -> str:
         client = self._get_client()
         try:
-            res = await client.post(
-                f"{self.base_url}/prompt", json={"prompt": workflow_prompt}
-            )
+            res = await client.post(f"{self.base_url}/prompt", json={"prompt": workflow_prompt})
             res.raise_for_status()
             data = res.json()
             return str(data.get("prompt_id"))

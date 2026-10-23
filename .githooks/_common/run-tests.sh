@@ -20,8 +20,15 @@ TESTS_FOUND=0
 if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -not -path '*/.[!.]*/*' -not -path '*/node_modules/*' -not -path '*/venv/*' -not -path '*/.venv/*' -not -path '*/site-packages/*' -print -quit | grep -q .; then
     TESTS_FOUND=1
     echo -e "${BLUE}  Exécution des tests Python (pytest)...${NC}"
-    if command -v pytest >/dev/null 2>&1; then
-        timeout $TEST_TIMEOUT pytest -q || {
+    PYTEST_CMD="pytest"
+    if [ -x "$HOME/.venvs/colab-ai-studio/bin/pytest" ]; then
+        PYTEST_CMD="$HOME/.venvs/colab-ai-studio/bin/pytest"
+    elif [ -x ".venv/bin/pytest" ]; then
+        PYTEST_CMD=".venv/bin/pytest"
+    fi
+
+    if command -v "$PYTEST_CMD" >/dev/null 2>&1; then
+        timeout --foreground $TEST_TIMEOUT "$PYTEST_CMD" -q < /dev/null || {
             echo -e "${RED}❌ Échec de la suite de tests Python.${NC}"
             exit 1
         }
@@ -43,7 +50,7 @@ if [ -f "frontend/package.json" ]; then
         fi
         TESTS_FOUND=1
         echo -e "${BLUE}  Exécution des tests Frontend (npm test)...${NC}"
-        (cd frontend && timeout $TEST_TIMEOUT npm test -- --run) || {
+        (cd frontend && timeout --foreground $TEST_TIMEOUT npm test -- --run) || {
             echo -e "${RED}❌ Échec de la suite de tests Frontend.${NC}"
             exit 1
         }

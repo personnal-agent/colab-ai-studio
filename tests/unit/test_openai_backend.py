@@ -19,9 +19,7 @@ async def test_chat_completion_non_streaming():
                 200,
                 json={
                     "id": "chatcmpl-1",
-                    "choices": [
-                        {"message": {"role": "assistant", "content": "Scénario généré"}}
-                    ],
+                    "choices": [{"message": {"role": "assistant", "content": "Scénario généré"}}],
                 },
             )
         return httpx.Response(404)

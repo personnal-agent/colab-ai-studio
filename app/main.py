@@ -13,6 +13,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes_config import router as config_router
 from app.api.routes_crud import router as crud_router
+from app.api.routes_generation import router as generation_router
+from app.api.routes_llm_proxy import router as llm_proxy_router
 from app.api.routes_models import router as models_router
 from app.config import ensure_directories
 
@@ -51,3 +53,5 @@ app.add_middleware(
 app.include_router(crud_router)
 app.include_router(config_router)
 app.include_router(models_router)
+app.include_router(generation_router)
+app.include_router(llm_proxy_router)
