@@ -16,7 +16,9 @@ from pathlib import Path
 
 SHA = re.compile(r"^[0-9a-f]{40}$")
 USES = re.compile(r"^\s*(?:-\s*)?uses:\s*([^@\s]+)@([^\s#]+)(?:\s+#\s*(.+))?\s*$")
-PERSIST_CREDENTIALS_TRUE = re.compile(r"^\s*persist-credentials:\s*([\"']?)true\1\s*(?:#.*)?$", re.IGNORECASE)
+PERSIST_CREDENTIALS_TRUE = re.compile(
+    r"^\s*persist-credentials:\s*([\"']?)true\1\s*(?:#.*)?$", re.IGNORECASE
+)
 TOP_KEY = re.compile(r"^([^:\s][^:]*):\s*(.*)$")
 ANCHOR_DEF = re.compile(r"(?:^|\s)&([A-Za-z0-9_-]+)(?:\s+(.*))?$")
 
@@ -259,7 +261,9 @@ def top_level_entries(lines: list[str]) -> list[tuple[int, str, str]]:
     return entries
 
 
-def check_permission_entry(path: Path, number: int, scope: str, perm: str, allowed_write_scopes: set[str]) -> int:
+def check_permission_entry(
+    path: Path, number: int, scope: str, perm: str, allowed_write_scopes: set[str]
+) -> int:
     errors = 0
     scope_clean = yaml_key(scope)
     perm_clean = perm.strip("\"'# ").split()[0] if perm.strip() else ""
@@ -290,7 +294,9 @@ def validate_permissions_block(
             for pair in split_flow(joined.strip()[1:-1]):
                 if ":" in pair:
                     scope, perm = [p.strip() for p in pair.split(":", 1)]
-                    errors += check_permission_entry(path, number, scope, perm, allowed_write_scopes)
+                    errors += check_permission_entry(
+                        path, number, scope, perm, allowed_write_scopes
+                    )
         return errors
     if not trimmed:
         for child in child_lines(lines, number - 1):
@@ -323,7 +329,7 @@ def check_workflow(path: Path) -> int:
         errors += 1
 
     jobs_start = None
-    for number, key, value in top_level_entries(lines):
+    for number, key, _value in top_level_entries(lines):
         if key == "jobs":
             jobs_start = number
             break
@@ -343,13 +349,19 @@ def check_workflow(path: Path) -> int:
                 job_headers.append((number, indent, yaml_key(header.group(1))))
 
         for position, (header_line, indent, _) in enumerate(job_headers):
-            end = job_headers[position + 1][0] - 1 if position + 1 < len(job_headers) else len(lines)
+            end = (
+                job_headers[position + 1][0] - 1
+                if position + 1 < len(job_headers)
+                else len(lines)
+            )
             block = [
                 (number, strip_comment(line).rstrip())
                 for number, line in enumerate(lines[header_line:end], start=header_line + 1)
                 if strip_comment(line).strip()
             ]
-            direct = [entry for entry in block if len(entry[1]) - len(entry[1].lstrip(" ")) > indent]
+            direct = [
+                entry for entry in block if len(entry[1]) - len(entry[1].lstrip(" ")) > indent
+            ]
             if not direct:
                 continue
             prop_indent = min(len(code) - len(code.lstrip(" ")) for _, code in direct)
@@ -398,13 +410,18 @@ def check_workflow(path: Path) -> int:
                 stripped = next_line.strip()
                 if not stripped or stripped.startswith("#"):
                     continue
-                if stripped.startswith("- ") or (next_indent <= base_indent and not stripped.startswith("with:")):
+                if stripped.startswith("- ") or (
+                    next_indent <= base_indent and not stripped.startswith("with:")
+                ):
                     break
                 if re.match(r"^persist-credentials:\s*false\b", stripped):
                     found_persist_false = True
                     break
             if not found_persist_false:
-                fail(f"{path}:{number}: actions/checkout must explicitly specify 'persist-credentials: false'.")
+                fail(
+                    f"{path}:{number}: actions/checkout must explicitly specify "
+                    "'persist-credentials: false'."
+                )
                 errors += 1
     return errors
 
@@ -447,10 +464,10 @@ def missing_job_directives(lines: list[str]) -> list[tuple[int, str]]:
     """Returns missing runs-on/timeout-minutes directives for each job."""
     problems: list[tuple[int, str]] = []
     jobs_start = None
-    for number, key, value in top_level_entries(lines):
+    for number, key, val in top_level_entries(lines):
         if key == "jobs":
             jobs_start = number
-            if value:
+            if val:
                 return [(number, "the 'jobs:' section must map job objects, not scalar values.")]
             break
     if jobs_start is None:
@@ -500,7 +517,9 @@ def missing_job_directives(lines: list[str]) -> list[tuple[int, str]]:
         if not has_runs_on:
             problems.append((header_line, f"job '{job_name}': missing 'runs-on:' directive."))
         if not has_timeout:
-            problems.append((header_line, f"job '{job_name}': missing 'timeout-minutes:' directive."))
+            problems.append(
+                (header_line, f"job '{job_name}': missing 'timeout-minutes:' directive.")
+            )
     return problems
 
 
