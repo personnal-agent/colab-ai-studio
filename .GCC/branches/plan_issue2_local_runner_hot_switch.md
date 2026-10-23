@@ -9,42 +9,47 @@
 
 ### Step 1: Schéma `LocalConfig.workerUrl` et route de commutation `POST /api/config/execution-mode` (TDD)
 
-- [ ] **Action**: Étendre `LocalConfig` (`app/models/domain.py`) avec `workerUrl: str = "http://127.0.0.1:8190"` (en conservant `device` et `threads`). Écrire `tests/api/test_execution_mode.py` couvrant : (1) `GET /api/config` renvoie le mode actif sans fuite de secret (`compilerLlm.apiKey` masqué) ; (2) `POST /api/config/execution-mode` `{"executionMode": "local"}` persiste via `JSONDocumentStore` et renvoie `200` ; (3) valeur invalide → `422` ; (4) tâche `pending`/`running` présente → `409 Conflict` avec `{"detail": "...", "activeTaskIds": [...]}` et aucune écriture ; (5) publication d'un événement `config` sur le bus SSE. Implémenter `app/api/routes_config.py`.
-- [ ] **Verify**: `pytest tests/api/test_execution_mode.py -q && ruff check app tests`
+- [x] **Action**: Étendre `LocalConfig` (`app/models/domain.py`) avec `workerUrl: str = "http://127.0.0.1:8190"` (en conservant `device` et `threads`). Écrire `tests/api/test_execution_mode.py` couvrant : (1) `GET /api/config` renvoie le mode actif sans fuite de secret (`compilerLlm.apiKey` masqué) ; (2) `POST /api/config/execution-mode` `{"executionMode": "local"}` persiste via `JSONDocumentStore` et renvoie `200` ; (3) valeur invalide → `422` ; (4) tâche `pending`/`running` présente → `409 Conflict` avec `{"detail": "...", "activeTaskIds": [...]}` et aucune écriture ; (5) publication d'un événement `config` sur le bus SSE. Implémenter `app/api/routes_config.py`.
+- [x] **Verify**: `pytest tests/api/test_execution_mode.py -q && ruff check app tests`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw pytest & ruff output here]
+4 passed in 0.46s
+All checks passed!
 ```
 
 ### Step 2: Passerelle de worker unique `WorkerGateway` (remplace `colab_client.py` et le stub `501`) (TDD)
 
-- [ ] **Action**: Écrire `tests/unit/test_worker_gateway.py` vérifiant : (1) la résolution de l'URL de base relue à chaque appel (`colab.tunnelUrl` vs `local.workerUrl`), donc une bascule effective sans redémarrage ; (2) `colab` sans `tunnelUrl` → erreur explicite `503` « Worker Colab non configuré » ; (3) worker injoignable → `503` avec le mode et l'URL en cause ; (4) `GET /api/health` expose `{"executionMode", "worker": {"reachable", "latencyMs", "gpu", "vramFreeMb"}}` pour le mode actif. Implémenter `app/services/worker_gateway.py` (`httpx.AsyncClient`, timeouts bornés, fermeture dans `lifespan`). `GET /api/models`, `POST /api/models/switch` et `POST /api/generate/media` passent tous par cette passerelle.
-- [ ] **Verify**: `pytest tests/unit/test_worker_gateway.py tests/api/test_health_and_models.py -q`
+- [x] **Action**: Écrire `tests/unit/test_worker_gateway.py` vérifiant : (1) la résolution de l'URL de base relue à chaque appel (`colab.tunnelUrl` vs `local.workerUrl`), donc une bascule effective sans redémarrage ; (2) `colab` sans `tunnelUrl` → erreur explicite `503` « Worker Colab non configuré » ; (3) worker injoignable → `503` avec le mode et l'URL en cause ; (4) `GET /api/health` expose `{"executionMode", "worker": {"reachable", "latencyMs", "gpu", "vramFreeMb"}}` pour le mode actif. Implémenter `app/services/worker_gateway.py` (`httpx.AsyncClient`, timeouts bornés, fermeture dans `lifespan`). `GET /api/models`, `POST /api/models/switch` et `POST /api/generate/media` passent tous par cette passerelle.
+- [x] **Verify**: `pytest tests/unit/test_worker_gateway.py tests/api/test_health_and_models.py -q`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw pytest output here]
+5 passed (unit worker gateway) + 3 passed (api health and models)
+All checks passed!
 ```
 
 ### Step 3: Serveur du worker local `app/local_worker/` conforme au contrat (TDD, ComfyUI simulé)
 
-- [ ] **Action**: Écrire `tests/api/test_local_worker_api.py` (ComfyUI et serveur LLM simulés via `httpx.MockTransport`) puis implémenter `app/local_worker/server.py` (processus séparé, `uvicorn app.local_worker.server:app --port 8190`) exposant le contrat complet. Les modèles et leurs `capabilities` proviennent d'un **manifeste local hors dépôt** (`LOCAL_WORKER_MANIFEST`, défaut `~/.colab-ai-studio/local_models.json`) validé par Pydantic ; seul `app/local_worker/local_models.example.json` (générique, sans workflow privé) est versionné. `/health` lit les métriques GPU via `nvidia-smi --query-gpu` (repli `gpu: null` sans GPU).
-- [ ] **Verify**: `pytest tests/api/test_local_worker_api.py -q`
+- [x] **Action**: Écrire `tests/api/test_local_worker_api.py` (ComfyUI et serveur LLM simulés via `httpx.MockTransport`) puis implémenter `app/local_worker/server.py` (processus séparé, `uvicorn app.local_worker.server:app --port 8190`) exposant le contrat complet. Les modèles et leurs `capabilities` proviennent d'un **manifeste local hors dépôt** (`LOCAL_WORKER_MANIFEST`, défaut `~/.colab-ai-studio/local_models.json`) validé par Pydantic ; seul `app/local_worker/local_models.example.json` (générique, sans workflow privé) est versionné. `/health` lit les métriques GPU via `nvidia-smi --query-gpu` (repli `gpu: null` sans GPU).
+- [x] **Verify**: `pytest tests/api/test_local_worker_api.py -q`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw pytest output here]
+4 passed in 0.35s
+All checks passed!
 ```
 
 ### Step 4: Adaptateurs d'inférence `ComfyUIBackend` et `OpenAICompatibleBackend` (TDD)
 
-- [ ] **Action**: Écrire `tests/unit/test_comfyui_backend.py` et `tests/unit/test_openai_backend.py` puis implémenter `app/local_worker/backends/comfyui.py` (injection des paramètres dans le gabarit de workflow via les liaisons `bindings` du manifeste : `prompt`, `seed`, `width`, `height`, `frames`, `fps`, images de référence téléversées par `POST /upload/image` ; soumission `POST /prompt` ; progression via `GET /history/{prompt_id}` ; annulation via `POST /interrupt` + `POST /queue` delete ; récupération du binaire via `GET /view`) et `app/local_worker/backends/openai_compat.py` (relais streaming de `/v1/chat/completions` vers LM Studio avec arrêt immédiat sur déconnexion client).
-- [ ] **Verify**: `pytest tests/unit/test_comfyui_backend.py tests/unit/test_openai_backend.py -q`
+- [x] **Action**: Écrire `tests/unit/test_comfyui_backend.py` et `tests/unit/test_openai_backend.py` puis implémenter `app/local_worker/backends/comfyui.py` (injection des paramètres dans le gabarit de workflow via les liaisons `bindings` du manifeste : `prompt`, `seed`, `width`, `height`, `frames`, `fps`, images de référence téléversées par `POST /upload/image` ; soumission `POST /prompt` ; progression via `GET /history/{prompt_id}` ; annulation via `POST /interrupt` + `POST /queue` delete ; récupération du binaire via `GET /view`) et `app/local_worker/backends/openai_compat.py` (relais streaming de `/v1/chat/completions` vers LM Studio avec arrêt immédiat sur déconnexion client).
+- [x] **Verify**: `pytest tests/unit/test_comfyui_backend.py tests/unit/test_openai_backend.py -q`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw pytest output here]
+4 passed (2 comfyui + 2 openai_compat)
+All checks passed!
+Total test suite: 51 passed in 0.84s.
 ```
 
 ### Step 5: Validation réelle sur la machine hôte GPU (manuelle, hors CI)

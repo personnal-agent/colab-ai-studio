@@ -1,0 +1,43 @@
+[
+  {
+    "id": "minimax-h3-heretic-local",
+    "name": "MiniMax-H3 Heretic (Local 16GB)",
+    "mediaType": "video",
+    "backend": "comfyui",
+    "workflowTemplate": "workflows/minimax_h3.json",
+    "capabilities": {
+      "aspectRatios": ["16:9", "9:16", "1:1"],
+      "resolutions": ["720p", "1080p"],
+      "durations": ["5s", "10s"],
+      "durationMode": "discrete",
+      "maxImageRefs": 9,
+      "supportsStartFrame": true,
+      "supportsEndFrame": true,
+      "supportsNativeAudio": true
+    }
+  },
+  {
+    "id": "noctq-v4-image-local",
+    "name": "NoctQ V4 Photo & Edit (Local 16GB)",
+    "mediaType": "image",
+    "backend": "comfyui",
+    "workflowTemplate": "workflows/noctq_v4.json",
+    "capabilities": {
+      "aspectRatios": ["16:9", "9:16", "1:1", "4:5", "3:4"],
+      "resolutions": ["1K", "2K"],
+      "batchSize": [1, 2, 4],
+      "maxImageRefs": 4,
+      "supportsImageEdit": true
+    }
+  },
+  {
+    "id": "qwen3.8-turbo-fable-uncensored",
+    "name": "Qwen 3.8B Turbo Fable Uncensored (Local)",
+    "mediaType": "llm",
+    "backend": "openai_compat",
+    "capabilities": {
+      "contextLength": 32768,
+      "streaming": true
+    }
+  }
+]
