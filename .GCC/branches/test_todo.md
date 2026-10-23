@@ -4,13 +4,13 @@
 
 ### Plan 01/05 — Backend Storage & Domain Models (`plan_01_backend_storage_domain.md`)
 
-- [ ] **Scenario**: Validation des schémas Pydantic v2 (`tests/unit/test_models.py`)
+- [x] **Scenario**: Validation des schémas Pydantic v2 (`tests/unit/test_models.py`)
   - Verification: Couverture complète de `TaskStatus` (`pending`, `running`, `completed`, `cancelled`, `failed`), `Generation`, `GenerationParameters`, `GenerationReferences`, `BrandKitSnapshot`, `BrandKit`, `Project`, `StudioConfig`.
-- [ ] **Scenario**: Concurrence et écriture atomique POSIX sur `JSONDocumentStore` (`tests/unit/test_json_store.py`)
+- [x] **Scenario**: Concurrence et écriture atomique POSIX sur `JSONDocumentStore` (`tests/unit/test_json_store.py`)
   - Verification: Exécuter `asyncio.gather` avec 4 insertions simultanées + `PATCH` favori + `DELETE` sur `generations.json` sans perte de mise à jour ni corruption JSON (`asyncio.Lock` + `os.replace`).
-- [ ] **Scenario**: Isolation physique de stockage dans `MediaFileStore` (`tests/unit/test_media_store.py`)
+- [x] **Scenario**: Isolation physique de stockage dans `MediaFileStore` (`tests/unit/test_media_store.py`)
   - Verification: Vérifier que `project.storagePath` stocke exclusivement les médias dans le dossier cible (0 fichier dupliqué dans `outputs/`), `outputs/projects/<id>/` par défaut pour un projet, et `outputs/YYYY-MM-DD/` hors projet.
-- [ ] **Scenario**: Endpoints CRUD documentaires et extraction d'identité Brand Kit (`tests/api/test_crud_routes.py`)
+- [x] **Scenario**: Endpoints CRUD documentaires et extraction d'identité Brand Kit (`tests/api/test_crud_routes.py`)
   - Verification: Tester `GET/DELETE /api/generations`, `PATCH /api/generations/{id}/favorite`, `GET/POST /api/brand-kits` (création `Blank` + extraction d'actifs depuis `Brand files` [PDF, images, `.fig`] et `Website` [URL]), `GET/POST /api/projects`, `POST /api/config/colab-url`.
 
 ### Plan 02/05 — BrandContextCompiler, TaskOrchestrator SSE & LLM Proxy (`plan_02_backend_brand_compiler_orchestrator.md`)

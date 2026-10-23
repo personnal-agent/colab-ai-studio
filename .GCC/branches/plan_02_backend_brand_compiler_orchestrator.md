@@ -2,7 +2,7 @@
 
 ## 📋 Target Invariant & Pre-requisites
 
-- **Target Invariant**: Le backend compile les Brand Kits avec repli déterministe anglais sans jamais bloquer l'utilisateur, respecte l'ordre strict de priorité des fentes de référence (`userRefs` > `kitRefs` > `logo`), orchestre le cycle de vie des tâches distantes (`pending` $\rightarrow$ `running` $\rightarrow$ `completed` / `cancelled` / `failed`) avec flux SSE et annulation idempotente, bloque explicitement le mode local (`501 Not Implemented`), et streame `/v1/chat/completions` au format OpenAI avec interruption propre sur déconnexion client (`alt` exhaustif).
+- **Target Invariant**: Le backend compile les Brand Kits avec repli déterministe anglais sans jamais bloquer l'utilisateur, respecte l'ordre strict de priorité des fentes de référence (`userRefs` > `kitRefs` > `logo`), orchestre le cycle de vie des tâches distantes (`pending` $\rightarrow$ `running` $\rightarrow$ `completed` / `cancelled` / `failed`) avec flux SSE et annulation idempotente, route les inférences vers le worker du mode actif (Colab ou local, cf. issue #2), et streame `/v1/chat/completions` au format OpenAI avec interruption propre sur déconnexion client (`alt` exhaustif).
 - **Pre-requisites**: Plan 01 complété ([`.GCC/branches/plan_01_backend_storage_domain.md`](plan_01_backend_storage_domain.md)). Références : `SPECIFICATION.md` §4.3–§4.4, diagrammes `05`, `06`, `07`, `08`, `10`. Suivant dans la chaîne : [`.GCC/branches/plan_03_frontend_foundation_gallery.md`](plan_03_frontend_foundation_gallery.md).
 
 ## 🛠️ Step-by-Step Sequence
@@ -19,7 +19,7 @@
 
 ### Step 2: Client HTTP asynchrone Colab, garde-fou mode Local (`501`) et routes modèles/santé (TDD)
 
-- [ ] **Action**: Écrire `tests/api/test_health_and_models.py` vérifiant : (1) `GET /api/health` (latence, VRAM libre, statut tunnel) ; (2) `GET /api/models` et `POST /api/models/switch` ; (3) renvoi systématique de `501 Not Implemented` (`{"detail": "Runner local en cours de développement (voir Issue #2)"}`) sur les routes d'inférence lorsque `executionMode == "local"`. Implémenter `app/services/colab_client.py` et `app/api/routes_models.py`.
+- [ ] **Action**: Écrire `tests/api/test_health_and_models.py` vérifiant : (1) `GET /api/health` (latence, VRAM libre, statut tunnel) ; (2) `GET /api/models` et `POST /api/models/switch` ; (3) routage des routes d'inférence vers le worker du mode actif. **Amendé le 2026-10-23** : le garde-fou `501` est remplacé par la passerelle `WorkerGateway` et le runner local de l'issue #2 ([`plan_issue2_local_runner_hot_switch.md`](plan_issue2_local_runner_hot_switch.md), Steps 1–2), réalisés avant ce plan. Implémenter `app/api/routes_models.py` au-dessus de `app/services/worker_gateway.py`.
 - [ ] **Verify**: `pytest tests/api/test_health_and_models.py -q`
 - **Verification Proof**:
 
