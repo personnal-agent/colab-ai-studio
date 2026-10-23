@@ -71,3 +71,25 @@
   - Total : 113 tests passés avec succès (47 frontend + 66 backend)
   - ESLint & Ruff : 0 warning, 0 error
   ```
+
+### Run: 2026-10-23 — Plan 05/05 Worker Distant Colab (ModelSwapper), Notebook & Intégration E2E
+- **Date**: 2026-10-23
+- **Target**: Plan 05/05 (`tests/unit/test_model_swapper.py`, `tests/api/test_colab_worker_api.py`, `tests/unit/test_notebook_structure.py`, `tests/e2e/test_full_pipeline.py`, `tests/e2e/test_memory_footprint.py`)
+- **Status**: PASSED
+- **Output / Evidence**:
+  ```text
+  Python Test Files: 12 passed
+  Tests: 89 passed in 2.16s
+  - test_model_swapper.py : 6 passed (transitions 11-etats, eviction complete, idle timeout, OOM recovery EnRecuperationSaturation)
+  - test_colab_worker_api.py : 5 passed (health/VRAM, switch model, infer & cancel lifecycle, file download, chat completions stream)
+  - test_notebook_structure.py : 3 passed (validite JSON nbformat v4, cellules clefs GPU/dependencies/swapper/tunnels/server)
+  - test_full_pipeline.py : 8 passed (UC-01 generation nominale Brand Kit, UC-02 project storagePath, UC-03 SSE task tracking, UC-04 task cancellation, UC-05 favorite/remix, UC-06 hot-switch local-colab, UC-07 proxy LLM streaming/abort, UC-08 brand compiler fallback)
+  - test_memory_footprint.py : 1 passed (mesure independante via processus OS uvicorn, RSS = 48.24 Mo < 80 Mo max)
+  Frontend Vitest Files: 9 passed
+  Tests: 47 passed in 27.64s
+  Total Test Suite: 136 tests verts (89 Python + 47 TypeScript)
+  Vite build : dist/ genere proprement
+  Depcruise : 0 violation de dependance circulaire (58 modules)
+  Linters : Ruff (0 warning, 0 error), ESLint (0 warning, 0 error)
+  Security : Semgrep SAST 0 vulnerabilite, Gitleaks 0 secret
+  ```

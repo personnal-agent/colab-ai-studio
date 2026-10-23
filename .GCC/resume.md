@@ -2,51 +2,49 @@
 
 ## 🎯 Functional Outcome & Task Reality
 
-- **Requested Task**: Poursuite du développement — Plan 04/05 : Floating Prompt Dock Modulaire, Brand Kit & Mode Chat LLM.
+- **Requested Task**: Finalisation Plan 05/05 — Worker Distant Google Colab (`ModelSwapper`), Notebook `colab_worker.ipynb`, Intégration E2E (UC-01 à UC-08) & Mesure d'empreinte mémoire (< 80 Mo).
 - **Functional Status**: SUCCESS
 - **Behavioral Proof**:
-  - **Plan 04/05 complété à 100% en TDD** :
-    1. **Step 1 (Contrôles atomiques & ParameterRegistry)** : `frontend/src/components/dock/controls/` avec 1 fichier par responsabilité (`BatchCountPill`, `EnhancePromptPill`, `SeedControlPill`, `ModelSelectorPopover`, `AspectRatioPill`, `ResolutionPill`, `DurationControlPill` gérant discrete et range continu, `NativeAudioPill`, `TalkingStylePill`, `UpscaleScalePill`, `UpscaleQualityPill`, `UpscaleFrameRatePill`, `FineSettingsPopover` et `ParameterRegistry.tsx`). 11 tests validés.
-    2. **Step 2 (Fentes de conditionnement & Règle de subsomption vidéo)** : `frontend/src/components/dock/slots/` avec `ReferenceSlot.tsx` (`w-20 h-16 rounded-slot`) et `ConditioningTray.tsx` garantissant la règle de subsomption (mode complet Start + End + Ingrédients autorisant toutes les combinaisons unitaires et partielles) et l'adaptation aux pôles Image, Lip sync et Upscaling. 4 tests validés.
-    3. **Step 3 (Système Brand Kit complet)** : `frontend/src/components/brand-kit/` avec `BrandKitHoverCard.tsx` (logo, nuancier, fraîcheur), `BrandKitSelectorPopover.tsx` (état vide incitatif + tri `lastUsedAt`), `PromptEditorWithChip.tsx` (chip atomique unique `[@NomDuKit]` et suppression Backspace en un bloc), `BrandKitCreateModal.tsx` (3 méthodes Blank, Brand files, Website) et `BrandKitInspectorModal.tsx` (8 sections latérales et bouton d'action `Use this brand kit`). 6 tests validés.
-    4. **Step 4 (Mode LLM, Persistance [H] et Assemblage du Dock)** : `frontend/src/components/dock/FloatingPromptDock.tsx` et `LlmChatView.tsx` intégrant le streaming SSE mot à mot, le bandeau API local OpenAI (`http://localhost:8000/v1/chat/completions`), le pseudo-état d'historique superficiel `[H]` conservant les brouillons lors des allers-retours entre modes, et le verrouillage de dock pendant l'inférence. 4 tests validés.
-  - **Suite complète de tests** : **113 tests passent au vert** (47 Vitest frontend + 66 Pytest backend).
+  - **Plan 05/05 complété à 100% en TDD** :
+    1. **Step 1 (Automate ModelSwapper VRAM)** : `app/colab_worker/model_swapper.py` et `tests/unit/test_model_swapper.py` (6 tests). Gestion des états `EnVeilleVRAMLibre`, `ChargementEnCours`, `ModeleActif`, `EvictionVRAMEnCours`, et `EnRecuperationSaturation` avec nettoyage coopératif complet (`del`, `gc.collect()`, `torch.cuda.empty_cache()`, `torch.cuda.ipc_collect()`).
+    2. **Step 2 (Serveur FastAPI Colab Worker)** : `app/colab_worker/server.py` et `tests/api/test_colab_worker_api.py` (5 tests). Routes `/health`, `/models`, `/models/switch`, `/infer`, `/tasks/{id}/status`, `/tasks/{id}/cancel`, `/files/{filename}`, et `/v1/chat/completions` (sync & SSE streaming).
+    3. **Step 3 (Notebook Colab Worker)** : `colab_worker.ipynb` (nbformat v4 structuré avec GPU check Tesla T4, pip installs, Swapper, ngrok/cloudflare tunnels, et FastAPI uvicorn) et `tests/unit/test_notebook_structure.py` (3 tests).
+    4. **Step 4 (Intégration E2E & Mesure Mémoire)** : `tests/e2e/test_full_pipeline.py` (8 tests couvrant UC-01 à UC-08) et `tests/e2e/test_memory_footprint.py` (processus OS isolé vérifiant un RSS de 48.24 Mo, strictement inférieur au plafond de 80 Mo).
+  - **Suite complète de tests** : **136 tests passent au vert** (89 Pytest backend + 47 Vitest frontend).
   - **Santé statique & sécurité** :
-    - `npm run build` : succès (`dist/` généré en 17.08s, 337.25 kB JS bundle).
+    - `npm run build` : succès (`dist/` généré proprement).
     - `depcruise` : 0 violation de dépendance circulaire (58 modules analysés).
-    - `eslint` : 0 warning, 0 error.
+    - `eslint` : 0 warning, 0 error (`--max-warnings=0`).
     - `ruff` : 0 erreur, 0 avertissement.
     - `semgrep` : 0 vulnérabilité SAST.
-    - `gitleaks` : 0 secret détecté.
+    - `gitleaks` : 0 secret détecté sur l'historique complet.
 
 ## ⚡ Technical Diffs / Atomic Modifications
 
-- **File**: `frontend/src/components/dock/controls/*` (13 composants atomiques)
-  - **Scope**: Contrôles de paramètres universels et conditionnés par les capacités du modèle actif.
-- **File**: `frontend/src/components/dock/slots/*` (`ReferenceSlot.tsx`, `ConditioningTray.tsx`)
-  - **Scope**: Fentes de conditionnement visuel et règle de subsomption vidéo.
-- **File**: `frontend/src/components/brand-kit/*` (5 composants)
-  - **Scope**: Système Brand Kit complet (hover card, sélecteur rapide, prompt avec chip atomique, création 3 sources et inspection 8 sections).
-- **File**: `frontend/src/components/dock/llm/LlmChatView.tsx`
-  - **Scope**: Vue conversationnelle LLM streaming SSE mot à mot et bandeau d'intégration API OpenAI.
-- **File**: `frontend/src/components/dock/FloatingPromptDock.tsx`
-  - **Scope**: Station de commande flottante adaptative unifiée avec persistance superficielle `[H]`.
-- **File**: `frontend/src/App.tsx`
-  - **Scope**: Connexion du FloatingPromptDock avec le store, les modèles, les brand kits et l'orchestration SSE de génération.
-- **File**: `frontend/src/__tests__/*` (4 nouveaux fichiers de tests complets)
-  - **Scope**: Tests unitaires et d'intégration TDD pour le dock, les capacités, la subsomption, le Brand Kit et le mode LLM (25 nouveaux tests, 47 au total).
+- **File**: `app/colab_worker/__init__.py`, `app/colab_worker/model_swapper.py`, `app/colab_worker/server.py`
+  - **Scope**: Automate d'éviction VRAM T4 16 Go et serveur distant FastAPI du worker Colab.
+- **File**: `colab_worker.ipynb`
+  - **Scope**: Notebook Google Colab interactif prêt au déploiement avec tunnels ngrok/Cloudflare.
+- **File**: `tests/unit/test_model_swapper.py`, `tests/api/test_colab_worker_api.py`, `tests/unit/test_notebook_structure.py`
+  - **Scope**: Validation unitaire et API du composant Colab Worker et de la structure du notebook.
+- **File**: `tests/e2e/test_full_pipeline.py`, `tests/e2e/test_memory_footprint.py`
+  - **Scope**: Matrice de traçabilité UC-01 à UC-08 et audit de sobriété RAM backend sous processus OS isolé.
+- **File**: `ruff.toml`
+  - **Scope**: Autorisation ciblée de `S603` dans `tests/**` pour les tests de subprocess (`test_memory_footprint.py`).
+- **File**: `.GCC/branches/plan_05_colab_worker_e2e.md`, `.GCC/branches/test.md`, `.GCC/resume.md`
+  - **Scope**: Documentation d'avancement, preuves de tests et journal de transition.
 
 ## 🛠️ Static Codebase Health
 
-- **Verification Command Run**: `npm --prefix frontend test && npm --prefix frontend run build && pytest tests/ -q`
-- **Status**: PASSED (113/113 tests, build OK).
+- **Verification Command Run**: `pytest tests/ -q && npm --prefix frontend test -- --run && npm --prefix frontend run build && ruff check app tests`
+- **Status**: PASSED (136/136 tests verts, build OK, linters OK).
 
 ## 🚧 Unfinished Work & Technical Failures
 
-- **Blocker / Failure Explanation**: Aucun bloqueur. Plan 04/05 intégralement complété.
+- **Blocker / Failure Explanation**: Aucun bloqueur. L'ensemble des 5 plans d'implémentation (01 à 05) est entièrement achevé, testé et validé.
 
 ## 👉 Handover Directives for the Next Agent
 
-1. **Target File**: `.GCC/branches/plan_05_colab_worker_e2e.md`
-2. **Immediate Action**: Exécuter le Plan 05/05 (Notebook Colab Worker, passerelle tunnel Ngrok/Cloudflare, tests d'intégration bout en bout E2E et validation finale de release).
-3. **Verification Command**: `npm --prefix frontend test && pytest tests/ -q`.
+1. **Target**: Préparer la validation pré-push et l'intégration vers `origin`.
+2. **Immediate Action**: Exécuter `ALLOW_CONFIG_EDIT=1 git commit` avec le message conventionnel de Plan 05, puis lancer `.githooks/pre-push`.
+3. **Verification Command**: `.githooks/pre-push`.

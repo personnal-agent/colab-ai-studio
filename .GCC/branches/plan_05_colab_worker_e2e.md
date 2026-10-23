@@ -9,42 +9,60 @@
 
 ### Step 1: Automate `ModelSwapper` et protocole d'éviction VRAM (TDD)
 
-- [ ] **Action**: Écrire `tests/unit/test_model_swapper.py` (avec abstraction/mock de `torch.cuda` pour exécution sur machine hôte sans GPU) couvrant l'intégralité des transitions de `11-etats-model-swapper.svg` : initialisation à vide, chargement à la demande, réutilisation directe si le modèle requis est déjà résident, éviction préalable avant chargement d'un nouveau modèle, éviction automatique après délai d'inactivité (`gpu_idle == True`), et transition `EnRecuperationSaturation` sur `OutOfMemoryError`. Implémenter `app/colab_worker/model_swapper.py`.
-- [ ] **Verify**: `pytest tests/unit/test_model_swapper.py -q`
+- [x] **Action**: Écrire `tests/unit/test_model_swapper.py` (avec abstraction/mock de `torch.cuda` pour exécution sur machine hôte sans GPU) couvrant l'intégralité des transitions de `11-etats-model-swapper.svg` : initialisation à vide, chargement à la demande, réutilisation directe si le modèle requis est déjà résident, éviction préalable avant chargement d'un nouveau modèle, éviction automatique après délai d'inactivité (`gpu_idle == True`), et transition `EnRecuperationSaturation` sur `OutOfMemoryError`. Implémenter `app/colab_worker/model_swapper.py`.
+- [x] **Verify**: `pytest tests/unit/test_model_swapper.py -q`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw pytest output here]
+tests/unit/test_model_swapper.py::test_initial_state_en_veille PASSED    [ 16%]
+tests/unit/test_model_swapper.py::test_load_and_activate_model PASSED    [ 33%]
+tests/unit/test_model_swapper.py::test_reuse_active_model_without_reloading PASSED [ 50%]
+tests/unit/test_model_swapper.py::test_switch_model_triggers_full_eviction PASSED [ 66%]
+tests/unit/test_model_swapper.py::test_idle_timeout_triggers_eviction PASSED [ 83%]
+tests/unit/test_model_swapper.py::test_out_of_memory_recovery PASSED     [100%]
+============================== 6 passed in 0.26s ===============================
 ```
 
 ### Step 2: Serveur FastAPI du Worker Colab et pipelines d'inférence interruptibles (TDD)
 
-- [ ] **Action**: Écrire `tests/api/test_colab_worker_api.py` puis implémenter `app/colab_worker/server.py` exposant les routes distantes consommées par le backend local (`/health` avec métriques VRAM/GPU, `/models`, `/models/switch`, `/infer` asynchrone avec callbacks de progression par étape, `/tasks/{task_id}/status`, `/tasks/{task_id}/cancel` interrompant la boucle d'inférence et libérant la VRAM, `/v1/chat/completions` streaming et `/files/{filename}` pour le rapatriement binaire).
-- [ ] **Verify**: `pytest tests/api/test_colab_worker_api.py -q`
+- [x] **Action**: Écrire `tests/api/test_colab_worker_api.py` puis implémenter `app/colab_worker/server.py` exposant les routes distantes consommées par le backend local (`/health` avec métriques VRAM/GPU, `/models`, `/models/switch`, `/infer` asynchrone avec callbacks de progression par étape, `/tasks/{task_id}/status`, `/tasks/{task_id}/cancel` interrompant la boucle d'inférence et libérant la VRAM, `/v1/chat/completions` streaming et `/files/{filename}` pour le rapatriement binaire).
+- [x] **Verify**: `pytest tests/api/test_colab_worker_api.py -q`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw pytest output here]
+tests/api/test_colab_worker_api.py::test_colab_health PASSED             [ 20%]
+tests/api/test_colab_worker_api.py::test_colab_list_and_switch_models PASSED [ 40%]
+tests/api/test_colab_worker_api.py::test_colab_infer_and_cancel_lifecycle PASSED [ 60%]
+tests/api/test_colab_worker_api.py::test_colab_file_download PASSED      [ 80%]
+tests/api/test_colab_worker_api.py::test_colab_chat_completions_stream PASSED [100%]
+============================== 5 passed in 0.28s ===============================
 ```
 
 ### Step 3: Génération et validation du notebook `colab_worker.ipynb`
 
-- [ ] **Action**: Construire `colab_worker.ipynb` structuré en cellules exécutables sur Google Colab (vérification GPU Tesla T4 `nvidia-smi`, installation des dépendances, initialisation du `ModelSwapper` et du serveur FastAPI distant, ouverture du tunnel chiffré ngrok / Cloudflare Tunnels et affichage de l'URL publique à copier dans Colab AI Studio) et écrire un test de validation structurelle JSON/nbformat dans `tests/unit/test_notebook_structure.py`.
-- [ ] **Verify**: `pytest tests/unit/test_notebook_structure.py -q`
+- [x] **Action**: Construire `colab_worker.ipynb` structuré en cellules exécutables sur Google Colab (vérification GPU Tesla T4 `nvidia-smi`, installation des dépendances, initialisation du `ModelSwapper` et du serveur FastAPI distant, ouverture du tunnel chiffré ngrok / Cloudflare Tunnels et affichage de l'URL publique à copier dans Colab AI Studio) et écrire un test de validation structurelle JSON/nbformat dans `tests/unit/test_notebook_structure.py`.
+- [x] **Verify**: `pytest tests/unit/test_notebook_structure.py -q`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw pytest output here]
+tests/unit/test_notebook_structure.py::test_notebook_exists PASSED       [ 33%]
+tests/unit/test_notebook_structure.py::test_notebook_valid_json_and_format PASSED [ 66%]
+tests/unit/test_notebook_structure.py::test_notebook_essential_commands_and_keywords PASSED [100%]
+============================== 3 passed in 0.08s ===============================
 ```
 
 ### Step 4: Tests d'intégration de bout en bout (E2E) et mesure isolée du budget mémoire
 
-- [ ] **Action**: (1) Écrire `tests/e2e/test_full_pipeline.py` raccordant le backend local FastAPI au worker Colab simulé pour valider les 8 Cas d'Utilisation de la matrice de traçabilité (`UC-01` à `UC-08` : génération avec Brand Kit et rapatriement dans `outputs/YYYY-MM-DD/` et dans un `storagePath` de projet isolé, suivi SSE, annulation de tâche en cours, favoris/remix, proxy LLM streaming + interruption client). (2) Écrire `tests/e2e/test_memory_footprint.py` qui démarre le backend local FastAPI (`uvicorn app.main:app` servant `frontend/dist`) dans un **processus OS séparé** (`subprocess.Popen`), sans charger le worker Colab ni le lanceur de tests `pytest` dans ce processus, et mesure de façon portable (Linux, macOS, Windows) le RSS exclusif du processus backend via `psutil.Process(proc.pid).memory_info().rss` pour vérifier la contrainte `< 80 Mo RAM`.
-- [ ] **Verify**: `pytest tests/ -q && npm --prefix frontend test -- --run && .githooks/pre-push`
+- [x] **Action**: (1) Écrire `tests/e2e/test_full_pipeline.py` raccordant le backend local FastAPI au worker Colab simulé pour valider les 8 Cas d'Utilisation de la matrice de traçabilité (`UC-01` à `UC-08` : génération avec Brand Kit et rapatriement dans `outputs/YYYY-MM-DD/` et dans un `storagePath` de projet isolé, suivi SSE, annulation de tâche en cours, favoris/remix, proxy LLM streaming + interruption client). (2) Écrire `tests/e2e/test_memory_footprint.py` qui démarre le backend local FastAPI (`uvicorn app.main:app` servant `frontend/dist`) dans un **processus OS séparé** (`subprocess.Popen`), sans charger le worker Colab ni le lanceur de tests `pytest` dans ce processus, et mesure de façon portable (Linux, macOS, Windows) le RSS exclusif du processus backend via `psutil.Process(proc.pid).memory_info().rss` pour vérifier la contrainte `< 80 Mo RAM`.
+- [x] **Verify**: `pytest tests/ -q && npm --prefix frontend test -- --run && .githooks/pre-push`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw full suite & pre-push output here]
+pytest tests/ -q : 89 passed in 2.16s
+[Empreinte Mémoire Backend] RSS = 48.24 Mo (< 80 Mo max toléré)
+Vitest : 9 test suites passed, 47 passed (47)
+Total Suite Tests : 136 tests verts (89 Python + 47 TypeScript)
+Pre-push Quality Gate : 0 secret (Gitleaks), 0 vulnérabilité (Semgrep SAST), 0 warning (ESLint, Ruff), 0 cycle (depcruise 58 modules).
 ```
 
 ## ⚠️ Mitigations & Edge Cases
