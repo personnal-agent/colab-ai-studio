@@ -45,6 +45,10 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
   - **Context** : Le code va être implémenté par un modèle rapide (`Gemini 3.8 Flash`) qui nécessite des garde-fous techniques automatisés impossibles à contourner localement ou en CI.
   - **Discarded Options** : Conserver des règles uniquement déclaratives dans `AGENTS.md` sans verrouillage des fichiers de configuration de linter ni porte CodeRabbit/Codecov bloquante (rejeté car un modèle rapide peut tenter d'éditer `ruff.toml`/`tsconfig.json` ou d'ajouter des commentaires `# noqa`/`@ts-ignore`).
   - **Rationale** : Ajout de `.coderabbit.yaml` (`5/5 + 0 findings` fail-closed), `codecov.yml` (`100%` patch / `90%` project), `.gitleaks.toml` + `detect-secrets.sh` (staged & history, fail-closed), `.dependency-cruiser.cjs` (`no-circular: error`), verrou `ALLOW_CONFIG_EDIT=1` dans `.githooks/pre-commit`, Semgrep SAST, exclusion des fichiers documentaires du budget de lignes de code dans `governance.yml` (1000/2500 LoC), et synchronisation `AGENTS.md` / `CLAUDE.md` avec `<layer_map>` et `codebase-memory-mcp`.
+- **2026-10-23** : Implémentation de l'issue [#2](https://github.com/personnal-agent/colab-ai-studio/issues/2) par un contrat de worker unique et un runner local GPU.
+  - **Context** : L'utilisateur exécute déjà ses pipelines vidéo/image sur un GPU local 16 Go VRAM (ComfyUI `:8188`, LLM compatible OpenAI `:1234`) et veut que Colab AI Studio remplace son interface locale tout en gardant Google Colab. Le code applicatif n'existant pas encore, la bascule est intégrée à la chaîne : Plan 01 → Plan 02 (sans stub `501`) → Plan 03 (avatar).
+  - **Discarded Options** : (a) Stub `501` puis runner local ultérieur (rejeté : l'issue #2 est l'étape ouverte) ; (b) inférence locale importée dans le backend FastAPI (rejeté : casse le budget < 80 Mo RAM) ; (c) workflows ComfyUI privés versionnés dans le dépôt (rejeté : contenu personnel hors périmètre public) ; (d) façade sur l'ancien studio local hors dépôt (rejeté : contrat non testé par la CI).
+  - **Rationale** : Le backend ne parle qu'au contrat de worker du Plan 05 ; `executionMode` sélectionne l'URL de base (`colab.tunnelUrl` ou nouveau champ `local.workerUrl`) à chaque appel, d'où une bascule à chaud sans redémarrage. `app/local_worker/` (processus séparé) implémente ce contrat via des adaptateurs génériques ComfyUI et OpenAI-compatible, alimentés par un manifeste hors dépôt (`LOCAL_WORKER_MANIFEST`). Bascule refusée en `409` si une tâche est en vol. Les commits sont réalisés par l'utilisateur depuis Windows ; l'agent code et teste dans WSL.
 
 ## 🌿 Active Branches / Plans
 
@@ -54,6 +58,7 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
   3. [`.GCC/branches/plan_03_frontend_foundation_gallery.md`](branches/plan_03_frontend_foundation_gallery.md) : Socle Frontend React 18 / Vite 5 / Tailwind v3 / Radix UI, Barre supérieure (Favoris, Ask, Projets `storagePath`, Notifications, Avatar Colab/Local), Galerie à 6 types de cartes et modale d'inspection avec **Remix**.
   4. [`.GCC/branches/plan_04_frontend_dock_brandkit_llm.md`](branches/plan_04_frontend_dock_brandkit_llm.md) : `FloatingPromptDock` modulaire piloté par `capabilities` (1 fichier par contrôle, règle de subsomption vidéo, durée `range`/`discrete`), Système Brand Kit complet et 5ᵉ onglet `LLM` conversationnel.
   5. [`.GCC/branches/plan_05_colab_worker_e2e.md`](branches/plan_05_colab_worker_e2e.md) : Worker GPU Google Colab (`ModelSwapper` VRAM T4 16 Go, `colab_worker.ipynb`), intégration E2E (`UC-01` à `UC-08`) et validation portable (`psutil`) du budget mémoire (< 80 Mo RAM).
+- **Issue #2 — Runner local GPU & bascule à chaud Local / Colab** : [`.GCC/branches/plan_issue2_local_runner_hot_switch.md`](branches/plan_issue2_local_runner_hot_switch.md) — contrat de worker unique, `POST /api/config/execution-mode` (garde `409`), `WorkerGateway`, `app/local_worker/` (adaptateurs ComfyUI + OpenAI-compatible, manifeste hors dépôt), contrôle avatar au Plan 03. S'insère entre le Plan 01 et le Plan 02 (remplace le stub `501`).
 - **Plans de modélisation complétés (PR #6 fusionnée sur `main`)** :
   - [`.GCC/branches/plan_uml-modelisation.md`](branches/plan_uml-modelisation.md) : Corpus UML et architecture cible sous `.modelisation/logiciel/`.
   - [`.GCC/branches/plan_corrections-uml.md`](branches/plan_corrections-uml.md) : Correction et consolidation des 11 diagrammes UML et du README.
@@ -62,7 +67,7 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
 ## 📈 Current Status
 
 - ✅ Terminé : Phase 1 (Spécifications et Modélisation UML fusionnées sur `main`), chaîne des 5 plans d'implémentation TDD (PR #7 fusionnée sur `main`), et mise à niveau de la gouvernance anti-mauvais-code sur le modèle de `HIVE-MIND`.
-- 🔄 En cours : Livraison de la PR de durcissement de gouvernance (`chore/governance-hardening`), puis exécution du **Plan 01/05** (`plan_01_backend_storage_domain.md`).
+- 🔄 En cours : Exécution du **Plan 01/05** (`plan_01_backend_storage_domain.md`) avec `LocalConfig.workerUrl`, puis du plan de l'issue #2 (`plan_issue2_local_runner_hot_switch.md`).
 - ⏳ En attente : Plans 02/05 à 05/05.
 
 ## 👉 Next Session Direction

@@ -2,61 +2,51 @@
 
 ## 🎯 Functional Outcome & Task Reality
 
-- **Requested Task**: Analyser la gouvernance anti-mauvais-code de `/home/omni/Code/HIVE-MIND`, mettre à niveau l'ensemble de la gouvernance de `/home/omni/Code/colab-ai-studio`, et résoudre l'intégralité des retours de revue Greptile (passes 1 et 2) sur la Pull Request [#8](https://github.com/personnal-agent/colab-ai-studio/pull/8) afin d'atteindre un score de confiance de `5/5`.
+- **Requested Task**: Intégrer l'étape de bascule Local / Colab (Option 2 / Issue [#2](https://github.com/personnal-agent/colab-ai-studio/issues/2)) et lancer l'implémentation de Colab AI Studio (`personnal-agent/colab-ai-studio`) sous les contraintes de gouvernance.
 - **Functional Status**: SUCCESS
 - **Behavioral Proof**:
-  - **Passe 1 Greptile (5 findings résolus)** :
-    1. `Couverture jamais évaluée` (`.github/workflows/ci.yml`) : génération et envoi des rapports `pytest-cov` (`coverage.xml`) et `npm test -- --run --coverage` vers Codecov via `codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5`.
-    2. `Semgrep vérifie une autre version` (`.githooks/pre-commit`) : analyse de la version indexée extraite dans `$TMP_STAGED` (`--no-git-ignore`).
-    3. `Contrôles ignorés sans leurs outils` (`.githooks/pre-commit`, `.github/workflows/ci.yml`) : exécution *fail-closed* de `run_ruff`, `depcruise`, `eslint` et `run_semgrep`.
-    4. `Le nettoyage est aussi bloqué` (`.githooks/pre-commit`) : inspection du contenu indexé via `git grep -I --cached -l -E -e`.
-    5. `Documentation renommée comptée comme code` (`.github/workflows/governance.yml`) : ajout de `--no-renames` sur `git -c core.quotePath=false diff --numstat --no-renames`.
-  - **Passe 2 Greptile (3 findings résolus)** :
-    1. `ESLint refuse les copies temporaires` (`.githooks/pre-commit`) : passage du contenu indexé (`$TMP_STAGED/$jf`) sur l'entrée standard d'ESLint avec `--stdin --stdin-filename "$REPO_ROOT/$rel_jf"` afin que la flat config `frontend/eslint.config.*` reconnaisse le chemin du projet tout en analysant la version exacte de l'index.
-    2. `La CI double le dossier` (`.github/workflows/ci.yml`) : exécution de `npx --prefix frontend depcruise --validate .dependency-cruiser.cjs frontend/src` depuis la racine du dépôt afin que `tsConfig.fileName: 'frontend/tsconfig.json'` soit résolu sans doubler le préfixe `frontend/`.
-    3. `Le scan PEM échoue silencieusement` (`.githooks/pre-commit`) : ajout de la fonction `staged_grep_files()` passant `-e "$pattern"` à `git grep -I --cached -l -E` (évitant que `-----BEGIN...` soit interprété comme une option) et distinguant le code de retour `1` (aucune correspondance) de tout code `> 1` (erreur interne *fail-closed* `exit 1`).
+  - **Plan Issue #2 rédigé et intégré à la chaîne GCC** ([`.GCC/branches/plan_issue2_local_runner_hot_switch.md`](branches/plan_issue2_local_runner_hot_switch.md)) : architecture à contrat de worker unique (`/health`, `/models`, `/models/switch`, `/infer`, `/tasks/{task_id}/status`, `/tasks/{task_id}/cancel`, `/files/{filename}`, `/v1/chat/completions`), route de commutation à chaud `POST /api/config/execution-mode` (rejet `409 Conflict` si tâche en cours), passerelle `WorkerGateway`, adaptateur local `app/local_worker/` (ComfyUI `:8188` + LLM local compatible OpenAI `:1234`) avec manifeste de modèles local hors dépôt (`LOCAL_WORKER_MANIFEST`), remplaçant le stub `501`.
+  - **Plan 01/05 exécuté à 100% en TDD strict (Red-Green-Refactor)** :
+    1. **Step 1 (Socle)** : `requirements.txt`, `ruff.toml`, `pytest.ini`, `app/config.py` et arborescences créées.
+    2. **Step 2 (Modèles de domaine)** : `app/models/domain.py` avec `TaskStatus`, `ExecutionMode`, `Generation`, `GenerationParameters`, `GenerationReferences`, `BrandKitSnapshot`, `BrandKit`, `Project`, `StudioConfig` (avec `LocalConfig.workerUrl = "http://127.0.0.1:8190"`). 14 tests unitaires validés.
+    3. **Step 3 (JSONDocumentStore)** : `app/storage/json_store.py` avec `asyncio.Lock` par collection, écriture temporaire locale et remplacement atomique POSIX `os.replace`. 6 tests unitaires validés (dont 10 écritures concurrentes sérialisées).
+    4. **Step 4 (MediaFileStore)** : `app/storage/media_store.py` avec les 3 règles de destination (isolation physique `Project.storagePath` exclusif avec 0 fichier dans `outputs/`, partition projet `outputs/projects/<id>/`, partition chronologique `outputs/YYYY-MM-DD/`), et rejet anti-traversée (`/etc`, `/proc`, etc.). 6 tests unitaires validés.
+    5. **Step 5 (CRUD & Point d'entrée)** : `app/services/brand_extractor.py`, `app/api/routes_crud.py`, `app/main.py`. 5 tests d'intégration validés (`GET /api/health`, `GET/PATCH/DELETE /api/generations`, `POST/GET /api/projects`, `POST/GET /api/brand-kits`, `POST /api/config/colab-url`).
+  - **Budget mémoire validé** : Processus backend isolé (`uvicorn app.main:app`) consomme **47.63 Mo RSS** (< 80 Mo requis).
+  - **Suite de tests complète** : 31/31 tests `pytest` passent au vert en 0.46s. Linting `ruff check app tests` à 0 erreur, 0 avertissement.
 
 ## ⚡ Technical Diffs / Atomic Modifications
 
-- **File**: `.githooks/pre-commit`
-  - **Scope**: Quality Gate locale Git
-  - **Exact Technical Change**: Ajout de `staged_grep_files()` avec `git grep -I --cached -l -E -e "$pattern"` et gestion stricte des codes de sortie (`0` / `1` vs `> 1`), et linting ESLint en mode `staged` via `--stdin --stdin-filename "$REPO_ROOT/$rel_jf" < "$src_jf"`.
-- **File**: `.github/workflows/ci.yml`
-  - **Scope**: Pipeline CI Frontend (`dependency-cruiser`)
-  - **Exact Technical Change**: Isolation des sous-shells `( cd frontend && ... )` pour que `npx --prefix frontend depcruise --validate .dependency-cruiser.cjs frontend/src` s'exécute depuis la racine du dépôt.
-- **File**: `.github/workflows/governance.yml` & `.github/scripts/verify_workflows.py`
-  - **Scope**: Gouvernance PR et validation des workflows
-  - **Exact Technical Change**: Calcul `git -c core.quotePath=false diff --numstat --no-renames` et conformité `ruff check` à 100 %.
+- **File**: `.GCC/branches/plan_issue2_local_runner_hot_switch.md`
+  - **Scope**: Spécification et séquence TDD de la bascule Local/Colab (Issue #2).
+  - **Exact Technical Change**: 6 étapes (schéma config, `WorkerGateway`, serveur `app/local_worker/`, backends ComfyUI + OpenAI, validation GPU réelle, IHM Plan 03).
+- **File**: `.GCC/main.md` & `.GCC/branches/plan_01_backend_storage_domain.md`
+  - **Scope**: Registre de décisions et validation du Plan 01.
+  - **Exact Technical Change**: Décision du 2026-10-23 documentée, cases cochées [x] avec preuves terminales d'exécution.
+- **File**: `app/config.py`, `app/models/domain.py`, `app/storage/json_store.py`, `app/storage/media_store.py`, `app/services/brand_extractor.py`, `app/api/routes_crud.py`, `app/main.py`
+  - **Scope**: Socle backend FastAPI, persistance atomique JSON & médias, modèles de domaine.
+  - **Exact Technical Change**: Implémentation complète et testée du Plan 01/05.
+- **File**: `tests/unit/test_models.py`, `tests/unit/test_json_store.py`, `tests/unit/test_media_store.py`, `tests/api/test_crud_routes.py`
+  - **Scope**: Backlog de tests TDD (31 tests unitaires et d'API).
+  - **Exact Technical Change**: Couverture complète des invariants de stockage, domaine et CRUD.
 
 ## 🛠️ Static Codebase Health
 
-- **Verification Command Run**: `diff -u AGENTS.md CLAUDE.md && python3 .github/scripts/verify_workflows.py .github/workflows && .githooks/pre-push`
+- **Verification Command Run**: `ruff check app tests && pytest tests/ -q`
 - **Linter/Compiler Status**:
 
 ```text
-Validation succeeded: 7 workflow(s) compliant.
-[1/3] Détection de secrets sur l'historique complet (gitleaks)...
-  38 commits scanned — no leaks found (✅ Aucun secret détecté)
-[2/3] Tests unitaires (timeout : 5 minutes)...
-  Aucune suite de tests active pour le moment (dépôt au stade de spécification).
-[3/3] Quality Gate intégrale (dépôt entier - full)...
-  [1/5] Vérification de sécurité (fichiers sensibles, secrets et configs) : OK
-  [1b/5] Scan gitleaks de l'index : OK (no leaks found)
-  [2/5] Validation Backend Python (.github/scripts/verify_workflows.py) :
-    Exécution de Ruff... All checks passed!
-    ✓ Contrôles Python validés.
-  [3/5] Validation Frontend TypeScript/React : OK
-  [4/5] Scan SAST sécurité (Semgrep) : OK (0 vulnérabilité)
-  [5/5] Validation des invariants d'architecture et workflows : OK
-✅ Pré-push validé (gitleaks history + tests + Quality Gate full).
+All checks passed!
+...............................                                          [100%]
+31 passed in 0.46s
 ```
 
 ## 🚧 Unfinished Work & Technical Failures
 
-- **Blocker / Failure Explanation**: Aucun bloqueur.
+- **Blocker / Failure Explanation**: Aucun bloqueur. Le code du Plan 01 est fonctionnel, propre et testé. Les fichiers sont prêts pour être indexés/committés depuis l'environnement Windows de l'utilisateur conformément à la consigne.
 
 ## 👉 Handover Directives for the Next Agent
 
-1. **Target File**: `.GCC/branches/plan_01_backend_storage_domain.md`
-2. **Immediate Action**: Après approbation 5/5 et fusion de la PR #8, créer la branche `feat/backend-storage-domain` et exécuter les Steps 1 à 5 du Plan 01/05 en TDD.
-3. **Verification Command**: `pytest tests/ -q && .githooks/pre-push`
+1. **Target File**: `.GCC/branches/plan_issue2_local_runner_hot_switch.md`
+2. **Immediate Action**: Exécuter la Step 1 du plan de l'issue #2 (route `POST /api/config/execution-mode` avec blocage `409 Conflict` si tâche en vol) puis la Step 2 (`WorkerGateway`), puis enchaîner sur le Plan 02 (`BrandContextCompiler` et `TaskOrchestrator`).
+3. **Verification Command**: `~/.venvs/colab-ai-studio/bin/pytest tests/ -q && ~/.venvs/colab-ai-studio/bin/ruff check app tests`
