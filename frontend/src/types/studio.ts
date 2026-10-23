@@ -17,6 +17,14 @@ export interface GenerationParameters {
   frameRate?: string | null;
   audio?: boolean | null;
   enhance?: boolean | null;
+  batchCount?: number;
+  talkingStyle?: string;
+  scaleFactor?: string;
+  upscaleQuality?: string;
+  cfgScale?: number;
+  steps?: number;
+  motionBucket?: number;
+  denoiseStrength?: number;
 }
 
 export interface GenerationReferences {
@@ -52,6 +60,11 @@ export interface BrandKit {
   logoPath?: string | null;
   referenceImages: string[];
   updatedAt: string;
+  lastUsedAt?: string | null;
+  assetCount?: number;
+  voices?: Array<{ id: string; name: string; previewUrl?: string }>;
+  captions?: string[];
+  guidelines?: Array<{ title: string; rule: string }>;
 }
 
 export interface Project {
@@ -90,11 +103,24 @@ export interface ModelCapabilities {
   aspectRatios?: string[];
   resolutions?: string[];
   durations?: string[];
+  durationMode?: "range" | "discrete";
+  durationRange?: { min: number; max: number; step?: number };
   fpsOptions?: string[];
   supportsAudio?: boolean;
+  supportsNativeAudio?: boolean;
   supportsNegativePrompt?: boolean;
   supportsStartEndFrames?: boolean;
+  supportsStartFrame?: boolean;
+  supportsEndFrame?: boolean;
+  supportsImageEdit?: boolean;
   maxImageRefs?: number;
+  batchSize?: number[];
+  talkingStyles?: string[];
+  upscaleScales?: string[];
+  upscaleQualities?: string[];
+  contextLength?: number;
+  streaming?: boolean;
+  badge?: "Beta" | "New" | "Slow";
 }
 
 export interface ModelDefinition {
@@ -102,6 +128,7 @@ export interface ModelDefinition {
   name: string;
   mediaType: string;
   description?: string;
+  backend?: string;
   capabilities?: ModelCapabilities;
 }
 

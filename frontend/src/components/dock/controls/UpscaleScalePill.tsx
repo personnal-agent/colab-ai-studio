@@ -1,0 +1,70 @@
+import React, { useState } from 'react';
+import * as Popover from '@radix-ui/react-popover';
+
+interface UpscaleScalePillProps {
+  value: string;
+  allowedScales?: string[];
+  onChange: (value: string) => void;
+}
+
+const DEFAULT_SCALES = ['1.25x', '1.5x', '2x', '4x'];
+
+export const UpscaleScalePill: React.FC<UpscaleScalePillProps> = ({
+  value,
+  allowedScales = DEFAULT_SCALES,
+  onChange,
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          aria-label="Scale"
+          title={`Facteur d'agrandissement : ${value}`}
+          className="h-8 px-3 rounded-pill border border-studio-border bg-white text-studio-text hover:bg-studio-subtle transition-colors duration-150 text-xs font-medium inline-flex items-center gap-1 cursor-pointer select-none"
+        >
+          <span className="text-studio-muted">⊕</span>
+          <span> {value}</span>
+        </button>
+      </Popover.Trigger>
+
+      <Popover.Portal>
+        <Popover.Content
+          align="center"
+          sideOffset={8}
+          className="z-50 p-2 bg-white rounded-xl shadow-lg border border-studio-border text-xs focus:outline-none min-w-[120px]"
+        >
+          <div className="text-[11px] font-semibold text-studio-muted px-2 py-1">
+            Facteur d'échelle
+          </div>
+          <div className="flex flex-col gap-1">
+            {allowedScales.map((scale) => {
+              const isSelected = scale === value;
+              return (
+                <button
+                  key={scale}
+                  type="button"
+                  aria-label={scale}
+                  onClick={() => {
+                    onChange(scale);
+                    setOpen(false);
+                  }}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium text-left transition-colors flex items-center justify-between ${
+                    isSelected
+                      ? 'bg-studio-text text-white'
+                      : 'text-studio-text hover:bg-studio-subtle'
+                  }`}
+                >
+                  <span>{scale}</span>
+                  {isSelected && <span className="text-[10px]">✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
+  );
+};

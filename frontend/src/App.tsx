@@ -3,8 +3,17 @@ import { MediaGallery } from './components/gallery/MediaGallery';
 import { MediaPlayerModal } from './components/gallery/MediaPlayerModal';
 import { SearchAndFilterBar } from './components/gallery/SearchAndFilterBar';
 import { TopNavBar } from './components/header/TopNavBar';
+import { FloatingPromptDock, SubmitTaskPayload } from './components/dock/FloatingPromptDock';
+import { CreateBrandKitData } from './components/brand-kit/BrandKitCreateModal';
 import { apiClient } from './services/apiClient';
-import { ExecutionMode, Generation, HealthResponse, Project } from './types/studio';
+import {
+  ExecutionMode,
+  Generation,
+  HealthResponse,
+  Project,
+  ModelDefinition,
+  BrandKit,
+} from './types/studio';
 
 export default function App() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -12,8 +21,12 @@ export default function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
 
+  const [models, setModels] = useState<ModelDefinition[]>([]);
+  const [brandKits, setBrandKits] = useState<BrandKit[]>([]);
+
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [activeTasks, setActiveTasks] = useState<Generation[]>([]);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   const [isFavoriteOnly, setIsFavoriteOnly] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -25,12 +38,15 @@ export default function App() {
   useEffect(() => {
     const initData = async () => {
       try {
-        const [healthRes, configRes, projectsRes, gensRes] = await Promise.all([
-          apiClient.getHealth().catch(() => null),
-          apiClient.getConfig().catch(() => null),
-          apiClient.listProjects().catch(() => []),
-          apiClient.listGenerations().catch(() => []),
-        ]);
+        const [healthRes, configRes, projectsRes, gensRes, modelsRes, brandKitsRes] =
+          await Promise.all([
+            apiClient.getHealth().catch(() => null),
+            apiClient.getConfig().catch(() => null),
+            apiClient.listProjects().catch(() => []),
+            apiClient.listGenerations().catch(() => []),
+            apiClient.listModels().catch(() => []),
+            apiClient.listBrandKits().catch(() => []),
+          ]);
 
         if (healthRes) {
           setHealth(healthRes);
@@ -40,6 +56,8 @@ export default function App() {
         }
 
         setProjects(projectsRes);
+        setModels(modelsRes);
+        setBrandKits(brandKitsRes);
 
         const active = gensRes.filter(
           (g) => g.status === 'pending' || g.status === 'running'
@@ -112,10 +130,65 @@ export default function App() {
   // 6. Action Remix
   const handleRemix = (gen: Generation) => {
     console.info('Remix invoqué pour', gen.id);
-    // Invoqué vers le dock flottant (Plan 04)
   };
 
-  // 7. Filtrage cumulatif des médias
+  // 7. Soumission d'une tâche de génération
+  const handleSubmitTask = async (payload: SubmitTaskPayload) => {
+    setIsGenerating(true);
+    try {
+      const task = await apiClient.generateMedia({
+        ...payload,
+        projectId: activeProjectId,
+      });
+
+      setActiveTasks((prev) => [task, ...prev]);
+
+      // Souscription SSE en direct
+      apiClient.subscribeTaskStatus(
+        task.id,
+        (event) => {
+          if (event.status === 'completed') {
+            setActiveTasks((prev) => prev.filter((t) => t.id !== event.taskId));
+            setGenerations((prev) => [
+              { ...task, status: 'completed', filePath: event.filePath || task.filePath },
+              ...prev,
+            ]);
+            setIsGenerating(false);
+          } else if (event.status === 'failed' || event.status === 'cancelled') {
+            setActiveTasks((prev) => prev.filter((t) => t.id !== event.taskId));
+            setIsGenerating(false);
+          } else {
+            setActiveTasks((prev) =>
+              prev.map((t) => (t.id === event.taskId ? { ...t, status: event.status } : t))
+            );
+          }
+        },
+        () => {
+          setIsGenerating(false);
+        }
+      );
+    } catch (err) {
+      console.error('Erreur lors de la soumission de tâche', err);
+      setIsGenerating(false);
+    }
+  };
+
+  // 8. Création d'un Brand Kit
+  const handleCreateBrandKit = async (data: CreateBrandKitData): Promise<BrandKit> => {
+    const created = await apiClient.createBrandKit({
+      name: data.name,
+      overview: `Brand Kit créé via ${data.method}`,
+      palette: [],
+      fonts: [],
+      dos: [],
+      donts: [],
+      referenceImages: [],
+    });
+    setBrandKits((prev) => [created, ...prev]);
+    return created;
+  };
+
+  // 9. Filtrage cumulatif des médias
   const filteredGenerations = useMemo(() => {
     return generations.filter((gen) => {
       // Filtre projet actif
@@ -148,7 +221,7 @@ export default function App() {
   }, [generations, activeProjectId, isFavoriteOnly, selectedTypes, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-studio-canvas text-gray-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-studio-canvas text-gray-900 flex flex-col font-sans pb-36">
       {/* Barre supérieure avec Favoris, Projets, Ask & Statut Worker */}
       <TopNavBar
         isFavoriteOnly={isFavoriteOnly}
@@ -184,6 +257,15 @@ export default function App() {
           onCancelTask={handleCancelTask}
         />
       </main>
+
+      {/* Station de Commande Flottante (Floating Prompt Dock) */}
+      <FloatingPromptDock
+        models={models}
+        brandKits={brandKits}
+        isGenerating={isGenerating}
+        onSubmitTask={handleSubmitTask}
+        onCreateBrandKit={handleCreateBrandKit}
+      />
 
       {/* Modale d'inspection grand format & Remix */}
       <MediaPlayerModal

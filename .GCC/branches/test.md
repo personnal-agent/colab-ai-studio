@@ -52,3 +52,22 @@
   - Total : 88 tests passés avec succès
   - Staged pre-commit : Gitleaks 0 fuite, ESLint 0 warning, Semgrep 0 vulnérabilité
   ```
+
+### Run: 2026-10-23 — Plan 04/05 Floating Prompt Dock, Brand Kit & LLM Mode
+- **Date**: 2026-10-23
+- **Target**: Plan 04/05 (`dock_capabilities.test.tsx`, `video_subsumption.test.tsx`, `brand_kit.test.tsx`, `llm_mode.test.tsx`)
+- **Status**: PASSED
+- **Output / Evidence**:
+  ```text
+  Test Files  9 passed (9)
+  Tests  47 passed (47)
+  - dock_capabilities.test.tsx : 11 passed (contrôles atomiques batch, enhance, seed, aspect ratio, resolution, duration discrete/range, native audio, talking style, upscale scale/quality/fps, model selector popover avec badges, et registre dynamique ParameterRegistry)
+  - video_subsumption.test.tsx : 4 passed (ReferenceSlot, règle de subsomption vidéo complète et combinaisons partielles, avertissement limite maxImageRefs, adaptation Image/LipSync/Upscale)
+  - brand_kit.test.tsx : 6 passed (BrandKitHoverCard, BrandKitSelectorPopover état vide et tri lastUsedAt, PromptEditorWithChip chip atomique et Backspace, BrandKitCreateModal 3 sources Blank/Files/Website, BrandKitInspectorModal 8 sections et Use button)
+  - llm_mode.test.tsx : 4 passed (Bascule 5e onglet LLM avec masquage fentes/pills média, bandeau API local OpenAI, persistance superficielle [H] sans perte de contexte, conversation streaming avec stop AbortController, verrouillage du dock pendant génération)
+  - Vite build : dist/ généré proprement en 17.08s (JS bundle minifié 337.25 kB gzip 101.14 kB)
+  - depcruise : 0 violation de cycle (58 modules, 184 dépendances)
+  - Python tests : 66 passed in 1.18s
+  - Total : 113 tests passés avec succès (47 frontend + 66 backend)
+  - ESLint & Ruff : 0 warning, 0 error
+  ```
