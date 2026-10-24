@@ -166,7 +166,7 @@ def child_lines(lines: list[str], start: int) -> list[str]:
     """Returns indented lines below start line until dedent."""
     parent_indent = len(lines[start]) - len(lines[start].lstrip(" "))
     collected: list[tuple[int, str]] = []
-    for line in lines[start + 1:]:
+    for line in lines[start + 1 :]:
         code = strip_comment(line).rstrip()
         if not code.strip():
             continue
@@ -350,9 +350,7 @@ def check_workflow(path: Path) -> int:
 
         for position, (header_line, indent, _) in enumerate(job_headers):
             end = (
-                job_headers[position + 1][0] - 1
-                if position + 1 < len(job_headers)
-                else len(lines)
+                job_headers[position + 1][0] - 1 if position + 1 < len(job_headers) else len(lines)
             )
             block = [
                 (number, strip_comment(line).rstrip())
@@ -375,8 +373,10 @@ def check_workflow(path: Path) -> int:
 
     # 3. Concurrency: mandatory group for PR/push triggers.
     if triggers.intersection({"pull_request", "push"}) and not has_concurrency_group(lines):
-        fail(f"{path}: top-level concurrency block with 'group:' required for triggers "
-             f"{', '.join(sorted(triggers.intersection({'pull_request', 'push'})))}.")
+        fail(
+            f"{path}: top-level concurrency block with 'group:' required for triggers "
+            f"{', '.join(sorted(triggers.intersection({'pull_request', 'push'})))}."
+        )
         errors += 1
 
     # 4. Jobs: each job must specify runs-on and timeout-minutes.
@@ -405,7 +405,7 @@ def check_workflow(path: Path) -> int:
         if action == "actions/checkout" or action.endswith("/checkout"):
             found_persist_false = False
             base_indent = len(line) - len(line.lstrip(" "))
-            for next_line in lines[number:number + 15]:
+            for next_line in lines[number : number + 15]:
                 next_indent = len(next_line) - len(next_line.lstrip(" "))
                 stripped = next_line.strip()
                 if not stripped or stripped.startswith("#"):
@@ -500,12 +500,12 @@ def missing_job_directives(lines: list[str]) -> list[tuple[int, str]]:
         direct = [entry for entry in block if len(entry[1]) - len(entry[1].lstrip(" ")) > indent]
         if not direct:
             continue
-        prop_indent = min(
-            len(code) - len(code.lstrip(" ")) for _, code in direct
-        )
+        prop_indent = min(len(code) - len(code.lstrip(" ")) for _, code in direct)
         has_timeout = any(
-            re.match(r"^(?:\"timeout-minutes\"|'timeout-minutes'|timeout-minutes):\s*(?:\d+|\$\{\{.+?\}\})\s*$",
-                     code.strip())
+            re.match(
+                r"^(?:\"timeout-minutes\"|'timeout-minutes'|timeout-minutes):\s*(?:\d+|\$\{\{.+?\}\})\s*$",
+                code.strip(),
+            )
             for _, code in direct
             if len(code) - len(code.lstrip(" ")) == prop_indent
         )

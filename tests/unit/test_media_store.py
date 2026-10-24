@@ -109,6 +109,41 @@ async def test_delete_media_removes_both_files(base_dirs):
     assert not Path(thumb_path).exists()
 
 
+async def test_distinct_media_homonyms_do_not_share_or_overwrite_thumbnails(base_dirs):
+    outputs, _ = base_dirs
+    store = MediaFileStore(outputs_dir=outputs)
+    p1, t1 = await store.save_media("clip.mp4", b"MP4_DATA", thumbnail_content=b"THUMB_MP4")
+    p2, t2 = await store.save_media("clip.png", b"PNG_DATA", thumbnail_content=b"THUMB_PNG")
+
+    assert t1 != t2
+    assert Path(t1).name == "clip.mp4.thumb.jpg"
+    assert Path(t2).name == "clip.png.thumb.jpg"
+    assert Path(t1).read_bytes() == b"THUMB_MP4"
+    assert Path(t2).read_bytes() == b"THUMB_PNG"
+
+    await store.delete_media(p1, t1)
+    assert not Path(p1).exists()
+    assert not Path(t1).exists()
+    assert Path(p2).exists()
+    assert Path(t2).exists()
+
+
+async def test_delete_media_error_propagates_on_permission_error(base_dirs, monkeypatch):
+    outputs, _ = base_dirs
+    store = MediaFileStore(outputs_dir=outputs)
+    saved_path, thumb_path = await store.save_media("test_err.mp4", b"DATA")
+
+    def failing_unlink(p):
+        raise PermissionError("Accès refusé pour la suppression")
+
+    import os
+
+    monkeypatch.setattr(os, "unlink", failing_unlink)
+
+    with pytest.raises(PermissionError, match="Accès refusé"):
+        await store.delete_media(saved_path, thumb_path)
+
+
 @pytest.mark.parametrize(
     "forbidden_path",
     [

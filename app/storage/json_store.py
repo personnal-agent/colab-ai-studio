@@ -18,6 +18,10 @@ from pathlib import Path
 from typing import Any
 
 
+class CorruptedDocumentStoreError(RuntimeError):
+    """Exception levée lorsqu'un document JSON existant est corrompu ou illisible sur le disque."""
+
+
 class JSONDocumentStore:
     def __init__(self, data_dir: Path | str) -> None:
         self.data_dir = Path(data_dir)
@@ -45,21 +49,32 @@ class JSONDocumentStore:
 
     async def read_list_unlocked(self, filename: str) -> list[dict[str, Any]]:
         target = self._resolve(filename)
-        if not target.exists():
-            return []
-        return self._perform_read_list(target)
+        return await asyncio.to_thread(self._perform_read_list, target)
 
     def _perform_read_list(self, target: Path) -> list[dict[str, Any]]:
+        if not target.exists():
+            return []
         try:
             content = target.read_text(encoding="utf-8")
-            if not content.strip():
-                return []
+        except OSError as e:
+            msg = f"Impossible de lire le fichier {target.name} : {e}"
+            raise CorruptedDocumentStoreError(msg) from e
+
+        if not content.strip():
+            return []
+
+        try:
             loaded = json.loads(content)
-            if isinstance(loaded, list):
-                return loaded
-            return []
-        except (json.JSONDecodeError, OSError):
-            return []
+        except json.JSONDecodeError as e:
+            msg = f"Fichier JSON corrompu {target.name} à la position {e.pos} : {e.msg}"
+            raise CorruptedDocumentStoreError(msg) from e
+
+        if not isinstance(loaded, list):
+            actual = type(loaded).__name__
+            msg = f"Type inattendu dans {target.name} : attendu 'list', obtenu '{actual}'"
+            raise CorruptedDocumentStoreError(msg)
+
+        return loaded
 
     async def write_list(self, filename: str, data: list[dict[str, Any]]) -> None:
         async with self.lock_for(filename):
@@ -78,21 +93,32 @@ class JSONDocumentStore:
         self, filename: str, default: dict[str, Any] | None = None
     ) -> dict[str, Any]:
         target = self._resolve(filename)
-        if not target.exists():
-            return dict(default or {})
-        return self._perform_read_dict(target, default)
+        return await asyncio.to_thread(self._perform_read_dict, target, default)
 
     def _perform_read_dict(self, target: Path, default: dict[str, Any] | None) -> dict[str, Any]:
+        if not target.exists():
+            return dict(default or {})
         try:
             content = target.read_text(encoding="utf-8")
-            if not content.strip():
-                return dict(default or {})
+        except OSError as e:
+            msg = f"Impossible de lire le fichier {target.name} : {e}"
+            raise CorruptedDocumentStoreError(msg) from e
+
+        if not content.strip():
+            return dict(default or {})
+
+        try:
             loaded = json.loads(content)
-            if isinstance(loaded, dict):
-                return loaded
-            return dict(default or {})
-        except (json.JSONDecodeError, OSError):
-            return dict(default or {})
+        except json.JSONDecodeError as e:
+            msg = f"Fichier JSON corrompu {target.name} à la position {e.pos} : {e.msg}"
+            raise CorruptedDocumentStoreError(msg) from e
+
+        if not isinstance(loaded, dict):
+            actual = type(loaded).__name__
+            msg = f"Type inattendu dans {target.name} : attendu 'dict', obtenu '{actual}'"
+            raise CorruptedDocumentStoreError(msg)
+
+        return loaded
 
     async def write_dict(self, filename: str, data: dict[str, Any]) -> None:
         async with self.lock_for(filename):
@@ -104,9 +130,9 @@ class JSONDocumentStore:
     async def _write_json_atomic(self, filename: str, payload: Any) -> None:
         target = self._resolve(filename)
         serialized = json.dumps(payload, indent=2, ensure_ascii=False)
-        await self._perform_atomic_write(target, serialized)
+        await asyncio.to_thread(self._perform_atomic_write, target, serialized)
 
-    async def _perform_atomic_write(self, target: Path, serialized: str) -> None:
+    def _perform_atomic_write(self, target: Path, serialized: str) -> None:
         tmp_fd, tmp_path_str = tempfile.mkstemp(
             dir=self.data_dir,
             prefix=f".{target.name}.",

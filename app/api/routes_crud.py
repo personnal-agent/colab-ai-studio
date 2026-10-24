@@ -14,9 +14,10 @@ Expose :
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import urlparse
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from pydantic import BaseModel, field_validator
 
 from app.config import (
     ASSETS_DIR,
@@ -26,7 +27,7 @@ from app.config import (
     OUTPUTS_DIR,
     PROJECTS_FILE,
 )
-from app.models.domain import Project, StudioConfig
+from app.models.domain import HEX_COLOR_REGEX, Project, StudioConfig
 from app.services.brand_extractor import BrandKitExtractor
 from app.storage.json_store import JSONDocumentStore
 from app.storage.media_store import MediaFileStore
@@ -39,6 +40,22 @@ _media_store = MediaFileStore(OUTPUTS_DIR)
 _extractor = BrandKitExtractor(ASSETS_DIR)
 
 
+def verify_trusted_origin(request: Request) -> None:
+    """Protection stricte anti-CSRF et contre les écritures cross-origin non sollicitées."""
+    sec_site = request.headers.get("sec-fetch-site")
+    if sec_site == "cross-site":
+        raise HTTPException(
+            status_code=403, detail="Requête cross-origin non autorisée (protection CSRF)"
+        )
+    origin = request.headers.get("origin")
+    if origin:
+        parsed = urlparse(origin)
+        if parsed.hostname not in {"localhost", "127.0.0.1", "testserver", "test"}:
+            raise HTTPException(
+                status_code=403, detail=f"Origine cross-site non autorisée : '{origin}'"
+            )
+
+
 class ColabUrlUpdate(BaseModel):
     tunnelUrl: str
 
@@ -48,6 +65,13 @@ class ProjectCreate(BaseModel):
     description: str | None = None
     colorTag: str | None = None
     storagePath: str | None = None
+
+    @field_validator("colorTag")
+    @classmethod
+    def validate_color_tag(cls, v: str | None) -> str | None:
+        if v is not None and not HEX_COLOR_REGEX.match(v):
+            raise ValueError(f"colorTag doit être un code hexadécimal valide : '{v}'")
+        return v.upper() if v else None
 
 
 # --- Generations ---
@@ -83,7 +107,11 @@ async def list_generations(
     return results
 
 
-@router.patch("/generations/{generation_id}/favorite", response_model=dict[str, Any])
+@router.patch(
+    "/generations/{generation_id}/favorite",
+    response_model=dict[str, Any],
+    dependencies=[Depends(verify_trusted_origin)],
+)
 async def toggle_favorite(generation_id: str) -> dict[str, Any]:
     async with _json_store.lock_for("generations.json"):
         items = await _json_store.read_list_unlocked("generations.json")
@@ -96,26 +124,34 @@ async def toggle_favorite(generation_id: str) -> dict[str, Any]:
     raise HTTPException(status_code=404, detail="Génération introuvable")
 
 
-@router.delete("/generations/{generation_id}", response_model=dict[str, Any])
+@router.delete(
+    "/generations/{generation_id}",
+    response_model=dict[str, Any],
+    dependencies=[Depends(verify_trusted_origin)],
+)
 async def delete_generation(generation_id: str) -> dict[str, Any]:
-    target_item: dict[str, Any] | None = None
     async with _json_store.lock_for("generations.json"):
         items = await _json_store.read_list_unlocked("generations.json")
-        remaining: list[dict[str, Any]] = []
-        for item in items:
-            if item.get("id") == generation_id:
-                target_item = item
-            else:
-                remaining.append(item)
+        target_item = next((item for item in items if item.get("id") == generation_id), None)
         if target_item is None:
             raise HTTPException(status_code=404, detail="Génération introuvable")
+
+        # 1. Suppression physique sur le disque en priorité (sans masquer les erreurs d'I/O)
+        try:
+            await _media_store.delete_media(
+                file_path=target_item.get("filePath"),
+                thumbnail_path=target_item.get("thumbnailPath"),
+            )
+        except OSError as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Échec de la suppression physique du média sur disque : {e}",
+            ) from e
+
+        # 2. Suppression de l'entrée JSON uniquement après confirmation physique
+        remaining = [item for item in items if item.get("id") != generation_id]
         await _json_store.write_list_unlocked("generations.json", remaining)
 
-    # Suppression physique sur disque
-    await _media_store.delete_media(
-        file_path=target_item.get("filePath"),
-        thumbnail_path=target_item.get("thumbnailPath"),
-    )
     return {"deleted": True, "id": generation_id}
 
 
@@ -127,7 +163,12 @@ async def list_brand_kits() -> list[dict[str, Any]]:
     return await _json_store.read_list(BRAND_KITS_FILE.name)
 
 
-@router.post("/brand-kits", response_model=dict[str, Any], status_code=201)
+@router.post(
+    "/brand-kits",
+    response_model=dict[str, Any],
+    status_code=201,
+    dependencies=[Depends(verify_trusted_origin)],
+)
 async def create_brand_kit(
     name: str = Form(...),
     overview: str = Form(default=""),
@@ -173,7 +214,12 @@ async def list_projects() -> list[dict[str, Any]]:
     return await _json_store.read_list(PROJECTS_FILE.name)
 
 
-@router.post("/projects", response_model=dict[str, Any], status_code=201)
+@router.post(
+    "/projects",
+    response_model=dict[str, Any],
+    status_code=201,
+    dependencies=[Depends(verify_trusted_origin)],
+)
 async def create_project(payload: ProjectCreate) -> dict[str, Any]:
     import asyncio
     import uuid
@@ -209,7 +255,11 @@ async def create_project(payload: ProjectCreate) -> dict[str, Any]:
 # --- Configuration ---
 
 
-@router.post("/config/colab-url", response_model=dict[str, Any])
+@router.post(
+    "/config/colab-url",
+    response_model=dict[str, Any],
+    dependencies=[Depends(verify_trusted_origin)],
+)
 async def update_colab_url(payload: ColabUrlUpdate) -> dict[str, Any]:
     async with _json_store.lock_for(CONFIG_FILE.name):
         raw_config = await _json_store.read_dict_unlocked(

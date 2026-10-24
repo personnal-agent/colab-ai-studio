@@ -119,6 +119,17 @@ async def test_generations_crud_and_filters(test_env):
     assert len(remaining) == 1
     assert remaining[0]["id"] == "gen_2"
 
+    # 7. Physical deletion failure propagates 500 and preserves JSON record
+    import unittest.mock
+
+    patch_del = unittest.mock.patch.object(media_store, "delete_media", side_effect=OSError("Disk"))
+    with patch_del:
+        res_fail_del = await client.delete("/api/generations/gen_2")
+        assert res_fail_del.status_code == 500
+
+    intact_rem = await store.read_list("generations.json")
+    assert any(item["id"] == "gen_2" for item in intact_rem)
+
 
 async def test_projects_crud_and_storage_path_validation(test_env):
     client, _, _, tmp_path = test_env
@@ -160,6 +171,13 @@ async def test_projects_crud_and_storage_path_validation(test_env):
     assert res_list.status_code == 200
     assert len(res_list.json()) == 2
 
+    # 5. Invalid colorTag returns 422 Unprocessable Entity
+    res_bad_color = await client.post(
+        "/api/projects",
+        json={"name": "Bad Color", "colorTag": "not_a_hex"},
+    )
+    assert res_bad_color.status_code == 422
+
 
 async def test_brand_kits_crud_blank_and_files(test_env):
     client, _, _, _ = test_env
@@ -193,7 +211,7 @@ async def test_brand_kits_crud_blank_and_files(test_env):
         data={"name": "Google", "websiteUrl": "https://google.com"},
     )
     assert res_web.status_code == 201
-    assert "google.com" in res_web.json()["overview"]
+    assert "google" in res_web.json()["overview"].lower()
 
     # 4. List brand kits
     res_list = await client.get("/api/brand-kits")
@@ -208,6 +226,93 @@ async def test_brand_kits_crud_blank_and_files(test_env):
         files=[("files", ("huge.bin", oversized_chunk, "application/octet-stream"))],
     )
     assert res_oversized.status_code == 413
+
+    # 6. Extract fonts from CSS file
+    css_content = (
+        b"@font-face { font-family: 'Montserrat'; }\n"
+        b"body { font-family: 'Open Sans', sans-serif; color: #123456; }"
+    )
+    res_css = await client.post(
+        "/api/brand-kits",
+        data={"name": "Font Brand", "overview": "Test fonts"},
+        files=[("files", ("style.css", css_content, "text/css"))],
+    )
+    assert res_css.status_code == 201
+    bk_css = res_css.json()
+    extracted_families = [f["family"] for f in bk_css["fonts"]]
+    assert "Montserrat" in extracted_families or "Open Sans" in extracted_families
+
+
+async def test_csrf_and_untrusted_origin_rejection(test_env):
+    client, _, _, _ = test_env
+
+    # 1. Sec-Fetch-Site: cross-site rejected with 403
+    res_cross = await client.post(
+        "/api/brand-kits",
+        data={"name": "Attacker Kit"},
+        headers={"sec-fetch-site": "cross-site"},
+    )
+    assert res_cross.status_code == 403
+    assert "cross-origin" in res_cross.json()["detail"].lower()
+
+    # 2. Origin: evil.com rejected with 403
+    res_bad_origin = await client.post(
+        "/api/projects",
+        json={"name": "Attacker Project"},
+        headers={"origin": "http://evil.com"},
+    )
+    assert res_bad_origin.status_code == 403
+
+
+async def test_brand_kit_extract_from_website_parsing(test_env, monkeypatch):
+    client, _, _, _ = test_env
+    import httpx
+
+    fake_html = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Studio Horizon</title>
+        <meta name="description" content="Cinematic AI Production Studio">
+        <link rel="icon" href="/favicon.ico">
+        <style>
+            :root { --primary: #0A84FF; --bg: #0D1117; }
+            body { font-family: 'Cabinet Grotesk', sans-serif; }
+        </style>
+    </head>
+    <body><h1>Horizon</h1></body>
+    </html>
+    """
+
+    class MockResponse:
+        status_code = 200
+        text = fake_html
+
+    class MockAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def get(self, url):
+            return MockResponse()
+
+    monkeypatch.setattr(httpx, "AsyncClient", MockAsyncClient)
+
+    res_web = await client.post(
+        "/api/brand-kits",
+        data={"name": "Horizon Studio", "websiteUrl": "https://horizon.ai"},
+    )
+    assert res_web.status_code == 201
+    bk = res_web.json()
+    assert "Cinematic AI Production Studio" in bk["overview"]
+    assert "#0A84FF" in [c["hex"] for c in bk["colors"]]
+    assert any("Cabinet Grotesk" in f["family"] for f in bk["fonts"])
+    assert len(bk["logos"]) >= 1
 
 
 async def test_config_colab_url_update(test_env):

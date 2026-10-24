@@ -54,10 +54,23 @@ def test_generation_parameters_defaults_and_validation():
 
 
 def test_generation_parameters_invalid_aspect_ratio():
+    # Ratios étendus valides
+    p1 = GenerationParameters(seed=1, aspectRatio="8:1")
+    assert p1.aspectRatio == "8:1"
+    p2 = GenerationParameters(seed=2, aspectRatio="2:3")
+    assert p2.aspectRatio == "2:3"
+
     with pytest.raises(ValidationError):
         GenerationParameters(
             seed=1,
             aspectRatio="invalid_ratio",
+            resolution="720p",
+            duration="5s",
+        )
+    with pytest.raises(ValidationError):
+        GenerationParameters(
+            seed=1,
+            aspectRatio="0:10",
             resolution="720p",
             duration="5s",
         )

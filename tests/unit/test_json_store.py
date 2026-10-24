@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from app.storage.json_store import JSONDocumentStore
+from app.storage.json_store import CorruptedDocumentStoreError, JSONDocumentStore
 
 
 @pytest.fixture
@@ -83,3 +83,23 @@ async def test_partial_write_failure_does_not_corrupt_existing_file(
 
     intact = await store.read_list("generations.json")
     assert intact == initial
+
+
+async def test_corrupted_json_raises_and_prevents_silent_data_loss(
+    store: JSONDocumentStore, tmp_path: Path
+):
+    target_file = tmp_path / "generations.json"
+    target_file.write_text("{ unclosed invalid json ...", encoding="utf-8")
+
+    with pytest.raises(CorruptedDocumentStoreError, match="Fichier JSON corrompu"):
+        await store.read_list("generations.json")
+
+
+async def test_invalid_json_type_raises_corrupted_document_store_error(
+    store: JSONDocumentStore, tmp_path: Path
+):
+    target_file = tmp_path / "generations.json"
+    target_file.write_text('{"error": "expected a list but got a dict"}', encoding="utf-8")
+
+    with pytest.raises(CorruptedDocumentStoreError, match="Type inattendu dans generations.json"):
+        await store.read_list("generations.json")

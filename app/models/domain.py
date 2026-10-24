@@ -56,11 +56,15 @@ class GenerationParameters(BaseModel):
     @field_validator("aspectRatio")
     @classmethod
     def validate_aspect_ratio(cls, v: str) -> str:
-        allowed = {"16:9", "9:16", "1:1", "4:5", "3:4", "21:9", "4:3"}
-        if v not in allowed:
-            msg = f"Ratio d'aspect non supporté : {v} (attendu parmi {sorted(allowed)})"
+        clean = v.strip()
+        if not re.match(r"^\d+:\d+$", clean):
+            msg = f"Format de ratio d'aspect non supporté : '{v}' (attendu 'W:H' ex: '16:9', '2:3')"
             raise ValueError(msg)
-        return v
+        w, h = map(int, clean.split(":"))
+        if w <= 0 or h <= 0:
+            msg = f"Les dimensions du ratio d'aspect doivent être strictement positives : '{v}'"
+            raise ValueError(msg)
+        return clean
 
     def validate(self) -> bool:
         return True

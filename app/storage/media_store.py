@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import os
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -68,13 +69,19 @@ class MediaFileStore:
         def _sync_save() -> tuple[str, str | None]:
             media_path = dest_dir / Path(filename).name
 
-            # Écriture atomique avec synchro disque
-            tmp_media = media_path.with_suffix(f"{media_path.suffix}.tmp")
-            with open(tmp_media, "wb") as f:
-                f.write(content)
-                f.flush()
-                os.fsync(f.fileno())
-            os.replace(tmp_media, media_path)
+            # Écriture atomique avec synchro disque et temporaire unique
+            tmp_media = media_path.with_suffix(f".{uuid.uuid4().hex[:8]}.tmp")
+            try:
+                with open(tmp_media, "wb") as f:
+                    f.write(content)
+                    f.flush()
+                    os.fsync(f.fileno())
+                os.replace(tmp_media, media_path)
+            except Exception:
+                with contextlib.suppress(OSError):
+                    if tmp_media.exists():
+                        os.unlink(tmp_media)
+                raise
 
             if os.name == "posix":
                 dir_fd = os.open(dest_dir, os.O_RDONLY)
@@ -87,14 +94,19 @@ class MediaFileStore:
             if thumbnail_content is not None:
                 thumb_dir = dest_dir / "thumbnails"
                 thumb_dir.mkdir(parents=True, exist_ok=True)
-                stem = media_path.stem
-                thumb_path = thumb_dir / f"{stem}.jpg"
-                tmp_thumb = thumb_path.with_suffix(".tmp")
-                with open(tmp_thumb, "wb") as f:
-                    f.write(thumbnail_content)
-                    f.flush()
-                    os.fsync(f.fileno())
-                os.replace(tmp_thumb, thumb_path)
+                thumb_path = thumb_dir / f"{media_path.name}.thumb.jpg"
+                tmp_thumb = thumb_path.with_suffix(f".{uuid.uuid4().hex[:8]}.tmp")
+                try:
+                    with open(tmp_thumb, "wb") as f:
+                        f.write(thumbnail_content)
+                        f.flush()
+                        os.fsync(f.fileno())
+                    os.replace(tmp_thumb, thumb_path)
+                except Exception:
+                    with contextlib.suppress(OSError):
+                        if tmp_thumb.exists():
+                            os.unlink(tmp_thumb)
+                    raise
 
                 if os.name == "posix":
                     thumb_dir_fd = os.open(thumb_dir, os.O_RDONLY)
@@ -116,16 +128,12 @@ class MediaFileStore:
     ) -> bool:
         def _sync_delete() -> bool:
             deleted_any = False
-            if file_path:
-                with contextlib.suppress(OSError):
-                    if os.path.isfile(file_path):
-                        os.unlink(file_path)
-                        deleted_any = True
-            if thumbnail_path:
-                with contextlib.suppress(OSError):
-                    if os.path.isfile(thumbnail_path):
-                        os.unlink(thumbnail_path)
-                        deleted_any = True
+            if file_path and os.path.exists(file_path):
+                os.unlink(file_path)
+                deleted_any = True
+            if thumbnail_path and os.path.exists(thumbnail_path):
+                os.unlink(thumbnail_path)
+                deleted_any = True
             return deleted_any
 
         return await asyncio.to_thread(_sync_delete)
