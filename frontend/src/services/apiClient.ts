@@ -4,7 +4,7 @@
 import type {
   BrandKit, ExecutionMode, Generation, GenerationSubmitRequest,
   GenerationSubmitResponse, HealthResponse, ModelDefinition,
-  Project, StudioConfig, TaskStatus, TaskStatusEvent,
+  Project, StudioConfig, TaskStatusEvent,
 } from '../types/studio';
 
 class ApiError extends Error {
@@ -33,6 +33,19 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   return (await response.json()) as T;
 }
 
+export function getMediaFileUrl(generation: { id: string; filePath?: string | null }): string {
+  const path = generation.filePath;
+  if (path && (/^(https?:|\/\/|data:|blob:)/i.test(path))) return path;
+  return `/api/generations/${generation.id}/file`;
+}
+
+export function getMediaThumbnailUrl(generation: { id: string; filePath?: string | null; thumbnailPath?: string | null }): string {
+  const thumb = generation.thumbnailPath;
+  if (thumb && (/^(https?:|\/\/|data:|blob:)/i.test(thumb))) return thumb;
+  if (thumb) return `/api/generations/${generation.id}/thumbnail`;
+  return getMediaFileUrl(generation);
+}
+
 export const apiClient = {
   getConfig: () => request<StudioConfig>('/api/config'),
   switchExecutionMode: (executionMode: ExecutionMode) =>
@@ -41,7 +54,7 @@ export const apiClient = {
     }),
   updateColabUrl: (tunnelUrl: string) =>
     request<{ tunnelUrl: string }>('/api/config/colab-url', {
-      method: 'PUT', body: JSON.stringify({ tunnelUrl }),
+      method: 'POST', body: JSON.stringify({ tunnelUrl }),
     }),
   getHealth: () => request<HealthResponse>('/api/health'),
   listModels: () => request<ModelDefinition[]>('/api/models'),
@@ -49,21 +62,22 @@ export const apiClient = {
     request<Record<string, unknown>>('/api/models/switch', {
       method: 'POST', body: JSON.stringify({ modelId }),
     }),
-  listGenerations: (filters?: { projectId?: string; isFavorite?: boolean; mediaType?: string; status?: TaskStatus; search?: string }) => {
+  listGenerations: (filters?: { projectId?: string; favorite?: boolean; isFavorite?: boolean; mediaType?: string; q?: string; search?: string }) => {
     const params = new URLSearchParams();
     if (filters?.projectId) params.set('projectId', filters.projectId);
-    if (filters?.isFavorite !== undefined) params.set('isFavorite', String(filters.isFavorite));
+    const fav = filters?.favorite !== undefined ? filters.favorite : filters?.isFavorite;
+    if (fav !== undefined) params.set('favorite', String(fav));
     if (filters?.mediaType) params.set('mediaType', filters.mediaType);
-    if (filters?.status) params.set('status', filters.status);
-    if (filters?.search) params.set('search', filters.search);
+    const queryStr = filters?.q || filters?.search;
+    if (queryStr) params.set('q', queryStr);
     const query = params.toString();
     return request<Generation[]>(query ? `/api/generations?${query}` : '/api/generations');
   },
   getGeneration: (id: string) => request<Generation>(`/api/generations/${id}`),
   submitGeneration: (req: GenerationSubmitRequest) =>
-    request<GenerationSubmitResponse>('/api/generations', { method: 'POST', body: JSON.stringify(req) }),
+    request<GenerationSubmitResponse>('/api/generate/media', { method: 'POST', body: JSON.stringify(req) }),
   toggleFavorite: (id: string) =>
-    request<{ id: string; isFavorite: boolean }>(`/api/generations/${id}/favorite`, { method: 'POST' }),
+    request<{ id: string; isFavorite: boolean }>(`/api/generations/${id}/favorite`, { method: 'PATCH' }),
   deleteGeneration: (id: string) =>
     request<{ status: string; id: string }>(`/api/generations/${id}`, { method: 'DELETE' }),
   cancelTask: (taskId: string) =>
@@ -71,12 +85,15 @@ export const apiClient = {
   subscribeTaskStatus(taskId: string, onEvent: (event: TaskStatusEvent) => void, onError?: (err: unknown) => void): () => void {
     const es = new EventSource(`/api/tasks/${taskId}/status`);
     const handleEvent = (e: MessageEvent<string>) => {
-      try { onEvent(JSON.parse(e.data) as TaskStatusEvent); } catch (err) { onError?.(err); }
+      try {
+        const data = JSON.parse(e.data) as Record<string, unknown>;
+        onEvent({ taskId: (data.taskId as string) || taskId, ...data } as TaskStatusEvent);
+      } catch (err) { onError?.(err); }
     };
-    es.addEventListener('task_progress', handleEvent as EventListener);
-    es.addEventListener('task_complete', handleEvent as EventListener);
-    es.addEventListener('task_error', handleEvent as EventListener);
-    es.addEventListener('task_cancelled', handleEvent as EventListener);
+    ['pending', 'running', 'completed', 'failed', 'cancelled'].forEach((name) => {
+      es.addEventListener(name, handleEvent as EventListener);
+    });
+    es.onmessage = handleEvent as (e: MessageEvent) => void;
     if (onError) es.onerror = (err) => onError(err);
     return () => es.close();
   },

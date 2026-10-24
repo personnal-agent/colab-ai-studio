@@ -54,7 +54,7 @@ export const WorkerStatusAvatar: React.FC = () => {
         <Popover.Content align="end" sideOffset={8} className="w-80 bg-white rounded-2xl shadow-dropdown border border-studio-border p-4 z-50 animate-in fade-in zoom-in-95 space-y-3">
           <div className="flex items-center justify-between border-b border-studio-border pb-2.5">
             <div className="flex items-center gap-2"><Server className="w-4 h-4 text-indigo-600" /><h3 className="text-xs font-semibold text-gray-900">{isColab ? 'Mode Google Colab' : 'Mode Local'}</h3></div>
-            <button type="button" onClick={fetchStatus} disabled={loading} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-studio-subtle transition-colors"><RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /></button>
+            <button type="button" aria-label="Rafraîchir le statut du worker" onClick={fetchStatus} disabled={loading} className="p-1 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-studio-subtle transition-colors"><RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /></button>
           </div>
           {error && <div className="p-2.5 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg">{error}</div>}
           <div className="space-y-2 text-xs">

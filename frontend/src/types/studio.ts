@@ -90,5 +90,6 @@ export interface GenerationSubmitRequest {
 export interface GenerationSubmitResponse { taskId: string; status: TaskStatus; }
 export interface TaskStatusEvent {
   taskId: string; status: TaskStatus; progress: number;
-  step?: string; outputUrl?: string; thumbnailUrl?: string; error?: string;
+  step?: string; filePath?: string | null; outputUrl?: string; thumbnailUrl?: string; error?: string;
+  generation?: Generation;
 }

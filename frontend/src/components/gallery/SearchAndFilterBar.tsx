@@ -22,7 +22,7 @@ export const SearchAndFilterBar: React.FC<SearchAndFilterBarProps> = ({ searchVa
         {PILLS.map((pill) => {
           const isActive = activePills.includes(pill.id);
           return (
-            <button key={pill.id} type="button" onClick={() => onTogglePill(pill.id)} className={`h-9 px-3.5 rounded-full text-xs font-medium whitespace-nowrap border transition-all flex items-center gap-1 ${isActive ? 'bg-gray-900 text-white border-gray-900 shadow-sm' : 'bg-white text-gray-600 border-studio-border hover:bg-studio-subtle hover:text-gray-900'}`}>
+            <button key={pill.id} type="button" aria-pressed={isActive} onClick={() => onTogglePill(pill.id)} className={`h-9 px-3.5 rounded-full text-xs font-medium whitespace-nowrap border transition-all flex items-center gap-1 ${isActive ? 'bg-gray-900 text-white border-gray-900 shadow-sm' : 'bg-white text-gray-600 border-studio-border hover:bg-studio-subtle hover:text-gray-900'}`}>
               <span>{pill.label}</span>
             </button>
           );

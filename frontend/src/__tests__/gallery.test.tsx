@@ -11,6 +11,8 @@ vi.mock('../services/apiClient', () => ({
   apiClient: {
     listGenerations: vi.fn(), toggleFavorite: vi.fn(), cancelTask: vi.fn(), subscribeTaskStatus: vi.fn(),
   },
+  getMediaFileUrl: (g: { filePath?: string | null }) => g.filePath || '',
+  getMediaThumbnailUrl: (g: { thumbnailPath?: string | null; filePath?: string | null }) => g.thumbnailPath || g.filePath || '',
 }));
 
 describe('Gallery and Media Components', () => {
@@ -104,18 +106,8 @@ describe('Gallery and Media Components', () => {
 
   describe('MediaGallery', () => {
     const mockGenerations: Generation[] = [
-      {
-        id: 'gen_1', status: 'completed', mediaType: 'image', prompt: 'Sunset on beach',
-        filePath: '/outputs/beach.png', modelId: 'flux-dev', modelName: 'FLUX.1 Dev', isFavorite: false,
-        parameters: { seed: 10, aspectRatio: '16:9', resolution: '720p', duration: '5s' },
-        references: {}, createdAt: '2026-10-24T12:00:00Z',
-      },
-      {
-        id: 'gen_2', status: 'completed', mediaType: 'video', prompt: 'Drone shot over mountains',
-        filePath: '/outputs/drone.mp4', modelId: 'wan-2.1', modelName: 'Wan 2.1 Video', isFavorite: true,
-        parameters: { seed: 20, aspectRatio: '16:9', resolution: '720p', duration: '5s' },
-        references: {}, createdAt: '2026-10-24T12:10:00Z',
-      },
+      { id: 'gen_1', status: 'completed', mediaType: 'image', prompt: 'Sunset on beach', filePath: '/outputs/beach.png', modelId: 'flux-dev', modelName: 'FLUX.1 Dev', isFavorite: false, parameters: { seed: 10, aspectRatio: '16:9', resolution: '720p', duration: '5s' }, references: {}, createdAt: '2026-10-24T12:00:00Z' },
+      { id: 'gen_2', status: 'completed', mediaType: 'video', prompt: 'Drone shot over mountains', filePath: '/outputs/drone.mp4', modelId: 'wan-2.1', modelName: 'Wan 2.1 Video', isFavorite: true, parameters: { seed: 20, aspectRatio: '16:9', resolution: '720p', duration: '5s' }, references: {}, createdAt: '2026-10-24T12:10:00Z' },
     ];
 
     it('fetches generations and applies search and favorite filtering', async () => {

@@ -199,6 +199,24 @@ async def test_projects_crud_and_storage_path_validation(test_env, tmp_path):
         ).status_code == 422
 
     assert len((await client.get("/api/projects")).json()) == 2
+    p_id = res.json()["id"]
+    del_res = await client.delete(f"/api/projects/{p_id}")
+    assert del_res.status_code == 200 and del_res.json()["deleted"] is True
+    assert len((await client.get("/api/projects")).json()) == 1
+    assert (await client.delete(f"/api/projects/{p_id}")).status_code == 404
+
+
+async def test_generation_file_and_thumbnail_serving(test_env, tmp_path):
+    client, store, _, _ = test_env
+    f, t = tmp_path / "img.png", tmp_path / "thumb.jpg"
+    f.write_bytes(b"PNGDATA")
+    t.write_bytes(b"JPGDATA")
+    await store.write_list(
+        "generations.json", [{"id": "s", "filePath": str(f), "thumbnailPath": str(t)}]
+    )
+    assert (await client.get("/api/generations/s/file")).content == b"PNGDATA"
+    assert (await client.get("/api/generations/s/thumbnail")).content == b"JPGDATA"
+    assert (await client.get("/api/generations/unknown/file")).status_code == 404
 
 
 async def test_brand_kits_crud_blank_and_files(test_env, monkeypatch):

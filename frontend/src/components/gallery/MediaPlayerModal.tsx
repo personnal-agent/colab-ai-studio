@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Check, Copy, Download, Folder, Layers, Sparkles, Star, Volume2, X } from 'lucide-react';
-import { apiClient } from '../../services/apiClient';
+import { apiClient, getMediaFileUrl } from '../../services/apiClient';
 import type { Generation } from '../../types/studio';
 
 export interface MediaPlayerModalProps {
@@ -44,20 +44,22 @@ export const MediaPlayerModal: React.FC<MediaPlayerModalProps> = ({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 animate-fade-in" />
         <Dialog.Content className="fixed inset-3 sm:inset-8 z-50 bg-white rounded-dock shadow-2xl flex flex-col md:flex-row overflow-hidden border border-studio-border outline-none">
+          <Dialog.Title className="sr-only">Inspection du média : {generation.prompt}</Dialog.Title>
+          <Dialog.Description className="sr-only">Fiche technique et lecture du média</Dialog.Description>
           {/* Lecteur grand format */}
           <div className="flex-1 bg-black flex items-center justify-center relative overflow-hidden min-h-[300px]">
             {(generation.mediaType === 'image' || generation.mediaType === 'upscale') && (
-              <img src={generation.filePath || undefined} alt={generation.prompt} className="max-h-full max-w-full object-contain" />
+              <img src={getMediaFileUrl(generation)} alt={generation.prompt} className="max-h-full max-w-full object-contain" />
             )}
             {(generation.mediaType === 'video' || generation.mediaType === 'lip_sync') && (
-              <video src={generation.filePath || undefined} controls autoPlay playsInline className="max-h-full max-w-full object-contain" />
+              <video src={getMediaFileUrl(generation)} controls autoPlay playsInline className="max-h-full max-w-full object-contain" />
             )}
             {generation.mediaType === 'audio' && (
               <div className="flex flex-col items-center justify-center p-8 gap-4">
                 <div className="w-20 h-20 rounded-full bg-indigo-900/60 flex items-center justify-center border border-indigo-500/30">
                   <Volume2 className="w-10 h-10 text-indigo-400 animate-pulse" />
                 </div>
-                <audio src={generation.filePath || undefined} controls className="mt-4" />
+                <audio src={getMediaFileUrl(generation)} controls className="mt-4" />
               </div>
             )}
           </div>
@@ -120,22 +122,17 @@ export const MediaPlayerModal: React.FC<MediaPlayerModalProps> = ({
               <div>
                 <span className="font-semibold text-gray-700 uppercase text-[10px] tracking-wider block mb-2">Paramètres de génération</span>
                 <div className="grid grid-cols-2 gap-2 font-mono text-[11px]">
-                  <div className="bg-studio-canvas p-2 rounded border border-studio-border">
-                    <span className="text-gray-400 block text-[10px]">Seed</span>
-                    <span className="font-semibold text-gray-800">{generation.parameters?.seed ?? 'Aléatoire'}</span>
-                  </div>
-                  <div className="bg-studio-canvas p-2 rounded border border-studio-border">
-                    <span className="text-gray-400 block text-[10px]">Ratio</span>
-                    <span className="font-semibold text-gray-800">{generation.parameters?.aspectRatio || '16:9'}</span>
-                  </div>
-                  <div className="bg-studio-canvas p-2 rounded border border-studio-border">
-                    <span className="text-gray-400 block text-[10px]">Résolution</span>
-                    <span className="font-semibold text-gray-800">{generation.parameters?.resolution || 'HD'}</span>
-                  </div>
-                  <div className="bg-studio-canvas p-2 rounded border border-studio-border">
-                    <span className="text-gray-400 block text-[10px]">Durée</span>
-                    <span className="font-semibold text-gray-800">{generation.parameters?.duration || '5s'}</span>
-                  </div>
+                  {[
+                    { label: 'Seed', val: generation.parameters?.seed ?? 'Aléatoire' },
+                    { label: 'Ratio', val: generation.parameters?.aspectRatio || '16:9' },
+                    { label: 'Résolution', val: generation.parameters?.resolution || 'HD' },
+                    { label: 'Durée', val: generation.parameters?.duration || '5s' },
+                  ].map((p) => (
+                    <div key={p.label} className="bg-studio-canvas p-2 rounded border border-studio-border">
+                      <span className="text-gray-400 block text-[10px]">{p.label}</span>
+                      <span className="font-semibold text-gray-800">{p.val}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 

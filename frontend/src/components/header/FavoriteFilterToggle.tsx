@@ -12,6 +12,7 @@ export const FavoriteFilterToggle: React.FC<FavoriteFilterToggleProps> = ({ acti
       <button
         type="button"
         aria-label="Filtrer par favoris"
+        aria-pressed={active}
         onClick={onToggle}
         className={`p-2 rounded-full border transition-colors flex items-center justify-center ${
           active

@@ -84,11 +84,11 @@ export const ProjectsDrawer: React.FC<ProjectsDrawerProps> = ({ activeProjectId,
               </button>
               {loading ? <div className="text-xs text-gray-400 py-4 text-center">Chargement...</div> : projects.length === 0 ? <div className="text-xs text-gray-400 py-4 text-center">Aucun projet créé pour l'instant.</div> : (
                 projects.map((p) => (
-                  <div key={p.id} onClick={() => { onSelectProject?.(p.id); setOpen(false); }} className={`w-full p-3 rounded-xl border cursor-pointer transition-colors flex items-center justify-between ${activeProjectId === p.id ? 'border-indigo-500 bg-indigo-50/50' : 'border-studio-border bg-white hover:bg-studio-subtle'}`}>
-                    <div className="space-y-0.5">
+                  <div key={p.id} className={`w-full p-2.5 rounded-xl border transition-colors flex items-center justify-between gap-2 ${activeProjectId === p.id ? 'border-indigo-500 bg-indigo-50/50' : 'border-studio-border bg-white hover:bg-studio-subtle'}`}>
+                    <button type="button" aria-label={`Sélectionner le projet ${p.name}`} onClick={() => { onSelectProject?.(p.id); setOpen(false); }} className="flex-1 text-left space-y-0.5 outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded p-0.5">
                       <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: p.colorTag || '#6B7280' }} /><span className="text-xs font-semibold text-gray-900">{p.name}</span></div>
-                      {p.storagePath && <div className="text-[11px] text-gray-500 font-mono truncate max-w-[260px]">{p.storagePath}</div>}
-                    </div>
+                      {p.storagePath && <div className="text-[11px] text-gray-500 font-mono truncate max-w-[240px]">{p.storagePath}</div>}
+                    </button>
                     <button type="button" aria-label={`Supprimer ${p.name}`} onClick={(e) => handleDelete(p.id, e)} className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 ))

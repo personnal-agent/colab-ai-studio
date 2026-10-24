@@ -9,6 +9,8 @@ vi.mock('../services/apiClient', () => ({
     getConfig: vi.fn(), getHealth: vi.fn(), listProjects: vi.fn(),
     listGenerations: vi.fn(), toggleFavorite: vi.fn(), cancelTask: vi.fn(), subscribeTaskStatus: vi.fn(),
   },
+  getMediaFileUrl: (g: { filePath?: string | null }) => g.filePath || '',
+  getMediaThumbnailUrl: (g: { thumbnailPath?: string | null; filePath?: string | null }) => g.thumbnailPath || g.filePath || '',
 }));
 
 describe('App Integration', () => {

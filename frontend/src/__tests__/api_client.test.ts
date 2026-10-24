@@ -18,21 +18,15 @@ describe('apiClient', () => {
   it('switches execution mode via POST', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ executionMode: 'local' }) });
     const res = await apiClient.switchExecutionMode('local');
-    expect(global.fetch).toHaveBeenCalledWith('/api/config/execution-mode', {
-      method: 'POST', body: JSON.stringify({ executionMode: 'local' }),
-      headers: { 'Content-Type': 'application/json' },
-    });
+    expect(global.fetch).toHaveBeenCalledWith('/api/config/execution-mode', { method: 'POST', body: JSON.stringify({ executionMode: 'local' }), headers: { 'Content-Type': 'application/json' } });
     expect(res.executionMode).toBe('local');
   });
 
-  it('updates colab url via PUT', async () => {
+  it('updates colab url via POST', async () => {
     const tunnelUrl = 'https://new-colab.ngrok-free.app';
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ tunnelUrl }) });
     const res = await apiClient.updateColabUrl(tunnelUrl);
-    expect(global.fetch).toHaveBeenCalledWith('/api/config/colab-url', {
-      method: 'PUT', body: JSON.stringify({ tunnelUrl }),
-      headers: { 'Content-Type': 'application/json' },
-    });
+    expect(global.fetch).toHaveBeenCalledWith('/api/config/colab-url', { method: 'POST', body: JSON.stringify({ tunnelUrl }), headers: { 'Content-Type': 'application/json' } });
     expect(res.tunnelUrl).toBe(tunnelUrl);
   });
 
@@ -56,9 +50,9 @@ describe('apiClient', () => {
 
   it('lists generations with query parameters', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [] });
-    await apiClient.listGenerations({ projectId: 'proj_1', isFavorite: true, mediaType: 'image' });
+    await apiClient.listGenerations({ projectId: 'proj_1', favorite: true, mediaType: 'image', q: 'sunset' });
     expect(global.fetch).toHaveBeenCalledWith(
-      '/api/generations?projectId=proj_1&isFavorite=true&mediaType=image', expect.anything(),
+      '/api/generations?projectId=proj_1&favorite=true&mediaType=image&q=sunset', expect.anything(),
     );
   });
 
@@ -66,12 +60,14 @@ describe('apiClient', () => {
     const submitReq = { modelId: 'wan-2.1', prompt: 'Sunset over ocean' };
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ taskId: 'task_1', status: 'pending' }) });
     const res = await apiClient.submitGeneration(submitReq);
+    expect(global.fetch).toHaveBeenCalledWith('/api/generate/media', expect.anything());
     expect(res.taskId).toBe('task_1');
   });
 
-  it('toggles favorite on generation', async () => {
+  it('toggles favorite on generation via PATCH', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ id: 'gen_1', isFavorite: true }) });
     const res = await apiClient.toggleFavorite('gen_1');
+    expect(global.fetch).toHaveBeenCalledWith('/api/generations/gen_1/favorite', expect.objectContaining({ method: 'PATCH' }));
     expect(res.isFavorite).toBe(true);
   });
 
@@ -111,10 +107,11 @@ describe('apiClient', () => {
     expect(eventSourceMockInstances).toHaveLength(1);
     expect(eventSourceMockInstances[0].url).toBe('/api/tasks/task_123/status');
 
-    eventSourceMockInstances[0].dispatchEvent('task_progress', {
-      taskId: 'task_123', status: 'running', progress: 50, step: 'Sampling step 10/20',
+    eventSourceMockInstances[0].dispatchEvent('running', {
+      status: 'running', progress: 50, step: 'Sampling step 10/20',
     });
     expect(events).toHaveLength(1);
+    expect(events[0].taskId).toBe('task_123');
     expect(events[0].progress).toBe(50);
     unsubscribe();
     expect(eventSourceMockInstances[0].close).toHaveBeenCalled();
@@ -122,9 +119,7 @@ describe('apiClient', () => {
   });
 
   it('throws API error with response message on failure', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: false, status: 400, json: async () => ({ detail: 'Custom error detail' }),
-    });
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 400, json: async () => ({ detail: 'Custom error detail' }) });
     await expect(apiClient.getConfig()).rejects.toThrow('Custom error detail');
   });
 });

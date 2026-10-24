@@ -4,21 +4,19 @@ import { MediaPlayerModal } from '../components/gallery/MediaPlayerModal';
 import { apiClient } from '../services/apiClient';
 import type { Generation } from '../types/studio';
 
-vi.mock('../services/apiClient', () => ({ apiClient: { toggleFavorite: vi.fn() } }));
+vi.mock('../services/apiClient', () => ({
+  apiClient: { toggleFavorite: vi.fn() },
+  getMediaFileUrl: (g: { filePath?: string | null }) => g.filePath || '',
+  getMediaThumbnailUrl: (g: { thumbnailPath?: string | null; filePath?: string | null }) => g.thumbnailPath || g.filePath || '',
+}));
 
 describe('MediaPlayerModal', () => {
   const mockGen: Generation = {
-    id: 'gen_modal_1', status: 'completed', mediaType: 'video',
-    prompt: 'Cinematic drone shot over misty cyberpunk neon metropolis',
+    id: 'gen_modal_1', status: 'completed', mediaType: 'video', prompt: 'Cinematic drone shot over misty cyberpunk neon metropolis',
     compiledPrompt: 'RAW photo, cinematic drone shot over misty cyberpunk neon metropolis, 8k uhd, dslr, soft lighting, high quality, film grain',
-    filePath: '/outputs/cyberpunk.mp4', thumbnailPath: '/outputs/cyberpunk_thumb.jpg',
-    modelId: 'wan-2.1', modelName: 'Wan 2.1 Video', isFavorite: false,
-    parameters: { seed: 98765, aspectRatio: '16:9', resolution: '1080p', duration: '5s' },
-    references: {},
-    brandKitSnapshot: {
-      id: 'brand_1', name: 'Cyberpunk Neon Brand', overview: 'High contrast dark neon cyberpunk aesthetic',
-      colors: ['#00ffcc', '#ff007f'], logos: [], fonts: ['Orbitron'], guidelines: ['Use neon glow on dark backgrounds'],
-    },
+    filePath: '/outputs/cyberpunk.mp4', thumbnailPath: '/outputs/cyberpunk_thumb.jpg', modelId: 'wan-2.1', modelName: 'Wan 2.1 Video', isFavorite: false,
+    parameters: { seed: 98765, aspectRatio: '16:9', resolution: '1080p', duration: '5s' }, references: {},
+    brandKitSnapshot: { id: 'brand_1', name: 'Cyberpunk Neon Brand', overview: 'High contrast dark neon cyberpunk aesthetic', colors: ['#00ffcc', '#ff007f'], logos: [], fonts: ['Orbitron'], guidelines: ['Use neon glow on dark backgrounds'] },
     createdAt: '2026-10-24T12:30:00Z',
   };
 

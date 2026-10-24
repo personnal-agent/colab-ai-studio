@@ -7,7 +7,7 @@ import { ProjectsDrawer } from '../components/header/ProjectsDrawer';
 import { TopNavBar } from '../components/header/TopNavBar';
 import { WorkerStatusAvatar } from '../components/header/WorkerStatusAvatar';
 import { apiClient } from '../services/apiClient';
-import type { HealthResponse, Project, StudioConfig } from '../types/studio';
+import type { ColabConfig, HealthResponse, Project, StudioConfig } from '../types/studio';
 
 vi.mock('../services/apiClient', () => ({
   apiClient: {
@@ -92,23 +92,15 @@ describe('TopNavBar and Header Components', () => {
   });
 
   describe('WorkerStatusAvatar', () => {
-    const colabConfig: Partial<StudioConfig> = {
-      executionMode: 'colab',
-      colab: { tunnelUrl: 'https://test-tunnel.ngrok-free.app', accountEmail: 'user@gmail.com' },
-    };
-    const colabHealth: Partial<HealthResponse> = {
-      executionMode: 'colab', status: 'healthy',
-      worker: { reachable: true, gpu: 'Tesla T4', vramFreeMb: 14200, latencyMs: 38 },
-    };
+    const colabConfig: Partial<StudioConfig> = { executionMode: 'colab', colab: { tunnelUrl: 'https://test-tunnel.ngrok-free.app', accountEmail: 'user@gmail.com' } as ColabConfig };
+    const colabHealth: Partial<HealthResponse> = { executionMode: 'colab', status: 'healthy', worker: { reachable: true, gpu: 'Tesla T4', vramFreeMb: 14200, latencyMs: 38 } };
 
     it('renders Colab active indicator and displays popover with telemetry', async () => {
       vi.mocked(apiClient.getConfig).mockResolvedValue(colabConfig as StudioConfig);
       vi.mocked(apiClient.getHealth).mockResolvedValue(colabHealth as HealthResponse);
       render(<WorkerStatusAvatar />);
-
       await waitFor(() => { expect(screen.getByRole('button', { name: /statut worker/i })).toBeInTheDocument(); });
       fireEvent.click(screen.getByRole('button', { name: /statut worker/i }));
-
       await waitFor(() => {
         expect(screen.getByText(/Mode Google Colab/i)).toBeInTheDocument();
         expect(screen.getByText(/Tesla T4/i)).toBeInTheDocument();
@@ -118,16 +110,10 @@ describe('TopNavBar and Header Components', () => {
     });
 
     it('renders inert gray circle in local mode with switch option', async () => {
-      const localConfig: Partial<StudioConfig> = {
-        executionMode: 'local', local: { device: 'cpu', threads: 4, workerUrl: 'http://127.0.0.1:8190' },
-      };
-      const localHealth: Partial<HealthResponse> = {
-        executionMode: 'local', status: 'healthy',
-        worker: { reachable: true, gpu: null, vramFreeMb: null, latencyMs: 2 },
-      };
+      const localConfig: Partial<StudioConfig> = { executionMode: 'local', local: { device: 'cpu', threads: 4, workerUrl: 'http://127.0.0.1:8190' } };
+      const localHealth: Partial<HealthResponse> = { executionMode: 'local', status: 'healthy', worker: { reachable: true, gpu: null, vramFreeMb: null, latencyMs: 2 } };
       vi.mocked(apiClient.getConfig).mockResolvedValue(localConfig as StudioConfig);
       vi.mocked(apiClient.getHealth).mockResolvedValue(localHealth as HealthResponse);
-
       render(<WorkerStatusAvatar />);
       await waitFor(() => { expect(screen.getByRole('button', { name: /statut worker/i })).toBeInTheDocument(); });
       fireEvent.click(screen.getByRole('button', { name: /statut worker/i }));
