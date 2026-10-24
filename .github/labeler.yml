@@ -1,0 +1,42 @@
+# Configuration for actions/labeler v5
+# https://github.com/actions/labeler
+
+backend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'app/**'
+          - 'tests/**'
+          - 'pyproject.toml'
+          - 'requirements.txt'
+          - 'ruff.toml'
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'frontend/**'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - '*.md'
+          - '.modelisation/**'
+          - 'ui-specifications/**'
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/**'
+          - '.githooks/**'
+          - '.releaserc.json'
+          - '.coderabbit.yaml'
+          - '.gitleaks.toml'
+          - 'codecov.yml'
+          - '.dependency-cruiser.cjs'
+
+bug:
+  - head-branch:
+      - '^fix/.*'
+      - '^fix-.*'
+      - '^bugfix/.*'
+      - '^bug/.*'
