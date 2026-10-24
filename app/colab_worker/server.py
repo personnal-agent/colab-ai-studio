@@ -243,16 +243,24 @@ def create_worker_app(
         ratio = raw.pop("aspectRatio", "1:1")
         raw.pop("duration", None)
         res = raw.pop("resolution", None)
-        ratios = {
-            "16:9": (1024, 576), "9:16": (576, 1024), "4:3": (1024, 768), "3:4": (768, 1024),
+        tbl: dict[str, dict[str, tuple[int, int]]] = {
+            "16:9": {
+                "512x512": (512, 288), "768x768": (768, 432), "1024x1024": (1024, 576),
+                "480p": (854, 480), "720p": (1280, 720), "1080p": (1920, 1080), "4K": (3840, 2160),
+            },
+            "9:16": {
+                "512x512": (288, 512), "768x768": (432, 768), "1024x1024": (576, 1024),
+                "480p": (480, 854), "720p": (720, 1280), "1080p": (1080, 1920), "4K": (2160, 3840),
+            },
+            "4:3": {"512x512": (512, 384), "768x768": (768, 576), "1024x1024": (1024, 768)},
+            "3:4": {"512x512": (384, 512), "768x768": (576, 768), "1024x1024": (768, 1024)},
+            "1:1": {
+                "512x512": (512, 512), "768x768": (768, 768), "1024x1024": (1024, 1024),
+                "480p": (480, 480), "720p": (720, 720), "1080p": (1080, 1080),
+            },
         }
-        res_map = {
-            "720p": (1280, 720) if ratio == "16:9" else (720, 1280),
-            "1080p": (1920, 1080) if ratio == "16:9" else (1080, 1920),
-            "4K": (3840, 2160) if ratio == "16:9" else (2160, 3840),
-            "1024x1024": (1024, 1024), "768x768": (768, 768), "512x512": (512, 512),
-        }
-        wh = res_map.get(res) or ratios.get(ratio, (1024, 1024))
+        fb = {"16:9": (1024, 576), "9:16": (576, 1024), "4:3": (1024, 768), "3:4": (768, 1024)}
+        wh = tbl.get(ratio, {}).get(res) or fb.get(ratio, (1024, 1024))
         kw = {"width": wh[0], "height": wh[1], **raw}
         if p.prompt:
             kw["prompt"] = p.prompt
@@ -307,10 +315,23 @@ def create_worker_app(
                             return
                         if hasattr(out, "images") and out.images:
                             out.images[0].save(file_path)
+                        elif hasattr(out, "frames") and out.frames:
+                            try:
+                                from diffusers.utils import export_to_video
+                                vid = (
+                                    out.frames[0]
+                                    if isinstance(out.frames[0], list)
+                                    else out.frames
+                                )
+                                export_to_video(vid, output_video_path=str(file_path), fps=8)
+                            except Exception as exp_err:
+                                logger.warning("Export vidéo impossible: %s", exp_err)
                         elif hasattr(out, "save"):
                             out.save(file_path)
                         elif isinstance(out, bytes):
                             file_path.write_bytes(out)
+                        if not file_path.exists():
+                            raise RuntimeError(f"Aucun fichier produit pour {payload.taskId}")
 
                     await asyncio.to_thread(_run_real_infer)
                 else:

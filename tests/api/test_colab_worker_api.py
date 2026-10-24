@@ -101,20 +101,11 @@ async def test_infer_and_download_flow(client: httpx.AsyncClient) -> None:
 @pytest.mark.anyio
 async def test_cancel_task(client: httpx.AsyncClient) -> None:
     """Vérifie l'annulation coopérative d'une tâche d'inférence en cours."""
-    infer_payload = {
-        "taskId": "task_to_cancel_001", "modelId": "wan-2.1-t2v",
-        "prompt": "Cinematic slow motion", "steps": 10,
-    }
-    await client.post("/infer", json=infer_payload)
-
-    # Annulation immédiate
-    cancel_resp = await client.post("/tasks/task_to_cancel_001/cancel")
-    assert cancel_resp.status_code == 200
-    assert cancel_resp.json()["status"] == "cancelled"
-
-    # Vérification du statut terminal
-    status_resp = await client.get("/tasks/task_to_cancel_001/status")
-    assert status_resp.json()["status"] == "cancelled"
+    p = {"taskId": "task_cancel_01", "modelId": "wan-2.1-t2v", "prompt": "Video", "steps": 10}
+    await client.post("/infer", json=p)
+    cancel = await client.post("/tasks/task_cancel_01/cancel")
+    assert cancel.status_code == 200 and cancel.json()["status"] == "cancelled"
+    assert (await client.get("/tasks/task_cancel_01/status")).json()["status"] == "cancelled"
 
 
 @pytest.mark.anyio
@@ -164,23 +155,13 @@ async def test_worker_secret_authentication(temp_storage: Path) -> None:
     async with httpx.AsyncClient(
         transport=ASGITransport(app=secured_app), base_url="http://secured-colab"
     ) as sec_client:
-        # 1. Sans secret : rejet 401
-        resp_unauth = await sec_client.get("/models")
-        assert resp_unauth.status_code == 401
-
-        # 2. Avec secret erroné : rejet 401
-        resp_bad = await sec_client.get("/models", headers={"X-Colab-Secret": "wrong"})
-        assert resp_bad.status_code == 401
-
-        # 3. Avec secret valide en en-tête : succès 200
-        resp_ok = await sec_client.get("/models", headers={"X-Colab-Secret": "secret-colab-42"})
-        assert resp_ok.status_code == 200
-
-        # 4. Avec secret valide Bearer : succès 200
-        resp_bearer = await sec_client.get(
-            "/models", headers={"Authorization": "Bearer secret-colab-42"}
-        )
-        assert resp_bearer.status_code == 200
+        assert (await sec_client.get("/models")).status_code == 401
+        h_bad = {"X-Colab-Secret": "bad"}
+        assert (await sec_client.get("/models", headers=h_bad)).status_code == 401
+        h_sec = {"X-Colab-Secret": "secret-colab-42"}
+        assert (await sec_client.get("/models", headers=h_sec)).status_code == 200
+        h_auth = {"Authorization": "Bearer secret-colab-42"}
+        assert (await sec_client.get("/models", headers=h_auth)).status_code == 200
 
 
 @pytest.mark.anyio
@@ -231,12 +212,12 @@ async def test_real_callable_pipeline_execution(temp_storage: Path) -> None:
     )
     transport = ASGITransport(app=app_real)
     async with httpx.AsyncClient(transport=transport, base_url="http://real") as c:
-        # 1. Test conversion de paramètres (Issue 1)
+        # 1. Test conversion de paramètres et respect du format (Issue 1)
         resp = await c.post(
             "/infer",
             json={
                 "taskId": "real_1", "modelId": "flux-schnell",
-                "parameters": {"aspectRatio": "16:9", "duration": "5s"},
+                "parameters": {"aspectRatio": "16:9", "resolution": "1024x1024", "duration": "5s"},
             },
         )
         assert resp.status_code == 200
@@ -244,7 +225,7 @@ async def test_real_callable_pipeline_execution(temp_storage: Path) -> None:
             st = (await c.get("/tasks/real_1/status")).json()
             if st["status"] == "completed":
                 assert (temp_storage / "real_1.png").read_bytes() == b"REAL_PNG"
-                assert "aspectRatio" not in received_kwargs and "duration" not in received_kwargs
+                assert "aspectRatio" not in received_kwargs and "resolution" not in received_kwargs
                 assert received_kwargs.get("width") == 1024 and received_kwargs.get("height") == 576
                 break
             await asyncio.sleep(0.04)
