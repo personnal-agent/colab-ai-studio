@@ -32,10 +32,11 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryTrigger, setRetryTrigger] = useState(0);
   const [searchValue, setSearchValue] = useState('');
   const [activePills, setActivePills] = useState<string[]>([]);
 
-  const fetchGenerations = useCallback(() => {
+  useEffect(() => {
     let isMounted = true;
     setLoading(true);
     setError(null);
@@ -53,32 +54,27 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
         setLoading(false);
       });
     return () => { isMounted = false; };
-  }, [activeProjectId, updateGenerations]);
+  }, [activeProjectId, updateGenerations, retryTrigger]);
+
+  const activeTaskIds = useMemo(
+    () => generations.filter((g) => g.status === 'pending' || g.status === 'running').map((g) => g.id).sort().join(','),
+    [generations]
+  );
 
   useEffect(() => {
-    const cleanup = fetchGenerations();
-    return cleanup;
-  }, [fetchGenerations]);
-
-  // Écoute automatique des tâches actives dans la liste
-  useEffect(() => {
-    const activeItems = generations.filter((g) => g.status === 'pending' || g.status === 'running');
-    if (activeItems.length === 0) return;
-    const unsubscribers = activeItems.map((item) =>
-      apiClient.subscribeTaskStatus(item.id, (ev) => {
-        updateGenerations((prev) => prev.map((g) => {
-          if (g.id !== item.id) return g;
-          return {
-            ...g,
-            status: ev.status,
-            progress: ev.progress ?? g.progress,
-            filePath: ev.filePath || g.filePath,
-          };
-        }));
+    if (!activeTaskIds) return;
+    const unsubscribers = activeTaskIds.split(',').map((id) =>
+      apiClient.subscribeTaskStatus(id, (ev) => {
+        updateGenerations((prev) => prev.map((g) => (g.id !== id ? g : {
+          ...g,
+          status: ev.status,
+          progress: ev.progress ?? g.progress,
+          filePath: ev.filePath || g.filePath,
+        })));
       })
     );
     return () => { unsubscribers.forEach((unsub) => unsub()); };
-  }, [generations, updateGenerations]);
+  }, [activeTaskIds, updateGenerations]);
 
   const handleTogglePill = (pill: string) => {
     setActivePills((prev) => prev.includes(pill) ? prev.filter((p) => p !== pill) : [...prev, pill]);
@@ -116,7 +112,7 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <AlertCircle className="w-10 h-10 text-rose-500 mb-3" />
             <h3 className="text-sm font-semibold text-gray-800">{error}</h3>
-            <button type="button" onClick={fetchGenerations} className="mt-4 px-4 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors flex items-center gap-1.5 shadow-sm">
+            <button type="button" onClick={() => setRetryTrigger((c) => c + 1)} className="mt-4 px-4 py-2 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800 transition-colors flex items-center gap-1.5 shadow-sm">
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Réessayer</span>
             </button>

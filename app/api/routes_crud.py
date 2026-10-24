@@ -297,6 +297,15 @@ async def create_project(payload: ProjectCreate) -> dict[str, Any]:
     dependencies=[Depends(verify_trusted_origin)],
 )
 async def delete_project(project_id: str) -> dict[str, Any]:
+    generations = await _json_store.read_list(GENERATIONS_FILE.name)
+    if any(
+        g.get("projectId") == project_id and g.get("status") in ("pending", "running")
+        for g in generations
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Impossible de supprimer un projet ayant des tâches en cours.",
+        )
     async with _json_store.lock_for(PROJECTS_FILE.name):
         projects = await _json_store.read_list_unlocked(PROJECTS_FILE.name)
         new_projects = [p for p in projects if p.get("id") != project_id]
