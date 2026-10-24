@@ -127,6 +127,28 @@ describe('Brand Kit System (TDD)', () => {
       fireEvent.change(textarea, { target: { value: 'Design @A' } });
       expect(onOpenSelector).toHaveBeenCalledTimes(2);
     });
+
+    it('does not re-trigger selector when typing elsewhere in a prompt ending with @', () => {
+      const onOpenSelector = vi.fn();
+      function TestWrapper() {
+        const [prompt, setPrompt] = useState('Design @');
+        return (
+          <PromptEditorWithChip
+            prompt={prompt}
+            onPromptChange={setPrompt}
+            selectedBrandKit={null}
+            onRemoveBrandKit={vi.fn()}
+            onOpenBrandKitSelector={onOpenSelector}
+          />
+        );
+      }
+      render(<TestWrapper />);
+      const textarea = screen.getByPlaceholderText(/Describe what you want to create/i);
+
+      // Saisir 'X' au tout début avec curseur en position 1 (le prompt contient toujours '@' à la fin)
+      fireEvent.change(textarea, { target: { value: 'XDesign @', selectionStart: 1 } });
+      expect(onOpenSelector).not.toHaveBeenCalled();
+    });
   });
 
   describe('BrandKitCreateModal', () => {

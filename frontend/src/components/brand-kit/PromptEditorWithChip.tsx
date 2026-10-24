@@ -44,15 +44,20 @@ export const PromptEditorWithChip: React.FC<PromptEditorWithChipProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
-    const cursorPos = e.target.selectionStart ?? val.length;
     onPromptChange(val);
 
-    // Only open when the user has just typed a final @ at start of prompt or immediately after whitespace
+    // If selectionStart is available and > 0, use it. Otherwise fall back to val.length (e.g. typing at end or synthetic change events).
+    const cursorPos = (typeof e.target.selectionStart === 'number' && e.target.selectionStart > 0)
+      ? e.target.selectionStart
+      : val.length;
+
+    // Only open when the character just typed at the cursor position is an '@'
+    // at the beginning of the prompt or immediately following whitespace.
     const atTyped = val.length > prompt.length && (
       (cursorPos === 1 && val[0] === '@') ||
-      (cursorPos > 1 && val[cursorPos - 1] === '@' && /\s/.test(val[cursorPos - 2])) ||
-      (val.endsWith('@') && (val.length === 1 || /\s/.test(val[val.length - 2])))
+      (cursorPos > 1 && val[cursorPos - 1] === '@' && /\s/.test(val[cursorPos - 2]))
     );
+
     if (atTyped) {
       onOpenBrandKitSelector();
     }
