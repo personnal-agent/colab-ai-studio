@@ -316,16 +316,9 @@ def create_worker_app(
                         if hasattr(out, "images") and out.images:
                             out.images[0].save(file_path)
                         elif hasattr(out, "frames") and out.frames:
-                            try:
-                                from diffusers.utils import export_to_video
-                                vid = (
-                                    out.frames[0]
-                                    if isinstance(out.frames[0], list)
-                                    else out.frames
-                                )
-                                export_to_video(vid, output_video_path=str(file_path), fps=8)
-                            except Exception as exp_err:
-                                logger.warning("Export vidéo impossible: %s", exp_err)
+                            from diffusers.utils import export_to_video
+                            vid = out.frames[0] if isinstance(out.frames[0], list) else out.frames
+                            export_to_video(vid, output_video_path=str(file_path), fps=8)
                         elif hasattr(out, "save"):
                             out.save(file_path)
                         elif isinstance(out, bytes):
@@ -423,14 +416,13 @@ def create_worker_app(
 
     @app.post("/v1/chat/completions")
     async def chat_completions(payload: ChatCompletionRequest, request: Request) -> Any:
-        chat_loader = loaders.get(payload.model)
-        chat_model = swapper.ensure_model(payload.model, load_fn=chat_loader)
         request_id = payload.requestId or f"chat_{uuid.uuid4().hex[:10]}"
         last_user_msg = payload.messages[-1].content if payload.messages else "Bonjour"
         summary = last_user_msg[:40] + "..." if len(last_user_msg) > 40 else last_user_msg
 
         if not payload.stream:
             async with gpu_lock:
+                chat_model = swapper.ensure_model(payload.model, load_fn=loaders.get(payload.model))
                 content = f"Voici une réponse synthétisée par {payload.model} pour : « {summary} »."
                 if callable(chat_model) and not sim_mode:
                     prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
@@ -460,12 +452,60 @@ def create_worker_app(
 
         async def chat_stream_generator() -> AsyncGenerator[str, None]:
             async with gpu_lock:
+                chat_model = swapper.ensure_model(payload.model, load_fn=loaders.get(payload.model))
                 words = [
                     "Bonjour", " ! ", "Voici", " une", " réponse", " synthétisée", " pour",
                     f" « {summary} »", " par", " le", " worker", " distant", " Colab.",
                 ]
                 if callable(chat_model) and not sim_mode:
+                    if request_id in active_chat_cancels or await request.is_disconnected():
+                        return
                     prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
+                    tok = getattr(chat_model, "tokenizer", None)
+                    if tok is not None:
+                        from threading import Thread
+
+                        from transformers import TextIteratorStreamer
+                        from transformers.generation import StoppingCriteria, StoppingCriteriaList
+
+                        class CancelCriteria(StoppingCriteria):
+                            def __call__(self, input_ids, scores, **kw):
+                                return request_id in active_chat_cancels
+
+                        streamer = TextIteratorStreamer(
+                            tok, skip_prompt=True, skip_special_tokens=True
+                        )
+                        crit = StoppingCriteriaList([CancelCriteria()])
+                        gen_kw = {
+                            "max_new_tokens": 150,
+                            "streamer": streamer,
+                            "stopping_criteria": crit,
+                        }
+                        th = Thread(target=chat_model, args=(prompt_in,), kwargs=gen_kw)
+                        th.start()
+                        try:
+                            for token in streamer:
+                                if (
+                                    request_id in active_chat_cancels
+                                    or await request.is_disconnected()
+                                ):
+                                    return
+                                d = {"content": token}
+                                choice = {"index": 0, "delta": d, "finish_reason": None}
+                                chunk = {
+                                    "id": request_id,
+                                    "object": "chat.completion.chunk",
+                                    "created": int(time.time()),
+                                    "model": payload.model,
+                                    "choices": [choice],
+                                }
+                                yield f"data: {json.dumps(chunk)}\n\n"
+                                await asyncio.sleep(0.01)
+                        finally:
+                            th.join(timeout=2.0)
+                        yield "data: [DONE]\n\n"
+                        return
+
                     try:
                         res = await asyncio.to_thread(chat_model, prompt_in, max_new_tokens=150)
                         if isinstance(res, list) and res and "generated_text" in res[0]:

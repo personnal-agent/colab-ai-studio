@@ -1,16 +1,4 @@
-"""Tests de bout en bout (E2E) du pipeline Colab AI Studio (tests/e2e/test_full_pipeline.py).
-
-Valide l'intégration complète entre le backend local FastAPI et le worker Colab
-couvrant les 8 Cas d'Utilisation canoniques (UC-01 à UC-08) de 01-perimetre-fonctionnel.svg :
-- UC-01 : Produire un média (génération avec Brand Kit et rapatriement physique)
-- UC-02 : Interagir avec l'assistant textuel IA (proxy LLM streaming)
-- UC-03 : Suivre une génération (progression temps réel SSE)
-- UC-04 : Annuler une génération (interruption coopérative worker & VRAM)
-- UC-05 : Parcourir et remixer (filtres, favoris, suppression)
-- UC-06 : Gérer les Brand Kits (création, persistance, compilation)
-- UC-07 : Organiser les projets (isolation de stockage personnalisée storagePath)
-- UC-08 : Connecter l'environnement distant (tunnel Colab et diagnostic)
-"""
+"""Tests de bout en bout (E2E) couvrant UC-01 à UC-08 de Colab AI Studio."""
 
 from __future__ import annotations
 

@@ -1,9 +1,4 @@
-"""Test de validation d'empreinte mémoire locale du backend (tests/e2e/test_memory_footprint.py).
-
-Conforme à ARCHITECTURE.md §1 et SPECIFICATION.md :
-Vérifie de façon portable (Linux, macOS, Windows) que le processus OS backend FastAPI
-(uvicorn app.main:app) s'exécute dans un budget mémoire strictement inférieur à 80 Mo RAM RSS.
-"""
+"""Test de validation d'empreinte mémoire locale du backend (< 80 Mo RAM RSS)."""
 
 from __future__ import annotations
 

@@ -1,15 +1,4 @@
-"""Tests d'intégration de l'API FastAPI du Worker Google Colab (tests/api/test_colab_worker_api.py).
-
-Valide l'ensemble des routes consommées par le backend local et WorkerGateway :
-- GET /health
-- GET /models
-- POST /models/switch
-- POST /infer (asynchrone, progression par étapes, rapatriement)
-- GET /tasks/{task_id}/status
-- POST /tasks/{task_id}/cancel (interruption coopérative et libération mémoire)
-- POST /v1/chat/completions (streaming SSE et annulation)
-- GET /files/{filename} (téléchargement binaire sécurisé)
-"""
+"""Tests d'intégration de l'API FastAPI du Worker Google Colab."""
 
 from __future__ import annotations
 

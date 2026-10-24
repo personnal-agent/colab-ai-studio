@@ -1,14 +1,4 @@
-"""Tests unitaires de l'automate ModelSwapper (tests/unit/test_model_swapper.py).
-
-Couvre l'intégralité des transitions d'états de 11-etats-model-swapper.svg :
-- Initialisation à vide (EnVeilleVRAMLibre)
-- Chargement à la demande (ChargementEnCours -> ModeleActif)
-- Réutilisation directe sans rechargement si modèle déjà résident
-- Éviction préalable complète avant chargement d'un nouveau modèle
-- Éviction automatique après délai d'inactivité (gpu_idle)
-- Récupération sur saturation CUDA OOM (EnRecuperationSaturation -> EnVeilleVRAMLibre)
-- Arrêt propre du worker (Arrete)
-"""
+"""Tests unitaires de l'automate ModelSwapper."""
 
 from __future__ import annotations
 
