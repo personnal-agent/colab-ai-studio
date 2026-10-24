@@ -192,13 +192,19 @@ export const apiClient = {
         break;
       }
       buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (line.length > MAX_LINE_BUFFER) {
+          await reader.cancel();
+          throw new ApiError('SSE stream line length exceeded maximum limit', 500);
+        }
+        processLine(line);
+      }
       if (buffer.length > MAX_LINE_BUFFER) {
         await reader.cancel();
         throw new ApiError('SSE stream line length exceeded maximum limit', 500);
       }
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) processLine(line);
     }
     buffer += decoder.decode();
     if (buffer.trim()) processLine(buffer);

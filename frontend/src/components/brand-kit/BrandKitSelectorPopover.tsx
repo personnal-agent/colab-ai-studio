@@ -37,7 +37,7 @@ export const BrandKitSelectorPopover: React.FC<BrandKitSelectorPopoverProps> = (
 
   return (
     <Popover.Root open={isOpen} onOpenChange={onOpenChange}>
-      {trigger ? <Popover.Trigger asChild>{trigger}</Popover.Trigger> : <Popover.Anchor />}
+      {trigger ? <Popover.Trigger asChild>{trigger}</Popover.Trigger> : <Popover.Anchor className="inline-block relative w-0 h-0" />}
       <Popover.Portal>
         <Popover.Content
           side="top"

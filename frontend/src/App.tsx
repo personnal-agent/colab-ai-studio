@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MediaGallery } from './components/gallery/MediaGallery';
 import { MediaPlayerModal } from './components/gallery/MediaPlayerModal';
 import { TopNavBar } from './components/header/TopNavBar';
@@ -41,12 +41,22 @@ export default function App(): React.ReactElement {
     }
   };
 
+  const activeProjectIdRef = useRef(activeProjectId);
+  useEffect(() => { activeProjectIdRef.current = activeProjectId; }, [activeProjectId]);
+
   const handleSubmitGeneration = async (req: GenerationSubmitRequest) => {
     if (apiClient.submitGeneration) {
       await apiClient.submitGeneration(req);
       if (apiClient.listGenerations) {
-        const updated = await apiClient.listGenerations(activeProjectId ? { projectId: activeProjectId } : undefined);
-        setGenerations(updated);
+        try {
+          const targetId = activeProjectIdRef.current;
+          const updated = await apiClient.listGenerations(targetId ? { projectId: targetId } : undefined);
+          if (activeProjectIdRef.current === targetId) {
+            setGenerations(updated);
+          }
+        } catch {
+          // Do not fail the submission if listGenerations refresh fails
+        }
       }
     }
   };

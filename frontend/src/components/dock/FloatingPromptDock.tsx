@@ -178,6 +178,9 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
       return;
     }
 
+    if (activeMode !== 'upscale' && !current.prompt.trim()) return;
+    if (isSubmittingMedia) return;
+
     if (onSubmitGeneration && current.model) {
       setMediaError(null);
       setIsSubmittingMedia(true);
@@ -258,6 +261,15 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
               onSelectBrandKit={(kit) => updateCurrent({ selectedBrandKit: kit })}
               onInspectBrandKit={(kit) => setInspectingKit(kit)}
               onCreateBrandKitClick={() => setIsCreateModalOpen(true)}
+              trigger={
+                <button
+                  type="button"
+                  aria-label="Brand kit options"
+                  className="text-xs text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 font-medium py-1 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {current.selectedBrandKit ? `@${current.selectedBrandKit.name}` : 'Brand Kit'}
+                </button>
+              }
             />
           </div>
         </div>
