@@ -48,8 +48,7 @@ async def test_singleton_config_read_and_write(store: JSONDocumentStore):
     cfg = await store.read_dict("config.json", default={"executionMode": "colab"})
     assert cfg["executionMode"] == "colab"
     await store.write_dict(
-        "config.json",
-        {"executionMode": "local", "local": {"workerUrl": "http://127.0.0.1:8190"}},
+        "config.json", {"executionMode": "local", "local": {"workerUrl": "http://127.0.0.1:8190"}}
     )
     reloaded = await store.read_dict("config.json")
     assert (

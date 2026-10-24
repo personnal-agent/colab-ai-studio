@@ -14,6 +14,7 @@ Couvre via httpx.AsyncClient (ASGITransport asynchrone pur) :
 
 from __future__ import annotations
 
+import contextlib
 import ipaddress
 import socket
 import unittest.mock
@@ -36,12 +37,17 @@ class MockResp:
         text: str = "",
         headers: dict | None = None,
         url: str = "https://google.com",
+        server_ip: str | None = None,
     ):
         self.status_code = status_code
         self.text = text
         self.headers = headers or {}
         self.url = httpx.URL(url)
         self.extensions: dict = {}
+        if server_ip:
+            stream = unittest.mock.Mock()
+            stream.get_extra_info.return_value = (server_ip, 443)
+            self.extensions["network_stream"] = stream
 
 
 def mock_http(monkeypatch, responses):
@@ -111,16 +117,11 @@ async def test_env(tmp_path: Path):
 
 @pytest.fixture(autouse=True)
 def mock_dns_resolution(monkeypatch):
-    def deterministic_getaddrinfo(host, port, *args, **kwargs):
-        try:
-            ip = ipaddress.ip_address(host)
-            if not ip.is_global or ip.is_private or ip.is_loopback:
-                return [(2, 1, 6, "", (str(ip), port))]
-        except ValueError:
-            pass
-        if host in ("127.0.0.1", "localhost", "::1") or host.endswith(
-            (".local", ".localhost", ".internal")
-        ):
+    def deterministic_getaddrinfo(host, port, *_, **__):
+        with contextlib.suppress(ValueError):
+            if not ipaddress.ip_address(host).is_global:
+                return [(2, 1, 6, "", (host, port))]
+        if host in ("127.0.0.1", "localhost", "::1") or host.endswith((".local", ".internal")):
             return [(2, 1, 6, "", ("127.0.0.1", port))]
         return [(2, 1, 6, "", ("93.184.216.34", port))]
 
@@ -186,9 +187,7 @@ async def test_projects_crud_and_storage_path_validation(test_env, tmp_path):
     assert res.status_code == 201 and res.json()["colorTag"] == "#3B82F6"
 
     custom_dir = tmp_path / "custom_storage"
-    res_c = await client.post(
-        "/api/projects", json={"name": "Projet Isolé", "storagePath": str(custom_dir)}
-    )
+    res_c = await client.post("/api/projects", json={"name": "Iso", "storagePath": str(custom_dir)})
     assert res_c.status_code == 201 and custom_dir.exists()
 
     file_as_dir = tmp_path / "file_exists.txt"
@@ -210,19 +209,15 @@ async def test_brand_kits_crud_blank_and_files(test_env, monkeypatch):
 
     # 2. Extract from SVG file
     svg = b'<svg><rect fill="#FF0000" /><circle fill="#00FF00" /></svg>'
-    res_f = await client.post(
-        "/api/brand-kits",
-        data={"name": "Colors"},
-        files=[("files", ("logo.svg", svg, "image/svg+xml"))],
-    )
+    f_svg = [("files", ("logo.svg", svg, "image/svg+xml"))]
+    res_f = await client.post("/api/brand-kits", data={"name": "Colors"}, files=f_svg)
     assert res_f.status_code == 201 and len(res_f.json()["logos"]) == 1
 
     # 3. Extract from website with title, description, colors and fonts
     html = (
-        "<html><head><title>Horizon</title><meta name='description' content='Cinematic AI'>"
+        "<title>Horizon</title><meta name='description' content='Cinematic AI'>"
         "<link rel='icon' href='/favicon.ico'>"
         "<style>:root{--primary:#0A84FF;}body{font-family:'Cabinet Grotesk';}</style>"
-        "</head><body><h1>Horizon</h1></body></html>"
     )
     mock_http(monkeypatch, MockResp(text=html, url="https://horizon.ai"))
     res_w = await client.post(
@@ -260,11 +255,10 @@ async def test_csrf_and_untrusted_origin_rejection(test_env):
     res_cross = await client.post(
         "/api/brand-kits", data={"name": "Attacker"}, headers={"sec-fetch-site": "cross-site"}
     )
-    assert res_cross.status_code == 403
     res_bad = await client.post(
         "/api/projects", json={"name": "Attacker"}, headers={"origin": "http://evil.com"}
     )
-    assert res_bad.status_code == 403
+    assert res_cross.status_code == 403 and res_bad.status_code == 403
 
 
 async def test_brand_kit_ssrf_rejects_private_and_redirects(test_env, monkeypatch):
@@ -281,11 +275,17 @@ async def test_brand_kit_ssrf_rejects_private_and_redirects(test_env, monkeypatc
         MockResp(302, headers={"location": "http://127.0.0.1:8190/admin"}, url="https://pub.com"),
     )
     res = await client.post(
-        "/api/brand-kits", data={"name": "Sneaky", "websiteUrl": "https://google.com"}
+        "/api/brand-kits", data={"name": "Sneaky", "websiteUrl": "https://pub.com"}
     )
     assert res.status_code == 400 and (
         "interdit" in res.json()["detail"].lower() or "privée" in res.json()["detail"].lower()
     )
+    # 3. DNS rebinding on connected socket
+    mock_http(monkeypatch, MockResp(server_ip="127.0.0.1", url="https://pub.com"))
+    res_r = await client.post(
+        "/api/brand-kits", data={"name": "Rebind", "websiteUrl": "https://pub.com"}
+    )
+    assert res_r.status_code == 400 and "privée" in res_r.json()["detail"].lower()
 
 
 async def test_brand_kit_website_http_error_returns_400(test_env, monkeypatch):

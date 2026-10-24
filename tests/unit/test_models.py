@@ -122,9 +122,11 @@ def test_project_and_configs(monkeypatch):
     assert colab.is_connected() and colab.lastPing and not ColabConfig(tunnelUrl="").is_connected()
 
     monkeypatch.setenv("TEST_KEY", "secret-123")
-    assert CompilerLlmConfig(apiKeyEnv="TEST_KEY").get_api_key() == "secret-123"
-    assert CompilerLlmConfig(apiKey="direct").get_api_key() == "direct"
-    assert not CompilerLlmConfig(apiKeyEnv="DUMMY_VAR_NOT_SET").is_configured()
+    assert (
+        CompilerLlmConfig(apiKeyEnv="TEST_KEY").get_api_key() == "secret-123"
+        and CompilerLlmConfig(apiKey="direct").get_api_key() == "direct"
+        and not CompilerLlmConfig(apiKeyEnv="DUMMY_VAR_NOT_SET").is_configured()
+    )
 
     proxy = LlmProxyConfig(port=8000)
     assert proxy.is_running() and proxy.get_base_url() == "http://127.0.0.1:8000"

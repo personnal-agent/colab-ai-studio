@@ -108,9 +108,11 @@ async def _fetch_safe_website(initial_url: str, max_redirects: int = 5) -> httpx
                 and (addr := stream.get_extra_info("server_addr"))
                 and isinstance(addr, tuple)
             ):
+                is_priv = False
                 with contextlib.suppress(ValueError):
-                    if not ipaddress.ip_address(addr[0]).is_global:
-                        raise ValueError(f"Accès refusé : l'adresse IP '{addr[0]}' est privée.")
+                    is_priv = not ipaddress.ip_address(addr[0]).is_global
+                if is_priv:
+                    raise ValueError(f"Accès refusé : l'adresse IP '{addr[0]}' est privée.")
 
             if resp.status_code in (301, 302, 303, 307, 308) and "location" in resp.headers:
                 current_url = urljoin(str(resp.url), resp.headers["location"])

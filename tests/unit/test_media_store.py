@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import unittest.mock
 from pathlib import Path
 
@@ -82,7 +81,7 @@ async def test_delete_media_error_propagates_on_permission_error(base_dirs, monk
     store = MediaFileStore(outputs_dir=outputs)
     saved, thumb = await store.save_media("test_err.mp4", b"DATA")
     monkeypatch.setattr(
-        os, "unlink", unittest.mock.Mock(side_effect=PermissionError("Accès refusé"))
+        Path, "unlink", unittest.mock.Mock(side_effect=PermissionError("Accès refusé"))
     )
     with pytest.raises(PermissionError, match="Accès refusé"):
         await store.delete_media(saved, thumb)
