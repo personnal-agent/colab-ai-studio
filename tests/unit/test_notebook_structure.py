@@ -42,17 +42,7 @@ def test_notebook_cells_content() -> None:
     ]
     combined_text = "\n".join(all_sources)
 
-    # 1. Vérification GPU
-    assert "nvidia-smi" in combined_text
-
-    # 2. Dépendances worker
-    assert "fastapi" in combined_text
-    assert "uvicorn" in combined_text
-
-    # 3. ModelSwapper & protocole VRAM
-    assert "ModelSwapper" in combined_text
-
-    # 4. Tunneling, sécurité & URL publique
-    assert any(tunnel in combined_text.lower() for tunnel in ["cloudflared", "ngrok", "tunnel"])
-    assert "http" in combined_text.lower()
-    assert any(secret_kw in combined_text.lower() for secret_kw in ["secret", "worker_secret"])
+    for kw in ("nvidia-smi", "fastapi", "uvicorn", "ModelSwapper", "http"):
+        assert kw in combined_text or kw.lower() in combined_text.lower()
+    assert any(t in combined_text.lower() for t in ("cloudflared", "ngrok", "tunnel"))
+    assert any(s in combined_text.lower() for s in ("secret", "worker_secret"))

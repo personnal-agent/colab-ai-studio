@@ -29,11 +29,8 @@ class MockTorchCuda:
     """Mock contrôlable de torch.cuda pour environnement de test hôte sans GPU."""
 
     def __init__(self, is_available: bool = True, memory_mb: float = 16384.0) -> None:
-        self._is_available = is_available
-        self._total_memory_mb = memory_mb
-        self._allocated_mb = 0.0
-        self.empty_cache_called = 0
-        self.ipc_collect_called = 0
+        self._is_available, self._total_memory_mb, self._allocated_mb = is_available, memory_mb, 0.0
+        self.empty_cache_called, self.ipc_collect_called = 0, 0
 
     def is_available(self) -> bool:
         return self._is_available
@@ -65,10 +62,8 @@ def swapper(mock_cuda: MockTorchCuda) -> ModelSwapper:
 def test_initialization_state(swapper: ModelSwapper) -> None:
     """Vérifie l'état initial EnVeilleVRAMLibre sans modèle résident."""
     assert swapper.state == ModelSwapperState.EN_VEILLE_VRAM_LIBRE
-    assert swapper.active_model is None
-    assert swapper.active_pipeline is None
-    assert swapper.pipeline_ready is False
-    assert swapper.vram_allocated_gb == 0.0
+    assert swapper.active_model is None and swapper.active_pipeline is None
+    assert swapper.pipeline_ready is False and swapper.vram_allocated_gb == 0.0
 
 
 def test_load_model_on_demand(swapper: ModelSwapper) -> None:

@@ -110,10 +110,8 @@ async def test_switch_model(client: httpx.AsyncClient) -> None:
 async def test_infer_and_download_flow(client: httpx.AsyncClient) -> None:
     """Vérifie le cycle complet d'inférence, de progression et de rapatriement."""
     infer_payload = {
-        "taskId": "task_e2e_001",
-        "modelId": "flux-schnell",
-        "prompt": "Cyberpunk high tech robot",
-        "parameters": {"aspectRatio": "16:9", "seed": 42},
+        "taskId": "task_e2e_001", "modelId": "flux-schnell",
+        "prompt": "Cyberpunk high tech robot", "parameters": {"aspectRatio": "16:9", "seed": 42},
     }
     resp = await client.post("/infer", json=infer_payload)
     assert resp.status_code == 200
@@ -144,10 +142,8 @@ async def test_infer_and_download_flow(client: httpx.AsyncClient) -> None:
 async def test_cancel_task(client: httpx.AsyncClient) -> None:
     """Vérifie l'annulation coopérative d'une tâche d'inférence en cours."""
     infer_payload = {
-        "taskId": "task_to_cancel_001",
-        "modelId": "wan-2.1-t2v",
-        "prompt": "Cinematic slow motion",
-        "steps": 10,
+        "taskId": "task_to_cancel_001", "modelId": "wan-2.1-t2v",
+        "prompt": "Cinematic slow motion", "steps": 10,
     }
     await client.post("/infer", json=infer_payload)
 
@@ -191,9 +187,7 @@ async def test_file_download_security(client: httpx.AsyncClient) -> None:
 async def test_task_id_validation_prevents_path_traversal(client: httpx.AsyncClient) -> None:
     """Vérifie le rejet strict des taskId malveillants contenant des traversées de chemin."""
     bad_payload = {
-        "taskId": "../victim",
-        "modelId": "flux-schnell",
-        "prompt": "Test path traversal",
+        "taskId": "../victim", "modelId": "flux-schnell", "prompt": "Test path traversal",
     }
     resp = await client.post("/infer", json=bad_payload)
     assert resp.status_code == 422

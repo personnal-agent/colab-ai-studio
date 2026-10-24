@@ -40,91 +40,44 @@ from app.colab_worker.model_swapper import ModelSwapper
 
 logger = logging.getLogger(__name__)
 
+def _model_spec(
+    mid: str, name: str, mtype: str, ratios: list[str], res: list[str],
+    dur: list[str], neg: bool = False, seed: bool = False,
+    img_ref: bool = False, max_refs: int = 0,
+) -> dict[str, Any]:
+    return {
+        "id": mid, "name": name, "type": mtype,
+        "capabilities": {
+            "aspectRatios": ratios, "resolutions": res, "durations": dur,
+            "supportsNegativePrompt": neg, "supportsSeed": seed,
+            "supportsImageRef": img_ref, "maxImageRefs": max_refs,
+        },
+    }
+
+
 AVAILABLE_MODELS: list[dict[str, Any]] = [
-    {
-        "id": "flux-schnell",
-        "name": "FLUX.1 [schnell]",
-        "type": "image",
-        "capabilities": {
-            "aspectRatios": ["1:1", "16:9", "9:16", "4:3", "3:4"],
-            "resolutions": ["1024x1024", "768x768", "512x512"],
-            "durations": ["1s"],
-            "supportsNegativePrompt": False,
-            "supportsSeed": True,
-            "supportsImageRef": True,
-            "maxImageRefs": 1,
-        },
-    },
-    {
-        "id": "wan-2.1-t2v",
-        "name": "Wan 2.1 Video",
-        "type": "video",
-        "capabilities": {
-            "aspectRatios": ["16:9", "9:16", "1:1"],
-            "resolutions": ["720p", "480p"],
-            "durations": ["5s", "10s"],
-            "supportsNegativePrompt": True,
-            "supportsSeed": True,
-            "supportsImageRef": True,
-            "maxImageRefs": 2,
-        },
-    },
-    {
-        "id": "cogvideox-5b",
-        "name": "CogVideoX-5B",
-        "type": "video",
-        "capabilities": {
-            "aspectRatios": ["16:9"],
-            "resolutions": ["720p"],
-            "durations": ["6s"],
-            "supportsNegativePrompt": True,
-            "supportsSeed": True,
-            "supportsImageRef": False,
-            "maxImageRefs": 0,
-        },
-    },
-    {
-        "id": "wav2lip",
-        "name": "Wav2Lip Lip Sync",
-        "type": "lipsync",
-        "capabilities": {
-            "aspectRatios": ["16:9", "9:16", "1:1"],
-            "resolutions": ["720p"],
-            "durations": ["5s", "10s", "15s"],
-            "supportsNegativePrompt": False,
-            "supportsSeed": False,
-            "supportsImageRef": False,
-            "maxImageRefs": 0,
-        },
-    },
-    {
-        "id": "realesrgan-x4",
-        "name": "Real-ESRGAN Upscaler",
-        "type": "upscale",
-        "capabilities": {
-            "aspectRatios": ["16:9", "9:16", "1:1"],
-            "resolutions": ["1080p", "4K"],
-            "durations": ["5s"],
-            "supportsNegativePrompt": False,
-            "supportsSeed": False,
-            "supportsImageRef": False,
-            "maxImageRefs": 0,
-        },
-    },
-    {
-        "id": "llama-3-8b-instruct",
-        "name": "Llama 3 8B Instruct",
-        "type": "text",
-        "capabilities": {
-            "aspectRatios": [],
-            "resolutions": [],
-            "durations": [],
-            "supportsNegativePrompt": False,
-            "supportsSeed": False,
-            "supportsImageRef": False,
-            "maxImageRefs": 0,
-        },
-    },
+    _model_spec(
+        "flux-schnell", "FLUX.1 [schnell]", "image",
+        ["1:1", "16:9", "9:16", "4:3", "3:4"], ["1024x1024", "768x768", "512x512"],
+        ["1s"], False, True, True, 1,
+    ),
+    _model_spec(
+        "wan-2.1-t2v", "Wan 2.1 Video", "video",
+        ["16:9", "9:16", "1:1"], ["720p", "480p"], ["5s", "10s"], True, True, True, 2,
+    ),
+    _model_spec(
+        "cogvideox-5b", "CogVideoX-5B", "video", ["16:9"], ["720p"], ["6s"],
+        neg=True, seed=True,
+    ),
+    _model_spec(
+        "wav2lip", "Wav2Lip Lip Sync", "lipsync",
+        ["16:9", "9:16", "1:1"], ["720p"], ["5s", "10s", "15s"],
+    ),
+    _model_spec(
+        "realesrgan-x4", "Real-ESRGAN Upscaler", "upscale",
+        ["16:9", "9:16", "1:1"], ["1080p", "4K"], ["5s"],
+    ),
+    _model_spec("llama-3-8b-instruct", "Llama 3 8B Instruct", "text", [], [], []),
 ]
 
 
@@ -205,12 +158,14 @@ def create_worker_app(
     storage_dir: Path | None = None,
     worker_secret: str | None = None,
     idle_check_interval: float = 1.0,
+    model_loaders: dict[str, Any] | None = None,
 ) -> FastAPI:
     """Fabrique d'application FastAPI pour le worker Google Colab."""
     swapper = model_swapper or ModelSwapper()
     output_dir = storage_dir or (Path(tempfile.gettempdir()) / "colab_outputs")
     output_dir.mkdir(parents=True, exist_ok=True)
     secret = worker_secret or os.environ.get("COLAB_STUDIO_SECRET")
+    loaders = model_loaders or {}
 
     tasks: dict[str, dict[str, Any]] = {}
     cancel_events: dict[str, asyncio.Event] = {}
@@ -286,7 +241,8 @@ def create_worker_app(
 
     @app.post("/models/switch")
     async def switch_model(payload: SwitchModelRequest) -> dict[str, Any]:
-        swapper.ensure_model(payload.modelId)
+        loader = loaders.get(payload.modelId)
+        swapper.ensure_model(payload.modelId, load_fn=loader)
         return {"status": "ok", "activeModel": payload.modelId}
 
     async def _execute_inference_task(task_id: str, payload: InferRequest) -> None:
@@ -296,7 +252,8 @@ def create_worker_app(
 
         try:
             # 1. Permutation / garantie du modèle
-            swapper.ensure_model(payload.modelId)
+            loader = loaders.get(payload.modelId)
+            swapper.ensure_model(payload.modelId, load_fn=loader)
 
             # 2. Boucle de génération interruptible
             for step in range(1, total_steps + 1):
@@ -397,7 +354,8 @@ def create_worker_app(
 
     @app.post("/v1/chat/completions")
     async def chat_completions(payload: ChatCompletionRequest, request: Request) -> Any:
-        swapper.ensure_model(payload.model)
+        chat_loader = loaders.get(payload.model)
+        swapper.ensure_model(payload.model, load_fn=chat_loader)
         request_id = payload.requestId or f"chat_{uuid.uuid4().hex[:10]}"
         last_user_msg = payload.messages[-1].content if payload.messages else "Bonjour"
         summary = (

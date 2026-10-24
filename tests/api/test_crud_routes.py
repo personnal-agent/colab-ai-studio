@@ -342,10 +342,15 @@ async def test_config_colab_url_update(test_env):
     client, store, _, _ = test_env
     await store.write_list("generations.json", [])
     res = await client.post(
-        "/api/config/colab-url", json={"tunnelUrl": "https://active-tunnel-123.ngrok-free.app"}
+        "/api/config/colab-url",
+        json={
+            "tunnelUrl": "https://active-tunnel-123.ngrok-free.app",
+            "secret": "my-worker-secret-42",
+        },
     )
     assert res.status_code == 200
     assert res.json()["tunnelUrl"] == "https://active-tunnel-123.ngrok-free.app"
+    assert res.json()["secretConfigured"] is True
 
     # Conflit si tâche active
     await store.write_list("generations.json", [{"id": "gen_act_colab", "status": "running"}])

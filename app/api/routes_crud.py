@@ -74,6 +74,7 @@ def verify_trusted_origin(request: Request) -> None:
 
 class ColabUrlUpdate(BaseModel):
     tunnelUrl: str
+    secret: str | None = None
 
 
 class ProjectCreate(BaseModel):
@@ -349,6 +350,13 @@ async def update_colab_url(payload: ColabUrlUpdate) -> Any:
             cfg = await _json_store.read_dict_unlocked(
                 CONFIG_FILE.name, default=StudioConfig().model_dump()
             )
-            cfg.setdefault("colab", {})["tunnelUrl"] = payload.tunnelUrl.strip()
+            colab_dict = cfg.setdefault("colab", {})
+            colab_dict["tunnelUrl"] = payload.tunnelUrl.strip()
+            if payload.secret is not None:
+                colab_dict["secret"] = payload.secret.strip()
             await _json_store.write_dict_unlocked(CONFIG_FILE.name, cfg)
-        return {"updated": True, "tunnelUrl": payload.tunnelUrl.strip()}
+        return {
+            "updated": True,
+            "tunnelUrl": payload.tunnelUrl.strip(),
+            "secretConfigured": bool(colab_dict.get("secret")),
+        }

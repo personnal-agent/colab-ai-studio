@@ -36,36 +36,24 @@ def test_isolated_backend_memory_footprint(tmp_path) -> None:
     env["COLAB_STUDIO_OUTPUTS_DIR"] = str(tmp_path / "outputs")
     env["PYTHONPATH"] = str(REPO_ROOT)
 
+    cmd = [
+        sys.executable, "-m", "uvicorn", "app.main:app",
+        "--port", str(port), "--host", "127.0.0.1",
+    ]
     proc = subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "uvicorn",
-            "app.main:app",
-            "--port",
-            str(port),
-            "--host",
-            "127.0.0.1",
-        ],
-        cwd=str(REPO_ROOT),
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        cmd, cwd=str(REPO_ROOT), env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
 
     try:
-        # Attendre que le backend soit démarré et réponde
         base_url = f"http://127.0.0.1:{port}"
         started = False
         for _ in range(60):
             try:
-                resp = httpx.get(f"{base_url}/api/health", timeout=1.0)
-                if resp.status_code == 200:
+                if httpx.get(f"{base_url}/api/health", timeout=1.0).status_code == 200:
                     started = True
                     break
             except (httpx.HTTPError, OSError):
-                time.sleep(0.1)
-                continue
+                pass
             time.sleep(0.1)
 
         if not started:

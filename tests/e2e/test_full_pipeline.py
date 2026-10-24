@@ -161,37 +161,25 @@ async def test_full_pipeline_uc01_to_uc08(
     assert h_data["worker"]["gpu"] == "Tesla T4 Test"
 
     # --- UC-06 : Gérer les Brand Kits ---
-    bk_form_data = {
-        "name": "NovaCyber",
-        "overview": "Esthétique cyberpunk épurée aux reflets néons",
-    }
-    create_bk_resp = await client.post("/api/brand-kits", data=bk_form_data)
+    bk_form = {"name": "NovaCyber", "overview": "Cyberpunk néon"}
+    create_bk_resp = await client.post("/api/brand-kits", data=bk_form)
     assert create_bk_resp.status_code == 201
-    bk_data = create_bk_resp.json()
-    kit_id = bk_data["id"]
+    kit_id = create_bk_resp.json()["id"]
 
     list_bk_resp = await client.get("/api/brand-kits")
     assert list_bk_resp.status_code == 200
     assert any(k["id"] == kit_id for k in list_bk_resp.json())
 
     # --- UC-07 : Organiser les projets ---
-    proj_payload = {
-        "name": "Film Sci-Fi 2026",
-        "description": "Production cinématique futuriste",
-        "storagePath": str(custom_project_storage),
-    }
+    proj_payload = {"name": "Film Sci-Fi", "storagePath": str(custom_project_storage)}
     create_proj_resp = await client.post("/api/projects", json=proj_payload)
     assert create_proj_resp.status_code == 201
-    proj_data = create_proj_resp.json()
-    proj_id = proj_data["id"]
+    proj_id = create_proj_resp.json()["id"]
 
     # --- UC-01 & UC-03 : Produire un média & Suivre la génération via SSE ---
     gen_payload = {
-        "prompt": "Un agent cyborg marchant sous une pluie de néons",
-        "modelId": "wan-2.1-t2v",
-        "type": "video",
-        "brandKitId": kit_id,
-        "projectId": proj_id,
+        "prompt": "Un agent cyborg sous une pluie néon", "modelId": "wan-2.1-t2v",
+        "type": "video", "brandKitId": kit_id, "projectId": proj_id,
         "parameters": {"aspectRatio": "16:9", "duration": "5s", "seed": 101},
     }
     gen_submit_resp = await client.post("/api/generate/media", json=gen_payload)
@@ -273,11 +261,7 @@ async def test_full_pipeline_uc01_to_uc08(
     # --- UC-04 : Annuler une génération ---
     cancel_submit_resp = await client.post(
         "/api/generate/media",
-        json={
-            "prompt": "Génération longue à interrompre",
-            "modelId": "wan-2.1-t2v",
-            "type": "video",
-        },
+        json={"prompt": "Génération à annuler", "modelId": "wan-2.1-t2v", "type": "video"},
     )
     assert cancel_submit_resp.status_code == 202
     task_to_cancel_id = cancel_submit_resp.json()["taskId"]
@@ -295,7 +279,7 @@ async def test_full_pipeline_uc01_to_uc08(
     # --- UC-02 : Interagir avec l'assistant textuel IA (LLM Proxy) ---
     chat_payload = {
         "model": "llama-3-8b-instruct",
-        "messages": [{"role": "user", "content": "Rédige un slogan court pour NovaCyber"}],
+        "messages": [{"role": "user", "content": "Slogan NovaCyber"}],
         "stream": True,
     }
     chat_lines = []

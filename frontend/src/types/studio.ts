@@ -47,6 +47,7 @@ export interface BrandKit {
 
 export interface ColabConfig {
   tunnelUrl: string; accountEmail?: string | null; lastPing?: string | null;
+  secret?: string | null;
   gpuName?: string | null; vramTotalMb?: number | null; vramUsedMb?: number | null;
 }
 export interface LocalConfig { device: string; threads: number; workerUrl: string; }
