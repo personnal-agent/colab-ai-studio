@@ -164,6 +164,8 @@ Git hooks are active (`core.hooksPath=.githooks`) — never bypass them. **Singl
 
 <governance source=".github/workflows/governance.yml">PR title and every commit must follow Conventional Commits; PR size ≤ 2000 changed lines of code, blocking above that (`.md`/`.markdown`/`.rst`/`.txt`/`.pdf`/`.docx`/`.csv`/`.svg`/`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp` excluded; exemption strictly restricted to initial repository bootstrap PR #1).</governance>
 
+<release_strategy tool="semantic-release" config=".releaserc.json">Official releases are fully automated by Semantic Release (`.releaserc.json`, `.github/workflows/release.yml`) on `main` branch without npm package publishing. Conventional Commits (`fix:`, `feat:`, `feat!:`, `BREAKING CHANGE:`) calculate SemVer bumps (Patch, Minor, Major), generate changelog notes, and publish GitHub Releases with Git tags. Deployment environments (`environment: name: ...`) are strictly prohibited in the release workflow to prevent false deployment events in the GitHub UI.</release_strategy>
+
 </git_hygiene>
 
 ---
