@@ -8,6 +8,7 @@ vi.mock('../services/apiClient', () => ({
   apiClient: {
     getConfig: vi.fn(), getHealth: vi.fn(), listProjects: vi.fn(),
     listGenerations: vi.fn(), toggleFavorite: vi.fn(), cancelTask: vi.fn(), subscribeTaskStatus: vi.fn(),
+    listModels: vi.fn(), listBrandKits: vi.fn(), submitGeneration: vi.fn(),
   },
   getMediaFileUrl: (g: { filePath?: string | null }) => g.filePath || '',
   getMediaThumbnailUrl: (g: { thumbnailPath?: string | null; filePath?: string | null }) => g.thumbnailPath || g.filePath || '',
@@ -33,6 +34,8 @@ describe('App Integration', () => {
       worker: { reachable: true, executionMode: 'colab', gpuName: 'NVIDIA A100-SXM4-40GB', vramTotalMb: 40960, vramUsedMb: 8200, latencyMs: 42 },
     } as unknown as HealthResponse);
     vi.mocked(apiClient.listProjects).mockResolvedValue([]);
+    vi.mocked(apiClient.listModels).mockResolvedValue([]);
+    vi.mocked(apiClient.listBrandKits).mockResolvedValue([]);
     vi.mocked(apiClient.listGenerations).mockResolvedValue([mockGen]);
   });
 
