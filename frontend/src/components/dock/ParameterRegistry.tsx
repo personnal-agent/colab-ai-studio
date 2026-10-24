@@ -81,9 +81,9 @@ export const ParameterRegistry: React.FC<ParameterRegistryProps> = ({
 
   // Détection des capacités
   const showAspect =
-    mode !== 'upscale' && (caps?.aspectRatios || ['image', 'video', 'lip_sync'].includes(mode));
+    mode !== 'upscale' && Boolean(caps?.aspectRatios?.length);
   const showResolution =
-    Boolean(caps?.resolutions?.length) || (mode !== 'lip_sync' && ['image', 'video', 'upscale'].includes(mode));
+    Boolean(caps?.resolutions?.length);
   const showDuration =
     mode === 'video' && caps?.durations !== undefined;
   const showAudio =
