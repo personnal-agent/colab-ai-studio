@@ -111,21 +111,27 @@ class TaskOrchestrator:
                     kit = BrandKit.model_validate(match)
 
             max_image_refs = 4
-            try:
-                models = await self._gateway.list_models()
-                m_info = next((m for m in models if m.get("id") == req.modelId), None)
-                if m_info:
-                    caps = m_info.get("capabilities", {})
-                    if not caps.get("supportsImageRef", True):
-                        max_image_refs = 0
-                    else:
-                        max_image_refs = caps.get("maxImageRefs", 4)
-            except Exception as e:
-                logger.debug(
-                    "Échec détection capacités modèle %s pour max_image_refs : %s",
-                    req.modelId,
-                    e,
-                )
+            if req.type == "text" or "text" in req.modelId.lower() or "llm" in req.modelId.lower():
+                max_image_refs = 0
+            else:
+                try:
+                    models = await self._gateway.list_models()
+                    m_info = next((m for m in models if m.get("id") == req.modelId), None)
+                    if m_info:
+                        if m_info.get("type") == "text":
+                            max_image_refs = 0
+                        else:
+                            caps = m_info.get("capabilities", {})
+                            if not caps.get("supportsImageRef", True):
+                                max_image_refs = 0
+                            else:
+                                max_image_refs = caps.get("maxImageRefs", 4)
+                except Exception as e:
+                    logger.debug(
+                        "Échec détection capacités modèle %s pour max_image_refs : %s",
+                        req.modelId,
+                        e,
+                    )
 
             # Compilation du Brand Kit avec llm_config
             compiled = await self._compiler.compile(
@@ -138,8 +144,8 @@ class TaskOrchestrator:
 
             gen_id = f"gen_{uuid.uuid4().hex[:10]}"
             refs = req.references.model_copy()
-            if compiled.image_refs:
-                refs.imageRefs = compiled.image_refs
+            # Remplacement systématique de refs.imageRefs par le résultat compilé (même vide)
+            refs.imageRefs = compiled.image_refs
 
             gen = Generation(
                 id=gen_id,
@@ -181,12 +187,29 @@ class TaskOrchestrator:
         for queue in list(self._listeners.get(task_id, [])):
             await queue.put(event)
 
-    async def _update_generation(self, gen_id: str, **kwargs: Any) -> Generation | None:
-        """Met à jour atomiquement une génération dans generations.json."""
+    async def _update_generation(
+        self, gen_id: str, allow_from_terminal: bool = False, **kwargs: Any
+    ) -> Generation | None:
+        """Met à jour atomiquement une génération en sanctuarisant les états terminaux."""
         async with self._json_store.lock_for(GENERATIONS_FILE.name):
             gens = await self._json_store.read_list_unlocked(GENERATIONS_FILE.name)
             for idx, g in enumerate(gens):
                 if g.get("id") == gen_id:
+                    old_status = g.get("status")
+                    terminal_statuses = {
+                        TaskStatus.COMPLETED.value,
+                        TaskStatus.CANCELLED.value,
+                        TaskStatus.FAILED.value,
+                    }
+                    if not allow_from_terminal and old_status in terminal_statuses:
+                        logger.warning(
+                            "Tâche %s déjà dans l'état terminal '%s'. Rejet écrasement vers '%s'.",
+                            gen_id,
+                            old_status,
+                            kwargs.get("status"),
+                        )
+                        return Generation.model_validate(g)
+
                     g.update(kwargs)
                     gens[idx] = g
                     await self._json_store.write_list_unlocked(GENERATIONS_FILE.name, gens)
@@ -322,6 +345,13 @@ class TaskOrchestrator:
                         thumbnailPath=str(thumb_file) if thumb_file else None,
                         progress=100,
                     )
+                    # Si l'annulation a gagné entre-temps sous le verrou
+                    if saved_gen and saved_gen.status == TaskStatus.CANCELLED:
+                        dest_file.unlink(missing_ok=True)
+                        if thumb_file:
+                            thumb_file.unlink(missing_ok=True)
+                        break
+
                     await self._emit_event(
                         gen_id,
                         {
@@ -335,6 +365,8 @@ class TaskOrchestrator:
                     break
                 elif remote_status == "failed":
                     err_msg = status_resp.get("error", "Erreur distante inconnue")
+                    with contextlib.suppress(Exception):
+                        await self._gateway.cancel_task(gen_id, base_url=target_worker_url)
                     await self._update_generation(
                         gen_id, status=TaskStatus.FAILED.value, errorMessage=err_msg
                     )
@@ -347,11 +379,16 @@ class TaskOrchestrator:
                 await asyncio.sleep(self._poll_interval)
 
         except Exception as e:
-            logger.exception("Échec exécution tâche %s : %s", gen_id, e)
-            await self._update_generation(
-                gen_id, status=TaskStatus.FAILED.value, errorMessage=str(e)
-            )
-            await self._emit_event(gen_id, {"type": "failed", "status": "failed", "error": str(e)})
+            if not cancel_evt.is_set():
+                logger.exception("Échec exécution tâche %s : %s", gen_id, e)
+                with contextlib.suppress(Exception):
+                    await self._gateway.cancel_task(gen_id, base_url=target_worker_url)
+                await self._update_generation(
+                    gen_id, status=TaskStatus.FAILED.value, errorMessage=str(e)
+                )
+                await self._emit_event(
+                    gen_id, {"type": "failed", "status": "failed", "error": str(e)}
+                )
         finally:
             self._active_tasks.pop(gen_id, None)
             if not self._listeners.get(gen_id):
@@ -399,34 +436,38 @@ class TaskOrchestrator:
                         self._cancel_events.pop(task_id, None)
 
     async def cancel_task(self, task_id: str) -> dict[str, Any]:
-        """Annule une tâche de façon idempotente."""
-        gens = await self._json_store.read_list(GENERATIONS_FILE.name)
-        current = next((g for g in gens if g.get("id") == task_id), None)
-        if not current:
-            return {"status": "not_found", "taskId": task_id}
-
-        cur_status = current.get("status")
-        if cur_status == TaskStatus.COMPLETED.value:
-            return {
-                "status": TaskStatus.COMPLETED.value,
-                "taskId": task_id,
-                "detail": "Tâche déjà terminée",
-            }
-        if cur_status == TaskStatus.CANCELLED.value:
-            return {"status": TaskStatus.CANCELLED.value, "taskId": task_id}
-
+        """Annule une tâche de façon idempotente et atomique."""
         evt = self._cancel_events.get(task_id)
         if evt:
             evt.set()
 
-        worker_url = current.get("workerUrl")
-        await self._gateway.cancel_task(task_id, base_url=worker_url)
+        worker_url = None
+        async with self._json_store.lock_for(GENERATIONS_FILE.name):
+            gens = await self._json_store.read_list_unlocked(GENERATIONS_FILE.name)
+            target = next((g for g in gens if g.get("id") == task_id), None)
+            if not target:
+                return {"status": "not_found", "taskId": task_id}
 
-        await self._update_generation(
-            task_id,
-            status=TaskStatus.CANCELLED.value,
-            errorMessage="Annulée par l'utilisateur",
-        )
+            cur_status = target.get("status")
+            if cur_status == TaskStatus.COMPLETED.value:
+                return {
+                    "status": TaskStatus.COMPLETED.value,
+                    "taskId": task_id,
+                    "detail": "Tâche déjà terminée",
+                }
+            if cur_status == TaskStatus.CANCELLED.value:
+                return {"status": TaskStatus.CANCELLED.value, "taskId": task_id}
+
+            worker_url = target.get("workerUrl")
+            target["status"] = TaskStatus.CANCELLED.value
+            target["errorMessage"] = "Annulée par l'utilisateur"
+            await self._json_store.write_list_unlocked(GENERATIONS_FILE.name, gens)
+
+        # Notification au worker en dehors du verrou
+        if worker_url:
+            await self._gateway.cancel_task(task_id, base_url=worker_url)
+        else:
+            await self._gateway.cancel_task(task_id)
 
         await self._emit_event(
             task_id,

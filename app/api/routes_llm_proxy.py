@@ -115,6 +115,7 @@ async def chat_completions_proxy(
                 await asyncio.sleep(0.1)
 
         disconnect_task = asyncio.create_task(watch_disconnect())
+        completed_normally = False
         try:
             async with gateway._http_client.stream(
                 "POST",
@@ -131,6 +132,12 @@ async def chat_completions_proxy(
 
                     if line:
                         yield f"{line}\n\n"
+                        if "[DONE]" in line:
+                            completed_normally = True
+        except (asyncio.CancelledError, GeneratorExit):
+            stop_event.set()
+            await cancel_upstream()
+            raise
         except Exception as e:
             if not stop_event.is_set() and not await request.is_disconnected():
                 logger.error("Erreur relayage stream LLM %s : %s", request_id, e)
@@ -138,6 +145,8 @@ async def chat_completions_proxy(
                 yield f"data: {err_data}\n\n"
         finally:
             stop_event.set()
+            if not completed_normally:
+                await cancel_upstream()
             disconnect_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
                 await disconnect_task

@@ -7,12 +7,12 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 
-from app.api.routes_crud import verify_trusted_origin
+from app.api.routes_crud import get_json_store, get_media_store, verify_trusted_origin
 from app.services.task_orchestrator import GenerationCreateRequest, TaskOrchestrator
 
 router = APIRouter(prefix="/api", tags=["Génération"])
 
-_default_orchestrator = TaskOrchestrator()
+_default_orchestrator = TaskOrchestrator(json_store=get_json_store(), media_store=get_media_store())
 
 
 def get_task_orchestrator() -> TaskOrchestrator:

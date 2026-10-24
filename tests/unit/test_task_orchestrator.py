@@ -10,6 +10,7 @@ from app.models.domain import (
     Asset,
     BrandKit,
     Color,
+    Generation,
     GenerationParameters,
     GenerationReferences,
     TaskStatus,
@@ -145,3 +146,44 @@ async def test_task_failure_on_worker_error(stores):
     assert (
         saved["status"] == TaskStatus.FAILED.value and "CUDA out of memory" in saved["errorMessage"]
     )
+
+
+@pytest.mark.asyncio
+async def test_terminal_state_sanctuary(stores):
+    js, ms = stores
+    gen_dummy = Generation(
+        id="gen_term_1",
+        status=TaskStatus.CANCELLED,
+        prompt="p",
+        modelId="m",
+        modelName="M",
+        parameters=GenerationParameters(seed=0),
+        errorMessage="Cancelled",
+    )
+    await js.write_list("generations.json", [gen_dummy.model_dump()])
+    orch = TaskOrchestrator(js, ms, MockWorkerGateway(), BrandContextCompiler())
+
+    # Tentative d'écraser vers COMPLETED
+    updated = await orch._update_generation(
+        "gen_term_1", status=TaskStatus.COMPLETED.value, progress=100
+    )
+    assert updated.status == TaskStatus.CANCELLED
+
+    saved = next(g for g in await js.read_list("generations.json") if g["id"] == "gen_term_1")
+    assert saved["status"] == TaskStatus.CANCELLED.value
+
+
+@pytest.mark.asyncio
+async def test_text_only_model_clears_image_refs(stores):
+    js, ms = stores
+    await js.write_list("generations.json", [])
+    orch = TaskOrchestrator(js, ms, MockWorkerGateway(), BrandContextCompiler())
+
+    req = GenerationCreateRequest(
+        prompt="Write a poem",
+        modelId="qwen2.5-7b-instruct",
+        type="text",
+        references=GenerationReferences(imageRefs=["data/assets/dummy.png"]),
+    )
+    gen = await orch.submit_generation(req)
+    assert gen.references.imageRefs == []

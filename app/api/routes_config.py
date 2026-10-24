@@ -8,21 +8,19 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.api.routes_crud import verify_trusted_origin
+from app.api.routes_crud import get_json_store, verify_trusted_origin
 from app.api.routes_generation import get_task_orchestrator
-from app.config import CONFIG_FILE, DATA_DIR, GENERATIONS_FILE
+from app.config import CONFIG_FILE, GENERATIONS_FILE
 from app.models.domain import ExecutionMode, StudioConfig, TaskStatus
 from app.services.task_orchestrator import TaskOrchestrator
 from app.storage.json_store import JSONDocumentStore
 
 router = APIRouter(prefix="/api/config", tags=["Configuration"])
 
-_default_store = JSONDocumentStore(DATA_DIR)
-
 
 def get_config_store() -> JSONDocumentStore:
     """Fournisseur de dépendance pour le store JSON de configuration."""
-    return _default_store
+    return get_json_store()
 
 
 def _mask_config_secrets(cfg_dict: dict[str, Any]) -> dict[str, Any]:

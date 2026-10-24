@@ -316,12 +316,21 @@ async def test_brand_kit_favicon_resolves_against_redirect_url(test_env, monkeyp
 
 
 async def test_config_colab_url_update(test_env):
-    client, _, _, _ = test_env
+    client, store, _, _ = test_env
+    await store.write_list("generations.json", [])
     res = await client.post(
         "/api/config/colab-url", json={"tunnelUrl": "https://active-tunnel-123.ngrok-free.app"}
     )
     assert res.status_code == 200
     assert res.json()["tunnelUrl"] == "https://active-tunnel-123.ngrok-free.app"
+
+    # Conflit si tâche active
+    await store.write_list("generations.json", [{"id": "gen_act_colab", "status": "running"}])
+    res_conflict = await client.post(
+        "/api/config/colab-url", json={"tunnelUrl": "https://other-tunnel.ngrok-free.app"}
+    )
+    assert res_conflict.status_code == 409
+    assert "gen_act_colab" in res_conflict.json()["activeTaskIds"]
 
 
 @pytest.mark.asyncio
