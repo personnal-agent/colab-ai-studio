@@ -69,7 +69,7 @@ async def chat_completions_proxy(
     # Si le client ne demande pas le streaming, appel synchrone simple
     if not payload.stream:
         try:
-            resp = await gateway._http_client.post(
+            resp = await gateway.http_client.post(
                 f"{base_url}/v1/chat/completions",
                 json=req_dict,
                 timeout=120.0,
@@ -94,10 +94,13 @@ async def chat_completions_proxy(
                     base_url,
                 )
                 try:
-                    await gateway._http_client.post(
-                        f"{base_url}/v1/chat/cancel",
-                        json={"requestId": request_id},
-                        timeout=5.0,
+                    # Sanctuarisé par asyncio.shield contre l'annulation ASGI
+                    await asyncio.shield(
+                        gateway.http_client.post(
+                            f"{base_url}/v1/chat/cancel",
+                            json={"requestId": request_id},
+                            timeout=5.0,
+                        )
                     )
                 except Exception as cancel_err:
                     logger.warning(
@@ -117,7 +120,7 @@ async def chat_completions_proxy(
         disconnect_task = asyncio.create_task(watch_disconnect())
         completed_normally = False
         try:
-            async with gateway._http_client.stream(
+            async with gateway.http_client.stream(
                 "POST",
                 url,
                 json=req_dict,

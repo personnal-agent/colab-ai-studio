@@ -42,6 +42,11 @@ class WorkerGateway:
         self._custom_client = http_client is not None
         self._http_client = http_client or httpx.AsyncClient(timeout=10.0)
 
+    @property
+    def http_client(self) -> httpx.AsyncClient:
+        """Accès contrôlé au client HTTP asynchrone."""
+        return self._http_client
+
     async def aclose(self) -> None:
         """Ferme les ressources réseau associées si créées en interne."""
         if not self._custom_client and not self._http_client.is_closed:
@@ -198,10 +203,14 @@ class WorkerGateway:
         parsed_base = httpx.URL(base_url)
         if file_path_or_url.startswith(("http://", "https://")):
             parsed_target = httpx.URL(file_path_or_url)
-            if parsed_target.host != parsed_base.host or parsed_target.port != parsed_base.port:
+            if (
+                parsed_target.scheme != parsed_base.scheme
+                or parsed_target.host != parsed_base.host
+                or parsed_target.port != parsed_base.port
+            ):
                 msg = (
                     f"Accès refusé : l'artéfact {file_path_or_url} n'appartient pas au worker "
-                    f"({parsed_base.host})"
+                    f"({parsed_base.scheme}://{parsed_base.host})"
                 )
                 raise ValueError(msg)
             url = str(parsed_target)

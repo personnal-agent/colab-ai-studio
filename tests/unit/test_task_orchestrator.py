@@ -130,6 +130,19 @@ async def test_cancel_already_completed_task_does_not_modify(stores):
 
 
 @pytest.mark.asyncio
+async def test_cancel_already_failed_task_does_not_modify(stores):
+    js, ms = stores
+    await js.write_list(
+        "generations.json", [{"id": "gen_failed", "status": TaskStatus.FAILED.value}]
+    )
+    worker = MockWorkerGateway()
+    orch = TaskOrchestrator(js, ms, worker, BrandContextCompiler())
+
+    res = await orch.cancel_task("gen_failed")
+    assert res["status"] == TaskStatus.FAILED.value and "gen_failed" not in worker.cancelled_tasks
+
+
+@pytest.mark.asyncio
 async def test_task_failure_on_worker_error(stores):
     js, ms = stores
     await js.write_list("generations.json", [])
@@ -187,3 +200,24 @@ async def test_text_only_model_clears_image_refs(stores):
     )
     gen = await orch.submit_generation(req)
     assert gen.references.imageRefs == []
+
+
+@pytest.mark.asyncio
+async def test_subscribe_task_orphaned_exits_cleanly(stores):
+    js, ms = stores
+    gen = Generation(
+        id="gen_orphan_test",
+        status=TaskStatus.RUNNING,
+        prompt="p",
+        modelId="m",
+        modelName="M",
+        parameters=GenerationParameters(seed=0),
+    )
+    await js.write_list("generations.json", [gen.model_dump()])
+    orch = TaskOrchestrator(js, ms, MockWorkerGateway(), BrandContextCompiler())
+
+    events = []
+    async for evt in orch.subscribe_task("gen_orphan_test", keepalive_timeout=0.05):
+        events.append(evt)
+    assert len(events) == 1
+    assert "running" in events[0]

@@ -394,8 +394,10 @@ class TaskOrchestrator:
             if not self._listeners.get(gen_id):
                 self._cancel_events.pop(gen_id, None)
 
-    async def subscribe_task(self, task_id: str) -> AsyncGenerator[str, None]:
-        """Générateur SSE pour streamer les événements d'une tâche en temps réel."""
+    async def subscribe_task(
+        self, task_id: str, keepalive_timeout: float = 15.0
+    ) -> AsyncGenerator[str, None]:
+        """Générateur SSE pour streamer les événements d'une tâche avec keep-alive."""
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._listeners[task_id].append(queue)
 
@@ -420,12 +422,39 @@ class TaskOrchestrator:
                 }:
                     return
 
+            # Si la tâche n'est pas ou plus active en arrière-plan, clore le flux
+            if task_id not in self._active_tasks:
+                return
+
             while True:
-                event = await queue.get()
-                ev_type = event.get("type", "message")
-                yield f"event: {ev_type}\ndata: {json.dumps(event)}\n\n"
-                if ev_type in {"completed", "failed", "cancelled"}:
-                    break
+                try:
+                    event = await asyncio.wait_for(queue.get(), timeout=keepalive_timeout)
+                    ev_type = event.get("type", "message")
+                    yield f"event: {ev_type}\ndata: {json.dumps(event)}\n\n"
+                    if ev_type in {"completed", "failed", "cancelled"}:
+                        break
+                except asyncio.TimeoutError:
+                    yield ": keep-alive\n\n"
+                    if task_id not in self._active_tasks:
+                        gens = await self._json_store.read_list(GENERATIONS_FILE.name)
+                        latest = next((g for g in gens if g.get("id") == task_id), None)
+                        if latest:
+                            lat_st = latest.get("status")
+                            if lat_st in {
+                                TaskStatus.COMPLETED.value,
+                                TaskStatus.FAILED.value,
+                                TaskStatus.CANCELLED.value,
+                            }:
+                                p = {
+                                    "type": lat_st,
+                                    "status": lat_st,
+                                    "progress": latest.get("progress", 0),
+                                    "filePath": latest.get("filePath"),
+                                    "error": latest.get("errorMessage"),
+                                    "generation": latest,
+                                }
+                                yield f"event: {lat_st}\ndata: {json.dumps(p)}\n\n"
+                        break
         finally:
             if task_id in self._listeners:
                 if queue in self._listeners[task_id]:
@@ -449,14 +478,16 @@ class TaskOrchestrator:
                 return {"status": "not_found", "taskId": task_id}
 
             cur_status = target.get("status")
-            if cur_status == TaskStatus.COMPLETED.value:
+            if cur_status in {
+                TaskStatus.COMPLETED.value,
+                TaskStatus.CANCELLED.value,
+                TaskStatus.FAILED.value,
+            }:
                 return {
-                    "status": TaskStatus.COMPLETED.value,
+                    "status": cur_status,
                     "taskId": task_id,
-                    "detail": "Tâche déjà terminée",
+                    "detail": f"Tâche déjà dans l'état terminal '{cur_status}'",
                 }
-            if cur_status == TaskStatus.CANCELLED.value:
-                return {"status": TaskStatus.CANCELLED.value, "taskId": task_id}
 
             worker_url = target.get("workerUrl")
             target["status"] = TaskStatus.CANCELLED.value

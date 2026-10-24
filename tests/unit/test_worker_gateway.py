@@ -159,6 +159,10 @@ async def test_worker_gateway_download_file_anti_ssrf(store):
     with pytest.raises(ValueError, match="Accès refusé"):
         await gw.download_file("http://attacker.com/steal")
 
+    # 2b. Schéma différent rejeté (ex: https au lieu de http)
+    with pytest.raises(ValueError, match="Accès refusé"):
+        await gw.download_file("https://127.0.0.1:8190/files/output.mp4")
+
     # 3. URL légitime vers le worker local autorisée
     res1 = await gw.download_file("output.mp4")
     assert res1 == b"BIN_OK"
