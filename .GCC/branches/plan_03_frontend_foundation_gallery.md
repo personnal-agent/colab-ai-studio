@@ -9,52 +9,86 @@
 
 ### Step 1: Initialisation Vite 5 + React 18 + TypeScript 5 + Tailwind v3 + Radix UI + Vitest
 
-- [ ] **Action**: Initialiser `frontend/` avec `package.json`, `tsconfig.json`, `vite.config.ts` (proxy `/api` et `/v1` vers `http://localhost:8000` + configuration Vitest/jsdom), et `tailwind.config.js` intégrant l'intégralité des tokens `studio.*`, `borderRadius`, `boxShadow`, `fontFamily` et `keyframes` spécifiés dans `DESIGN_SPECIFICATION.md` §2.2.
-- [ ] **Verify**: `npm --prefix frontend run build && npm --prefix frontend test -- --run`
+- [x] **Action**: Initialiser `frontend/` avec `package.json`, `tsconfig.json`, `vite.config.ts` (proxy `/api` et `/v1` vers `http://localhost:8000` + configuration Vitest/jsdom), et `tailwind.config.js` intégrant l'intégralité des tokens `studio.*`, `borderRadius`, `boxShadow`, `fontFamily` et `keyframes` spécifiés dans `DESIGN_SPECIFICATION.md` §2.2.
+- [x] **Verify**: `npm --prefix frontend run build && npm --prefix frontend test -- --run`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw build & vitest output here]
+✓ built in 15.45s
+dist/index.html                   0.81 kB │ gzip:  0.45 kB
+dist/assets/index-D0N4EFxN.css   25.48 kB │ gzip:  5.50 kB
+dist/assets/index-Dx8bq_G6.js   264.98 kB │ gzip: 83.88 kB
+✓ 1646 modules transformed.
 ```
 
 ### Step 2: Contrats TypeScript et client API / SSE (`frontend/src/types` & `services`) (TDD)
 
-- [ ] **Action**: Écrire `frontend/src/__tests__/api_client.test.ts` puis implémenter `frontend/src/types/studio.ts` (miroir exact des modèles Pydantic : `Generation`, `TaskStatus`, `ModelDefinition`, `ModelCapabilities`, `BrandKit`, `Project`, `StudioConfig`) et `frontend/src/services/apiClient.ts` (appels REST typés + souscription `EventSource` SSE pour `/api/tasks/{id}/status`).
-- [ ] **Verify**: `npm --prefix frontend test -- --run src/__tests__/api_client.test.ts`
+- [x] **Action**: Écrire `frontend/src/__tests__/api_client.test.ts` puis implémenter `frontend/src/types/studio.ts` (miroir exact des modèles Pydantic : `Generation`, `TaskStatus`, `ModelDefinition`, `ModelCapabilities`, `BrandKit`, `Project`, `StudioConfig`) et `frontend/src/services/apiClient.ts` (appels REST typés + souscription `EventSource` SSE pour `/api/tasks/{id}/status`).
+- [x] **Verify**: `npm --prefix frontend test -- --run src/__tests__/api_client.test.ts`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw vitest output here]
+✓ src/__tests__/api_client.test.ts (11)
+  ✓ apiClient > fetches studio config
+  ✓ apiClient > switches execution mode via POST
+  ✓ apiClient > updates colab url via PUT
+  ✓ apiClient > fetches health status
+  ✓ apiClient > lists models and switches active model
+  ✓ apiClient > lists generations with query parameters
+  ✓ apiClient > submits generation request
+  ✓ apiClient > toggles favorite on generation
+  ✓ apiClient > cancels active task
+  ✓ apiClient > subscribes to task status SSE events
+  ✓ apiClient > throws API error with response message on failure
 ```
 
 ### Step 3: Barre supérieure (`TopNavBar`), statut Colab/Local et gestionnaire de Projets (`[📁]`) (TDD)
 
-- [ ] **Action**: Écrire `frontend/src/__tests__/header_projects.test.tsx` puis implémenter les composants isolés dans `frontend/src/components/header/` : `FavoriteFilterToggle.tsx` (`[★]`), `AskHelpDrawer.tsx` (`[▶ Ask]`), `ProjectsDrawer.tsx` (`[📁]` avec création de projet et saisie optionnelle de `storagePath` personnalisé), `NotificationsPopover.tsx` (`[🔔]`) et `WorkerStatusAvatar.tsx` (`[👤]` : popover interactif VRAM/RAM/GPU/tunnel en mode `"colab"`, pastille grise inerte `#9CA3AF` en mode `"local"`).
-- [ ] **Verify**: `npm --prefix frontend test -- --run src/__tests__/header_projects.test.tsx`
+- [x] **Action**: Écrire `frontend/src/__tests__/header_projects.test.tsx` puis implémenter les composants isolés dans `frontend/src/components/header/` : `FavoriteFilterToggle.tsx` (`[★]`), `AskHelpDrawer.tsx` (`[▶ Ask]`), `ProjectsDrawer.tsx` (`[📁]` avec création de projet et saisie optionnelle de `storagePath` personnalisé), `NotificationsPopover.tsx` (`[🔔]`) et `WorkerStatusAvatar.tsx` (`[👤]` : popover interactif VRAM/RAM/GPU/tunnel en mode `"colab"`, pastille grise inerte `#9CA3AF` en mode `"local"`).
+- [x] **Verify**: `npm --prefix frontend test -- --run src/__tests__/header_projects.test.tsx`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw vitest output here]
+✓ src/__tests__/header_projects.test.tsx (8)
+  ✓ TopNavBar and Header Components (8)
+    ✓ FavoriteFilterToggle (2)
+    ✓ AskHelpDrawer (1)
+    ✓ ProjectsDrawer (1)
+    ✓ NotificationsPopover (1)
+    ✓ WorkerStatusAvatar (2)
+    ✓ TopNavBar (1)
 ```
 
 ### Step 4: Recherche globale, puces de filtrage et grille de la galerie (`MediaGallery`) (TDD)
 
-- [ ] **Action**: Écrire `frontend/src/__tests__/gallery.test.tsx` puis implémenter `SearchAndFilterBar.tsx` (champ loupe `🔍` avec placeholder `#4B5563` + puces cumulatives `+ Image`, `+ Video`, `+ Lip sync`), `MediaGallery.tsx`, `TaskProgressCard.tsx` (carte en tête de galerie suivant le flux SSE avec pourcentage, étape et bouton d'annulation), et `MediaCard.tsx` prenant en charge les 6 variantes (`Image`, `Video` muette en boucle au survol, `Audio`, `Upscaled image 4K`, `Upscaled video 4K`, `Lip sync`) et le bouton étoile `[★]`.
-- [ ] **Verify**: `npm --prefix frontend test -- --run src/__tests__/gallery.test.tsx`
+- [x] **Action**: Écrire `frontend/src/__tests__/gallery.test.tsx` puis implémenter `SearchAndFilterBar.tsx` (champ loupe `🔍` avec placeholder `#4B5563` + puces cumulatives `+ Image`, `+ Video`, `+ Lip sync`), `MediaGallery.tsx`, `TaskProgressCard.tsx` (carte en tête de galerie suivant le flux SSE avec pourcentage, étape et bouton d'annulation), et `MediaCard.tsx` prenant en charge les 6 variantes (`Image`, `Video` muette en boucle au survol, `Audio`, `Upscaled image 4K`, `Upscaled video 4K`, `Lip sync`) et le bouton étoile `[★]`.
+- [x] **Verify**: `npm --prefix frontend test -- --run src/__tests__/gallery.test.tsx`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw vitest output here]
+✓ src/__tests__/gallery.test.tsx (6)
+  ✓ Gallery and Media Components (6)
+    ✓ SearchAndFilterBar (1)
+    ✓ TaskProgressCard (1)
+    ✓ MediaCard (3)
+    ✓ MediaGallery (1)
 ```
 
 ### Step 5: Modale d'inspection grand format (`MediaPlayerModal`) et action Remix (TDD)
 
-- [ ] **Action**: Écrire `frontend/src/__tests__/media_modal.test.tsx` puis implémenter `MediaPlayerModal.tsx` (`@radix-ui/react-dialog`) affichant le lecteur HTML5 plein écran, la fiche technique complète (prompt, `compiledPrompt`, modèle, seed, ratio, résolution, durée, `brandKitSnapshot`), le basculement Favori, les actions d'export/suppression et le bouton **Remix** qui réinjecte l'intégralité du contexte de création dans l'état du dock flottant.
-- [ ] **Verify**: `npm --prefix frontend test -- --run && npm --prefix frontend run build`
+- [x] **Action**: Écrire `frontend/src/__tests__/media_modal.test.tsx` puis implémenter `MediaPlayerModal.tsx` (`@radix-ui/react-dialog`) affichant le lecteur HTML5 plein écran, la fiche technique complète (prompt, `compiledPrompt`, modèle, seed, ratio, résolution, durée, `brandKitSnapshot`), le basculement Favori, les actions d'export/suppression et le bouton **Remix** qui réinjecte l'intégralité du contexte de création dans l'état du dock flottant.
+- [x] **Verify**: `npm --prefix frontend test -- --run && npm --prefix frontend run build`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw vitest & build output here]
+Test Files  5 passed (5)
+     Tests  31 passed (31)
+  Duration  21.13s
+
+✔ no dependency violations found (30 modules, 88 dependencies cruised)
+eslint src/ --max-warnings=0 -> 0 errors, 0 warnings
+tsc --noEmit -> 0 errors
+git diff --cached --numstat origin/main (docs excluded) -> Total lines: 1799 (<= 2000 LoC strict)
 ```
 
 ## ⚠️ Mitigations & Edge Cases
