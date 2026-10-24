@@ -31,40 +31,48 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
   const canAddIngredient = !isOverLimit && (canAddImage || canAddVideo);
   const ingredientAccept = canAddVideo ? (canAddImage ? 'image/*,video/*' : 'video/*') : 'image/*';
 
-  // Gestion propriétaire du cycle de vie des Object URLs créées localement
   const createdUrlsRef = useRef<Set<string>>(new Set());
 
-  const safeRevoke = (url?: string | null) => {
-    if (url && typeof url === 'string' && url.startsWith('blob:') && createdUrlsRef.current.has(url)) {
-      try { URL.revokeObjectURL(url); } catch { /* ignore */ }
-      createdUrlsRef.current.delete(url);
+  const isUrlReferenced = (url: string, refs: GenerationReferences) => {
+    if (refs.startFrame === url || refs.endFrame === url || refs.upscaleSource === url) return true;
+    if (refs.imageRefs?.some((u) => u === url)) return true;
+    if (refs.videoRefs?.some((u) => u === url)) return true;
+    if (refs.audioRefs?.some((u) => u === url)) return true;
+    return false;
+  };
+
+  const safeRevokeIfNotReferenced = (url: string | null | undefined, nextRefs: GenerationReferences) => {
+    if (url && typeof url === 'string' && url.startsWith('blob:')) {
+      if (!isUrlReferenced(url, nextRefs)) {
+        try { URL.revokeObjectURL(url); } catch { /* ignore */ }
+        createdUrlsRef.current.delete(url);
+      }
     }
   };
 
-  // Synchronisation des révocations lors des réinitialisations parentes
+  const updateReferences = (nextRefs: GenerationReferences) => {
+    const oldUrls = [
+      references.startFrame, references.endFrame, references.upscaleSource,
+      ...(references.imageRefs || []), ...(references.videoRefs || []), ...(references.audioRefs || []),
+    ].filter((u): u is string => Boolean(u));
+
+    oldUrls.forEach((u) => safeRevokeIfNotReferenced(u, nextRefs));
+    onReferencesChange(nextRefs);
+  };
+
   const prevRefsRef = useRef(references);
   useEffect(() => {
     const prev = prevRefsRef.current;
-    const current = new Set<string>([
-      references.startFrame, references.endFrame, references.upscaleSource,
-      ...(references.imageRefs || []), ...(references.videoRefs || []), ...(references.audioRefs || []),
-    ].filter((u): u is string => Boolean(u)));
+    if (prev !== references) {
+      const prevUrls = [
+        prev.startFrame, prev.endFrame, prev.upscaleSource,
+        ...(prev.imageRefs || []), ...(prev.videoRefs || []), ...(prev.audioRefs || []),
+      ].filter((u): u is string => Boolean(u));
 
-    const checkAndRevoke = (url?: string | null) => {
-      if (url && !current.has(url)) safeRevoke(url);
-    };
-    [prev.startFrame, prev.endFrame, prev.upscaleSource, ...(prev.imageRefs || []), ...(prev.videoRefs || []), ...(prev.audioRefs || [])].forEach(checkAndRevoke);
-    prevRefsRef.current = references;
+      prevUrls.forEach((u) => safeRevokeIfNotReferenced(u, references));
+      prevRefsRef.current = references;
+    }
   });
-
-  // Nettoyage au démontage
-  useEffect(() => {
-    const localUrls = createdUrlsRef.current;
-    return () => {
-      localUrls.forEach((url) => { try { URL.revokeObjectURL(url); } catch { /* ignore */ } });
-      localUrls.clear();
-    };
-  }, []);
 
   const handleFileSelect = (
     slotType: 'startFrame' | 'endFrame' | 'upscaleSource' | 'lipSyncImage' | 'lipSyncAudio' | 'ingredient',
@@ -74,40 +82,41 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
     createdUrlsRef.current.add(blobUrl);
 
     if (slotType === 'startFrame') {
-      safeRevoke(references.startFrame);
-      onReferencesChange({ ...references, startFrame: blobUrl });
+      updateReferences({ ...references, startFrame: blobUrl });
     } else if (slotType === 'endFrame') {
-      safeRevoke(references.endFrame);
-      onReferencesChange({ ...references, endFrame: blobUrl });
+      updateReferences({ ...references, endFrame: blobUrl });
     } else if (slotType === 'upscaleSource') {
       const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
-      safeRevoke(references.upscaleSource);
-      onReferencesChange({ ...references, upscaleSource: blobUrl, upscaleSourceType: isVideo ? 'video' : 'image' });
+      updateReferences({ ...references, upscaleSource: blobUrl, upscaleSourceType: isVideo ? 'video' : 'image' });
     } else if (slotType === 'lipSyncImage') {
-      references.imageRefs?.forEach(safeRevoke);
-      onReferencesChange({ ...references, imageRefs: [blobUrl] });
+      updateReferences({ ...references, imageRefs: [blobUrl] });
     } else if (slotType === 'lipSyncAudio') {
-      references.audioRefs?.forEach(safeRevoke);
-      onReferencesChange({ ...references, audioRefs: [blobUrl] });
+      updateReferences({ ...references, audioRefs: [blobUrl] });
     } else if (slotType === 'ingredient') {
       const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
       if (isVideo) {
-        if (!supportsVideoRef || videoRefs.length >= maxVideoRefs) { safeRevoke(blobUrl); return; }
-        onReferencesChange({ ...references, videoRefs: [...videoRefs, blobUrl] });
+        if (!supportsVideoRef || videoRefs.length >= maxVideoRefs) {
+          try { URL.revokeObjectURL(blobUrl); } catch { /* ignore */ }
+          createdUrlsRef.current.delete(blobUrl);
+          return;
+        }
+        updateReferences({ ...references, videoRefs: [...videoRefs, blobUrl] });
       } else {
-        if (imageRefs.length >= maxImageRefs) { safeRevoke(blobUrl); return; }
-        onReferencesChange({ ...references, imageRefs: [...imageRefs, blobUrl] });
+        if (imageRefs.length >= maxImageRefs) {
+          try { URL.revokeObjectURL(blobUrl); } catch { /* ignore */ }
+          createdUrlsRef.current.delete(blobUrl);
+          return;
+        }
+        updateReferences({ ...references, imageRefs: [...imageRefs, blobUrl] });
       }
     }
   };
 
   const removeIngredient = (idx: number, isVideo: boolean) => {
     if (isVideo) {
-      safeRevoke(videoRefs[idx]);
-      onReferencesChange({ ...references, videoRefs: videoRefs.filter((_, i) => i !== idx) });
+      updateReferences({ ...references, videoRefs: videoRefs.filter((_, i) => i !== idx) });
     } else {
-      safeRevoke(imageRefs[idx]);
-      onReferencesChange({ ...references, imageRefs: imageRefs.filter((_, i) => i !== idx) });
+      updateReferences({ ...references, imageRefs: imageRefs.filter((_, i) => i !== idx) });
     }
   };
 
@@ -135,14 +144,14 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
               <ReferenceSlot
                 label="Start frame" fileUrl={references.startFrame} accept="image/*"
                 onFileSelected={(f: File) => handleFileSelect('startFrame', f)}
-                onClear={() => { safeRevoke(references.startFrame); onReferencesChange({ ...references, startFrame: null }); }}
+                onClear={() => updateReferences({ ...references, startFrame: null })}
               />
             )}
             {supportsLastFrame && (
               <ReferenceSlot
                 label="End frame" fileUrl={references.endFrame} accept="image/*"
                 onFileSelected={(f: File) => handleFileSelect('endFrame', f)}
-                onClear={() => { safeRevoke(references.endFrame); onReferencesChange({ ...references, endFrame: null }); }}
+                onClear={() => updateReferences({ ...references, endFrame: null })}
               />
             )}
             {imageRefs.map((url, idx) => (
@@ -188,12 +197,12 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
             <ReferenceSlot
               label="Portrait source" fileUrl={imageRefs[0] || null} accept="image/*"
               onFileSelected={(f: File) => handleFileSelect('lipSyncImage', f)}
-              onClear={() => { imageRefs.forEach(safeRevoke); onReferencesChange({ ...references, imageRefs: [] }); }}
+              onClear={() => updateReferences({ ...references, imageRefs: [] })}
             />
             <ReferenceSlot
               label="Voix / Audio vocal" mediaType="audio" fileUrl={references.audioRefs?.[0] || null} accept="audio/*"
               onFileSelected={(f: File) => handleFileSelect('lipSyncAudio', f)}
-              onClear={() => { references.audioRefs?.forEach(safeRevoke); onReferencesChange({ ...references, audioRefs: [] }); }}
+              onClear={() => updateReferences({ ...references, audioRefs: [] })}
             />
           </>
         )}
@@ -203,7 +212,7 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
             label="Média source" fileUrl={references.upscaleSource}
             mediaType={references.upscaleSourceType || 'image'} accept="image/*,video/*"
             onFileSelected={(f: File) => handleFileSelect('upscaleSource', f)}
-            onClear={() => { safeRevoke(references.upscaleSource); onReferencesChange({ ...references, upscaleSource: null, upscaleSourceType: null }); }}
+            onClear={() => updateReferences({ ...references, upscaleSource: null, upscaleSourceType: null })}
           />
         )}
       </div>

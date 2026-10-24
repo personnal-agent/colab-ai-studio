@@ -132,6 +132,20 @@ describe('ConditioningTray & Video Subsumption', () => {
     expect(videoElem?.getAttribute('src')).toBe('blob:mock/render.mp4');
   });
 
+  it('does not revoke a blob URL on removal if it is still used elsewhere', () => {
+    const sharedUrl = 'blob:mock/shared.png';
+    window.URL.revokeObjectURL = vi.fn();
+    const ControlledShared = () => {
+      const [refs, setRefs] = useState<GenerationReferences>({ startFrame: sharedUrl, imageRefs: [sharedUrl] });
+      return <ConditioningTray mode="video" model={completeVideoModel} references={refs} onReferencesChange={setRefs} />;
+    };
+    render(<ControlledShared />);
+    fireEvent.click(screen.getByRole('button', { name: /supprimer la référence start frame/i }));
+    expect(window.URL.revokeObjectURL).not.toHaveBeenCalledWith(sharedUrl);
+    fireEvent.click(screen.getByRole('button', { name: /supprimer la référence réf 1/i }));
+    expect(window.URL.revokeObjectURL).toHaveBeenCalledWith(sharedUrl);
+  });
+
   it('hides conditioning tray in LLM mode', () => {
     const { container } = render(<ConditioningTray mode="llm" model={{ id: 'llama', name: 'Llama 3', type: 'text' }} references={{}} onReferencesChange={() => {}} />);
     expect(container.firstChild).toBeNull();
