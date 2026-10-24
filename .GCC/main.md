@@ -9,6 +9,7 @@
 - **2026-10-15** : Approbation formelle à 100% de la Pull Request #6 par Greptile (score 5/5, 0 issue bloquante) et CodeRabbit (statut `APPROVED`, 0 finding résiduel, 16/16 review threads résolus), puis fusion sur `main` (`90f8dcb`).
 - **2026-10-16** : Séquencement complet de l'implémentation logicielle et du backlog de tests TDD en une chaîne de 5 plans d'exécution sous `.GCC/branches/` (PR #7 fusionnée sur `main`, `046b9d9`).
 - **2026-10-16** : Durcissement intégral de la gouvernance anti-mauvais-code sur le modèle de `HIVE-MIND` pour encadrer l'écriture du code par `Gemini 3.8 Flash` (`.coderabbit.yaml` fail-closed `5/5 + 0 findings`, `codecov.yml` `100% patch / 90% project`, `.gitleaks.toml` + `detect-secrets.sh` staged/history, `.dependency-cruiser.cjs`, verrou `ALLOW_CONFIG_EDIT=1`, Semgrep SAST, `<layer_map>` à 5 couches et `codebase-memory-mcp` dans `AGENTS.md` / `CLAUDE.md`).
+- **2026-10-24** : Validation formelle et fusion sur `main` de la PR #10 par Léandre (Plan 01/05 : Socle FastAPI, Modèles de domaine, Persistance atomique JSON & médias, Extracteur Brand Kit avec anti-SSRF/anti-DNS rebinding, Routes CRUD documentaires) avec score Greptile 5/5, 0 issue bloquante, budget < 2000 LoC respecté et 100% des tests verts (`19156a6`).
 
 ## 🎯 Objective
 
@@ -66,10 +67,10 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
 
 ## 📈 Current Status
 
-- ✅ Terminé : Phase 1 (Spécifications et Modélisation UML fusionnées sur `main`), chaîne des 5 plans d'implémentation TDD (PR #7 fusionnée sur `main`), et mise à niveau de la gouvernance anti-mauvais-code sur le modèle de `HIVE-MIND`.
-- 🔄 En cours : Exécution du **Plan 01/05** (`plan_01_backend_storage_domain.md`) avec `LocalConfig.workerUrl`, puis du plan de l'issue #2 (`plan_issue2_local_runner_hot_switch.md`).
-- ⏳ En attente : Plans 02/05 à 05/05.
+- ✅ Terminé : Phase 1 (Spécifications et Modélisation UML fusionnées sur `main`), chaîne des 5 plans d'implémentation TDD, gouvernance anti-mauvais-code, Plan 01/05 fusionné sur `main` (`19156a6`), et **Plan 02/05** entièrement exécuté en TDD et validé sous pre-push (63 tests verts, 0 warning Ruff, 0 fail Semgrep/Gitleaks, budget < 2000 LoC).
+- 🔄 En cours : Revue et validation de la PR du **Plan 02/05** (`feat/plan-02-backend-brand-compiler-orchestrator`).
+- ⏳ En attente : Plans 03/05 à 05/05.
 
 ## 👉 Next Session Direction
 
-Démarrer l'exécution TDD du **Plan 01/05** ([`.GCC/branches/plan_01_backend_storage_domain.md`](branches/plan_01_backend_storage_domain.md)) à partir de la Step 1 (initialisation de `app/`, `tests/`, modèles Pydantic v2 et persistance atomique JSON/médias).
+Ouvrir la Pull Request pour le **Plan 02/05**, déclencher les revues Greptile (`@greptile-apps review`) et CodeRabbit (`@coderabbitai review`), puis enchaîner avec le **Plan 03/05** ([`.GCC/branches/plan_03_frontend_foundation_gallery.md`](branches/plan_03_frontend_foundation_gallery.md)).

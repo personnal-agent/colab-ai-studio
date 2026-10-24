@@ -9,12 +9,18 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.routes_config import router as config_router
 from app.api.routes_crud import router as crud_router
+from app.api.routes_generation import router as generation_router
+from app.api.routes_llm_proxy import router as llm_proxy_router
+from app.api.routes_models import get_worker_gateway
+from app.api.routes_models import router as models_router
 from app.config import ensure_directories
+from app.services.worker_gateway import WorkerGateway
 from app.storage.json_store import CorruptedDocumentStoreError
 
 
@@ -24,6 +30,8 @@ async def lifespan(app: FastAPI):
     ensure_directories()
     yield
     # Arrêt propre
+    gateway = get_worker_gateway()
+    await gateway.aclose()
 
 
 app = FastAPI(
@@ -54,12 +62,20 @@ async def corrupted_store_exception_handler(
 
 
 app.include_router(crud_router)
+app.include_router(models_router)
+app.include_router(config_router)
+app.include_router(generation_router)
+app.include_router(llm_proxy_router)
 
 
 @app.get("/api/health", tags=["Diagnostic"])
-async def health_check() -> dict[str, Any]:
+async def health_check(
+    gateway: WorkerGateway = Depends(get_worker_gateway),
+) -> dict[str, Any]:
+    worker_health = await gateway.health()
     return {
         "status": "healthy",
         "service": "Colab AI Studio Local Backend",
         "version": "1.0.0",
+        **worker_health,
     }
