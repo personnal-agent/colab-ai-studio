@@ -14,12 +14,14 @@ Expose :
 from __future__ import annotations
 
 import asyncio
+import mimetypes
 import uuid
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, field_validator
 
 from app.config import (
@@ -161,6 +163,37 @@ async def delete_generation(generation_id: str) -> dict[str, Any]:
     return {"deleted": True, "id": generation_id}
 
 
+def _resolve_existing_file(path_str: str) -> Path | None:
+    p = Path(path_str).resolve()
+    return p if p.is_file() else None
+
+
+@router.get("/generations/{generation_id}/file")
+async def get_generation_file(generation_id: str) -> FileResponse:
+    items = await _json_store.read_list(GENERATIONS_FILE.name)
+    gen = next((it for it in items if it.get("id") == generation_id), None)
+    if not gen or not gen.get("filePath"):
+        raise HTTPException(status_code=404, detail="Fichier introuvable")
+    path = await asyncio.to_thread(_resolve_existing_file, gen["filePath"])
+    if not path:
+        raise HTTPException(status_code=404, detail="Fichier introuvable sur disque")
+    media_type, _ = mimetypes.guess_type(str(path))
+    return FileResponse(path=path, media_type=media_type or "application/octet-stream")
+
+
+@router.get("/generations/{generation_id}/thumbnail")
+async def get_generation_thumbnail(generation_id: str) -> FileResponse:
+    items = await _json_store.read_list(GENERATIONS_FILE.name)
+    gen = next((it for it in items if it.get("id") == generation_id), None)
+    if not gen or not gen.get("thumbnailPath"):
+        raise HTTPException(status_code=404, detail="Miniature introuvable")
+    path = await asyncio.to_thread(_resolve_existing_file, gen["thumbnailPath"])
+    if not path:
+        raise HTTPException(status_code=404, detail="Miniature introuvable sur disque")
+    media_type, _ = mimetypes.guess_type(str(path))
+    return FileResponse(path=path, media_type=media_type or "image/jpeg")
+
+
 # --- Brand Kits ---
 
 
@@ -256,6 +289,30 @@ async def create_project(payload: ProjectCreate) -> dict[str, Any]:
         await _json_store.write_list_unlocked(PROJECTS_FILE.name, projects)
 
     return project.model_dump()
+
+
+@router.delete(
+    "/projects/{project_id}",
+    response_model=dict[str, Any],
+    dependencies=[Depends(verify_trusted_origin)],
+)
+async def delete_project(project_id: str) -> dict[str, Any]:
+    generations = await _json_store.read_list(GENERATIONS_FILE.name)
+    if any(
+        g.get("projectId") == project_id and g.get("status") in ("pending", "running")
+        for g in generations
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Impossible de supprimer un projet ayant des tâches en cours.",
+        )
+    async with _json_store.lock_for(PROJECTS_FILE.name):
+        projects = await _json_store.read_list_unlocked(PROJECTS_FILE.name)
+        new_projects = [p for p in projects if p.get("id") != project_id]
+        if len(new_projects) == len(projects):
+            raise HTTPException(status_code=404, detail="Projet introuvable")
+        await _json_store.write_list_unlocked(PROJECTS_FILE.name, new_projects)
+    return {"deleted": True, "id": project_id}
 
 
 # --- Configuration ---

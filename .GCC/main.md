@@ -67,10 +67,10 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
 
 ## 📈 Current Status
 
-- ✅ Terminé : Phase 1 (Spécifications et Modélisation UML fusionnées sur `main`), chaîne des 5 plans d'implémentation TDD, gouvernance anti-mauvais-code, Plan 01/05 fusionné sur `main` (`19156a6`), et **Plan 02/05** entièrement exécuté en TDD et validé sous pre-push (63 tests verts, 0 warning Ruff, 0 fail Semgrep/Gitleaks, budget < 2000 LoC).
-- 🔄 En cours : Revue et validation de la PR du **Plan 02/05** (`feat/plan-02-backend-brand-compiler-orchestrator`).
-- ⏳ En attente : Plans 03/05 à 05/05.
+- ✅ Terminé : Phase 1 (Spécifications et Modélisation UML fusionnées sur `main`), chaîne des 5 plans d'implémentation TDD, gouvernance anti-mauvais-code, Plan 01/05 fusionné sur `main` (`19156a6`), Plan 02/05 fusionné sur `main` (`7f46de9`), et **Plan 03/05** entièrement exécuté en TDD et validé sous pre-push (31 tests frontend verts, 71 tests backend verts, build Vite OK, ESLint 0 warning, depcruise 0 violation, budget LoC < 2000).
+- 🔄 En cours : Revue et validation de la PR du **Plan 03/05** (`feat/plan-03-frontend-foundation-gallery`).
+- ⏳ En attente : Plans 04/05 et 05/05.
 
 ## 👉 Next Session Direction
 
-Ouvrir la Pull Request pour le **Plan 02/05**, déclencher les revues Greptile (`@greptile-apps review`) et CodeRabbit (`@coderabbitai review`), puis enchaîner avec le **Plan 03/05** ([`.GCC/branches/plan_03_frontend_foundation_gallery.md`](branches/plan_03_frontend_foundation_gallery.md)).
+Ouvrir la Pull Request pour le **Plan 03/05**, déclencher les revues Greptile (`@greptile-apps review`) et CodeRabbit (`@coderabbitai review`), puis enchaîner avec le **Plan 04/05** ([`.GCC/branches/plan_04_frontend_dock_brandkit_llm.md`](branches/plan_04_frontend_dock_brandkit_llm.md)).
