@@ -3,6 +3,12 @@ import { AlertCircle } from 'lucide-react';
 import type { GenerationReferences, ModelDefinition } from '../../../types/studio';
 import { ReferenceSlot } from './ReferenceSlot';
 
+/**
+ * Plateau de conditionnement multimédia (dock).
+ * Contrat de propriété mémoire : ConditioningTray ne révoque que les Object URLs
+ * qu'il crée localement lors de l'upload utilisateur. Les URLs fournies par le parent
+ * restent sous la responsabilité exclusive du parent.
+ */
 export interface ConditioningTrayProps {
   mode: string;
   model?: ModelDefinition | null;
@@ -42,7 +48,7 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
   };
 
   const safeRevokeIfNotReferenced = (url: string | null | undefined, nextRefs: GenerationReferences) => {
-    if (url && typeof url === 'string' && url.startsWith('blob:')) {
+    if (url && typeof url === 'string' && url.startsWith('blob:') && createdUrlsRef.current.has(url)) {
       if (!isUrlReferenced(url, nextRefs)) {
         try { URL.revokeObjectURL(url); } catch { /* ignore */ }
         createdUrlsRef.current.delete(url);

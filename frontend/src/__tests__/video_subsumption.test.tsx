@@ -132,18 +132,39 @@ describe('ConditioningTray & Video Subsumption', () => {
     expect(videoElem?.getAttribute('src')).toBe('blob:mock/render.mp4');
   });
 
-  it('does not revoke a blob URL on removal if it is still used elsewhere', () => {
-    const sharedUrl = 'blob:mock/shared.png';
+  it('does not revoke a locally created blob URL on removal if it is still used elsewhere', () => {
     window.URL.revokeObjectURL = vi.fn();
     const ControlledShared = () => {
-      const [refs, setRefs] = useState<GenerationReferences>({ startFrame: sharedUrl, imageRefs: [sharedUrl] });
-      return <ConditioningTray mode="video" model={completeVideoModel} references={refs} onReferencesChange={setRefs} />;
+      const [refs, setRefs] = useState<GenerationReferences>({});
+      return (
+        <div>
+          <ConditioningTray mode="video" model={completeVideoModel} references={refs} onReferencesChange={setRefs} />
+          {refs.startFrame && !refs.imageRefs?.length && (
+            <button data-testid="share-url" onClick={() => setRefs({ ...refs, imageRefs: [refs.startFrame!] })}>Share</button>
+          )}
+        </div>
+      );
     };
     render(<ControlledShared />);
+    const file = new File(['data'], 'shared.png', { type: 'image/png' });
+    fireEvent.change(screen.getAllByTestId('reference-slot-input')[0], { target: { files: [file] } });
+    fireEvent.click(screen.getByTestId('share-url'));
     fireEvent.click(screen.getByRole('button', { name: /supprimer la référence start frame/i }));
-    expect(window.URL.revokeObjectURL).not.toHaveBeenCalledWith(sharedUrl);
+    expect(window.URL.revokeObjectURL).not.toHaveBeenCalledWith('blob:mock/shared.png');
     fireEvent.click(screen.getByRole('button', { name: /supprimer la référence réf 1/i }));
-    expect(window.URL.revokeObjectURL).toHaveBeenCalledWith(sharedUrl);
+    expect(window.URL.revokeObjectURL).toHaveBeenCalledWith('blob:mock/shared.png');
+  });
+
+  it('does not revoke a parent-provided blob URL even when removed from all slots', () => {
+    const parentUrl = 'blob:mock/parent-owned.png';
+    window.URL.revokeObjectURL = vi.fn();
+    const ControlledParent = () => {
+      const [refs, setRefs] = useState<GenerationReferences>({ startFrame: parentUrl });
+      return <ConditioningTray mode="video" model={completeVideoModel} references={refs} onReferencesChange={setRefs} />;
+    };
+    render(<ControlledParent />);
+    fireEvent.click(screen.getByRole('button', { name: /supprimer la référence start frame/i }));
+    expect(window.URL.revokeObjectURL).not.toHaveBeenCalledWith(parentUrl);
   });
 
   it('hides conditioning tray in LLM mode', () => {
