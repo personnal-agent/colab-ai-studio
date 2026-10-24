@@ -9,25 +9,52 @@
 
 ### Step 1: Composants atomiques de paramètres et registre piloté par capacités (`ParameterRegistry`) (TDD)
 
-- [ ] **Action**: Écrire `frontend/src/__tests__/dock_capabilities.test.tsx` puis créer un fichier par contrôle atomique sous `frontend/src/components/dock/controls/` :
+- [x] **Action**: Écrire `frontend/src/__tests__/dock_capabilities.test.tsx` puis créer un fichier par contrôle atomique sous `frontend/src/components/dock/controls/` :
   - Contrôles universels passe-partout : `BatchCountPill.tsx` (`⚏ 1`–`4`), `EnhancePromptPill.tsx` (`🪄 On`/`Off`), `SeedControlPill.tsx`.
   - Contrôles conditionnels : `ModelSelectorPopover.tsx` (recherche, filtres, badges `Beta`/`New`/`! Slower than usual`), `AspectRatioPill.tsx`, `ResolutionPill.tsx`, `DurationControlPill.tsx` (rendu curseur continu si `duration.type === "range"` vs pilules discrètes si `duration.type === "discrete"`), `NativeAudioPill.tsx` (`🔊 On`/`Off`), `TalkingStylePill.tsx` (`Stable`/`Expressive`), `UpscaleScalePill.tsx` (`1.25x`–`4x`), `UpscaleQualityPill.tsx` (`Fast`/`Precise`), `UpscaleFrameRatePill.tsx`, `FineSettingsPopover.tsx` (`🎛️`).
   - Assembler le registre déclaratif `ParameterRegistry.tsx`.
-- [ ] **Verify**: `npm --prefix frontend test -- --run src/__tests__/dock_capabilities.test.tsx`
+- [x] **Verify**: `npm --prefix frontend test -- --run src/__tests__/dock_capabilities.test.tsx`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw vitest output here]
+ ✓ src/__tests__/dock_capabilities.test.tsx (10)
+   ✓ Atomic Dock Controls (8)
+     ✓ BatchCountPill cycles or selects batch 1 to 4
+     ✓ EnhancePromptPill toggles on/off state
+     ✓ SeedControlPill displays seed and random state
+     ✓ DurationControlPill renders discrete pills when type is discrete or string array
+     ✓ DurationControlPill renders slider when type is range
+     ✓ NativeAudioPill toggles audio when supported
+     ✓ TalkingStylePill switches between Stable and Expressive
+     ✓ Upscale pills allow choosing scale and quality
+   ✓ ModelSelectorPopover & ParameterRegistry (2)
+     ✓ ModelSelectorPopover filters models by search and mode
+     ✓ ParameterRegistry adapts controls based on model capabilities
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
 ```
 
 ### Step 2: Plateau de fentes de conditionnement et règle de subsomption vidéo (TDD)
 
-- [ ] **Action**: Écrire `frontend/src/__tests__/video_subsumption.test.tsx` vérifiant que tout modèle déclarant le mode vidéo complet (`Start frame` + `End frame` + `Ingredients`) active et autorise obligatoirement toutes les combinaisons partielles et unitaires (`Ingredients` seuls jusqu'à 9 réf. incluant *Video-as-Ingredient*, `Start frame` seul, `End frame` seul, `Start + End`, `Start + Ingredients`, `End + Ingredients`), ainsi que l'avertissement visuel en cas de dépassement de `maxImageRefs`. Implémenter `ReferenceSlot.tsx` (`w-20 h-16 rounded-slot`) et `ConditioningTray.tsx` pour les pôles `Image`, `Video`, `Lip sync` et `Upscaling`.
-- [ ] **Verify**: `npm --prefix frontend test -- --run src/__tests__/video_subsumption.test.tsx`
+- [x] **Action**: Écrire `frontend/src/__tests__/video_subsumption.test.tsx` vérifiant que tout modèle déclarant le mode vidéo complet (`Start frame` + `End frame` + `Ingredients`) active et autorise obligatoirement toutes les combinaisons partielles et unitaires (`Ingredients` seuls jusqu'à 9 réf. incluant *Video-as-Ingredient*, `Start frame` seul, `End frame` seul, `Start + End`, `Start + Ingredients`, `End + Ingredients`), ainsi que l'avertissement visuel en cas de dépassement de `maxImageRefs`. Implémenter `ReferenceSlot.tsx` (`w-20 h-16 rounded-slot`) et `ConditioningTray.tsx` pour les pôles `Image`, `Video`, `Lip sync` et `Upscaling`.
+- [x] **Verify**: `npm --prefix frontend test -- --run src/__tests__/video_subsumption.test.tsx`
 - **Verification Proof**:
 
 ```text
-[Pending execution — paste raw vitest output here]
+ ✓ src/__tests__/video_subsumption.test.tsx (8)
+   ✓ Video Conditioning Subsumption Rule (TDD) (8)
+     ✓ renders start frame, end frame, and ingredient slot for a full video model
+     ✓ allows start frame only
+     ✓ allows end frame only
+     ✓ allows both start and end frame without ingredients
+     ✓ allows ingredients only without start or end frame (Ingredient Mode)
+     ✓ supports video-as-ingredient (N-1 chaining)
+     ✓ displays warning badge when references count exceeds maxImageRefs
+     ✓ supports partial combination: start frame + ingredients without end frame
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
 ```
 
 ### Step 3: Système Brand Kit complet (Popover, Hover Card, Chip atomique, Extraction & Inspection) (TDD)
