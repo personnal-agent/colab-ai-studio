@@ -110,5 +110,37 @@ describe('LLM Mode & FloatingPromptDock Integration (TDD)', () => {
       fireEvent.click(llmTab);
       expect(textarea).toHaveValue('Draft a system prompt for video generation');
     });
+
+    it('submits generation with exact mode type and catches submission errors', async () => {
+      const mockSubmit = vi.fn().mockRejectedValueOnce(new Error('GPU worker offline'));
+      render(
+        <FloatingPromptDock
+          models={mockModels} brandKits={[mockBrandKit]}
+          onSubmitGeneration={mockSubmit}
+        />
+      );
+
+      // In Image mode
+      fireEvent.click(screen.getByRole('tab', { name: /Image/i }));
+      const textarea = screen.getByPlaceholderText(/Describe what you want to create/i);
+      fireEvent.change(textarea, { target: { value: 'Futuristic city' } });
+
+      // Click submit
+      fireEvent.click(screen.getByRole('button', { name: /Submit/i }));
+      await waitFor(() => {
+        expect(mockSubmit).toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'image', prompt: 'Futuristic city' })
+        );
+      });
+
+      // Error banner must be displayed
+      await waitFor(() => {
+        expect(screen.getByText(/GPU worker offline/i)).toBeInTheDocument();
+      });
+
+      // Dismiss error
+      fireEvent.click(screen.getByRole('button', { name: /Dismiss error/i }));
+      expect(screen.queryByText(/GPU worker offline/i)).not.toBeInTheDocument();
+    });
   });
 });

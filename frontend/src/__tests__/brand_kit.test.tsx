@@ -122,6 +122,10 @@ describe('Brand Kit System (TDD)', () => {
       const textarea = screen.getByPlaceholderText(/Describe what you want to create/i);
       fireEvent.change(textarea, { target: { value: 'Design @' } });
       expect(onOpenSelector).toHaveBeenCalledTimes(2);
+
+      // Typing characters after @ must NOT re-trigger selector popover
+      fireEvent.change(textarea, { target: { value: 'Design @A' } });
+      expect(onOpenSelector).toHaveBeenCalledTimes(2);
     });
   });
 

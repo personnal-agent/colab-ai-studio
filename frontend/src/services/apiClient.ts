@@ -164,35 +164,44 @@ export const apiClient = {
     let fullText = '';
     let buffer = '';
 
-    let isDone = false;
-    while (!isDone) {
+    const MAX_LINE_BUFFER = 64 * 1024;
+    const processLine = (line: string) => {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith(':')) return;
+      let rawData: string | null = null;
+      if (trimmed.startsWith('data: ')) rawData = trimmed.slice(6);
+      else if (trimmed.startsWith('data:')) rawData = trimmed.slice(5);
+      if (rawData === null || rawData.trim() === '[DONE]') return;
+      try {
+        const data = JSON.parse(rawData) as {
+          choices?: Array<{ delta?: { content?: string } }>;
+        };
+        const delta = data.choices?.[0]?.delta?.content ?? '';
+        if (delta) {
+          fullText += delta;
+          onChunk(delta);
+        }
+      } catch { /* ignore malformed or non-json chunk */ }
+    };
+
+    let reading = true;
+    while (reading) {
       const { done, value } = await reader.read();
       if (done) {
-        isDone = true;
+        reading = false;
         break;
       }
       buffer += decoder.decode(value, { stream: true });
+      if (buffer.length > MAX_LINE_BUFFER) {
+        await reader.cancel();
+        throw new ApiError('SSE stream line length exceeded maximum limit', 500);
+      }
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith(':')) continue;
-        if (trimmed === 'data: [DONE]') continue;
-        if (trimmed.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(trimmed.slice(6));
-            const delta = data.choices?.[0]?.delta?.content || '';
-            if (delta) {
-              fullText += delta;
-              onChunk(delta);
-            }
-          } catch {
-            // Ignore non-json or malformed SSE line
-          }
-        }
-      }
+      for (const line of lines) processLine(line);
     }
+    buffer += decoder.decode();
+    if (buffer.trim()) processLine(buffer);
     return fullText;
   },
 };

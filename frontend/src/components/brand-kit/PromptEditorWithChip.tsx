@@ -44,10 +44,16 @@ export const PromptEditorWithChip: React.FC<PromptEditorWithChipProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
+    const cursorPos = e.target.selectionStart ?? val.length;
     onPromptChange(val);
 
-    // If the user just typed '@', trigger the selector popover
-    if (val.endsWith('@') || val.includes(' @')) {
+    // Only open when the user has just typed a final @ at start of prompt or immediately after whitespace
+    const atTyped = val.length > prompt.length && (
+      (cursorPos === 1 && val[0] === '@') ||
+      (cursorPos > 1 && val[cursorPos - 1] === '@' && /\s/.test(val[cursorPos - 2])) ||
+      (val.endsWith('@') && (val.length === 1 || /\s/.test(val[val.length - 2])))
+    );
+    if (atTyped) {
       onOpenBrandKitSelector();
     }
   };

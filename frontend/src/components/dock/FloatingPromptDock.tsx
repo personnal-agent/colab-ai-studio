@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowUp, Square, Image, Video, Mic, Maximize2, MessageSquare } from 'lucide-react';
+import { ArrowUp, Square, Image, Video, Mic, Maximize2, MessageSquare, AlertCircle } from 'lucide-react';
 import type {
   ModelDefinition, BrandKit, Generation, GenerationParameters,
   GenerationReferences, GenerationSubmitRequest,
@@ -51,11 +51,13 @@ export interface FloatingPromptDockProps {
     source: 'blank' | 'website' | 'files'; name: string; overview?: string; url?: string; files?: File[];
   }) => Promise<BrandKit>;
   onSubmitGeneration?: (req: GenerationSubmitRequest) => Promise<void>;
+  onBrandKitCreated?: (kit: BrandKit) => void;
   className?: string;
 }
 
 export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
-  models, brandKits, activeProjectId, remixContext, onClearRemix, onCreateBrandKit, onSubmitGeneration, className = '',
+  models, brandKits, activeProjectId, remixContext, onClearRemix,
+  onCreateBrandKit, onSubmitGeneration, onBrandKitCreated, className = '',
 }) => {
   const [activeMode, setActiveMode] = useState<DockMode>('video');
   const [modeStates, setModeStates] = useState<Record<DockMode, ModeState>>({
@@ -70,6 +72,8 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
   const [isBrandKitPopoverOpen, setIsBrandKitPopoverOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [inspectingKit, setInspectingKit] = useState<BrandKit | null>(null);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [isSubmittingMedia, setIsSubmittingMedia] = useState(false);
 
   useEffect(() => {
     setModeStates((prev) => {
@@ -140,9 +144,22 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
       const controller = new AbortController();
       llmAbortRef.current = controller;
 
+      let chatPayloadMessages = newMessages.map((m) => ({ role: m.role, content: m.content }));
+      if (current.selectedBrandKit) {
+        const kit = current.selectedBrandKit;
+        const brandSummary = [
+          `Brand: ${kit.name}`,
+          kit.overview ? `Overview: ${kit.overview}` : null,
+          kit.colors?.length ? `Colors: ${kit.colors.map((c) => `${c.label} (${c.hex})`).join(', ')}` : null,
+          kit.fonts?.length ? `Fonts: ${kit.fonts.map((f) => `${f.family} ${f.weight}`).join(', ')}` : null,
+          kit.guidelines?.length ? `Guidelines: ${kit.guidelines.map((g) => `[${g.kind.toUpperCase()}] ${g.text}`).join('; ')}` : null,
+        ].filter(Boolean).join('\n');
+        chatPayloadMessages = [{ role: 'system', content: `Condition your responses using this Brand Kit:\n${brandSummary}` }, ...chatPayloadMessages];
+      }
+
       try {
         await apiClient.streamChatCompletion(
-          { model: current.model?.name || 'Llama-3-8B', messages: newMessages.map((m) => ({ role: m.role, content: m.content })) },
+          { model: current.model?.name || 'Llama-3-8B', messages: chatPayloadMessages },
           (chunk) => {
             setLlmMessages((prev) => prev.map((msg) => (msg.id === assistantId ? { ...msg, content: msg.content + chunk } : msg)));
           },
@@ -162,10 +179,34 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
     }
 
     if (onSubmitGeneration && current.model) {
-      await onSubmitGeneration({
-        modelId: current.model.id, prompt: current.prompt, parameters: current.parameters,
-        references: current.references, projectId: activeProjectId, brandKitId: current.selectedBrandKit?.id,
-      });
+      setMediaError(null);
+      setIsSubmittingMedia(true);
+      try {
+        const count = Math.max(1, current.batchCount || 1);
+        const mediaType = activeMode === 'upscale' ? 'upscale' : activeMode === 'lip_sync' ? 'lip_sync' : activeMode;
+        for (let i = 0; i < count; i++) {
+          await onSubmitGeneration({
+            modelId: current.model.id,
+            prompt: current.prompt,
+            type: mediaType,
+            negativePrompt: current.negativePrompt || undefined,
+            parameters: {
+              ...current.parameters,
+              talkingStyle: current.talkingStyle,
+              upscaleScale: current.upscaleScale,
+              upscaleQuality: current.upscaleQuality,
+              upscaleFrameRate: current.upscaleFrameRate,
+            },
+            references: current.references,
+            projectId: activeProjectId,
+            brandKitId: current.selectedBrandKit?.id,
+          });
+        }
+      } catch (err: unknown) {
+        setMediaError(err instanceof Error ? err.message : 'Échec de soumission de la génération.');
+      } finally {
+        setIsSubmittingMedia(false);
+      }
     }
   };
 
@@ -202,7 +243,7 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
               return (
                 <button
                   key={tab.id} type="button" role="tab" aria-selected={isActive} aria-label={tab.label}
-                  onClick={() => setActiveMode(tab.id)}
+                  onClick={() => { setActiveMode(tab.id); setMediaError(null); }}
                   className={`flex items-center space-x-1.5 py-1 px-2.5 sm:px-3 rounded-full text-xs font-semibold transition-all duration-150 ${isActive ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800'}`}
                 >
                   <Icon className="w-3.5 h-3.5 flex-shrink-0" /><span>{tab.label}</span>
@@ -232,9 +273,23 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
           />
         )}
 
+        {mediaError && (
+          <div className="flex items-center justify-between px-3.5 py-2 text-xs bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-xl border border-red-200 dark:border-red-800 animate-in fade-in duration-100">
+            <div className="flex items-center space-x-1.5">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{mediaError}</span>
+            </div>
+            <button type="button" aria-label="Dismiss error" onClick={() => setMediaError(null)} className="ml-2 font-bold text-gray-400 hover:text-red-700">&times;</button>
+          </div>
+        )}
+
         <div className="bg-gray-50 dark:bg-gray-800/60 rounded-2xl p-3 border border-gray-100 dark:border-gray-700/60 focus-within:border-gray-300 dark:focus-within:border-gray-600 transition-colors">
           <PromptEditorWithChip
-            prompt={current.prompt} onPromptChange={(prompt) => updateCurrent({ prompt })}
+            prompt={current.prompt}
+            onPromptChange={(prompt) => {
+              updateCurrent({ prompt });
+              if (mediaError) setMediaError(null);
+            }}
             selectedBrandKit={current.selectedBrandKit} onRemoveBrandKit={() => updateCurrent({ selectedBrandKit: null })}
             onOpenBrandKitSelector={() => setIsBrandKitPopoverOpen(true)} onSubmit={handleSubmit}
             placeholder={activeMode === 'llm' ? 'Ask the LLM anything or generate prompts, copy and code...' : 'Describe what you want to create or @ to mention a brand kit...'}
@@ -260,10 +315,14 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
                 </button>
               ) : (
                 <button
-                  type="button" aria-label="Submit" onClick={handleSubmit} disabled={!current.prompt.trim() && activeMode !== 'upscale'}
+                  type="button" aria-label="Submit" onClick={handleSubmit} disabled={(!current.prompt.trim() && activeMode !== 'upscale') || isSubmittingMedia}
                   className="w-9 h-9 flex items-center justify-center rounded-full bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 dark:text-black active:scale-95 text-white shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                  {isSubmittingMedia ? (
+                    <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                  )}
                 </button>
               )}
             </div>
@@ -276,6 +335,7 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
         onCreateBrandKit={handleCreateBrandKitInternal}
         onSuccess={(createdKit) => {
           setIsCreateModalOpen(false); setInspectingKit(createdKit); updateCurrent({ selectedBrandKit: createdKit });
+          onBrandKitCreated?.(createdKit);
         }}
       />
       <BrandKitInspectorModal

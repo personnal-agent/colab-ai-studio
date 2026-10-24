@@ -9,6 +9,7 @@ export type MediaType = 'image' | 'video' | 'audio' | 'upscale' | 'lip_sync' | '
 export interface GenerationParameters {
   seed: number; aspectRatio: string; resolution: string; duration: string;
   frameRate?: string | null; audio?: boolean | null; enhance?: boolean | null;
+  talkingStyle?: string; upscaleScale?: string; upscaleQuality?: string; upscaleFrameRate?: string;
 }
 export interface GenerationReferences {
   startFrame?: string | null; endFrame?: string | null; imageRefs?: string[];
@@ -84,7 +85,7 @@ export interface ModelDefinition {
 }
 
 export interface GenerationSubmitRequest {
-  modelId: string; prompt: string; type?: string;
+  modelId: string; prompt: string; type?: string; negativePrompt?: string;
   parameters?: Partial<GenerationParameters>; references?: GenerationReferences;
   projectId?: string | null; brandKitId?: string | null;
 }

@@ -44,7 +44,19 @@ export default function App(): React.ReactElement {
   const handleSubmitGeneration = async (req: GenerationSubmitRequest) => {
     if (apiClient.submitGeneration) {
       await apiClient.submitGeneration(req);
+      if (apiClient.listGenerations) {
+        const updated = await apiClient.listGenerations(activeProjectId ? { projectId: activeProjectId } : undefined);
+        setGenerations(updated);
+      }
     }
+  };
+
+  const handleCreateBrandKit = async (data: {
+    source: 'blank' | 'website' | 'files'; name: string; overview?: string; url?: string; files?: File[];
+  }): Promise<BrandKit> => {
+    const created = await apiClient.createBrandKit(data);
+    setBrandKits((prev) => [created, ...prev.filter((k) => k.id !== created.id)]);
+    return created;
   };
 
   return (
@@ -81,6 +93,7 @@ export default function App(): React.ReactElement {
         remixContext={remixContext}
         onClearRemix={() => setRemixContext(null)}
         onSubmitGeneration={handleSubmitGeneration}
+        onCreateBrandKit={handleCreateBrandKit}
       />
 
       {/* Modale d'inspection grand format */}
