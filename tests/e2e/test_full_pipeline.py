@@ -221,15 +221,11 @@ async def test_full_pipeline_uc01_to_uc08(
     assert saved_gen["brandKitSnapshot"]["id"] == kit_id
 
     # Génération d'image (flux-schnell) avec rapatriement en .png conforme (Thread #5)
-    img_submit_resp = await client.post(
-        "/api/generate/media",
-        json={
-            "prompt": "Portrait cyberpunk épuré",
-            "modelId": "flux-schnell",
-            "type": "image",
-            "projectId": proj_id,
-        },
-    )
+    img_payload = {
+        "prompt": "Portrait cyberpunk", "modelId": "flux-schnell",
+        "type": "image", "projectId": proj_id,
+    }
+    img_submit_resp = await client.post("/api/generate/media", json=img_payload)
     assert img_submit_resp.status_code == 202
     img_task_id = img_submit_resp.json()["taskId"]
 

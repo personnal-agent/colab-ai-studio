@@ -209,15 +209,11 @@ async def test_worker_secret_authentication(temp_storage: Path) -> None:
         assert resp_unauth.status_code == 401
 
         # 2. Avec secret erroné : rejet 401
-        resp_bad = await sec_client.get(
-            "/models", headers={"X-Colab-Secret": "wrong-secret"}
-        )
+        resp_bad = await sec_client.get("/models", headers={"X-Colab-Secret": "wrong"})
         assert resp_bad.status_code == 401
 
         # 3. Avec secret valide en en-tête : succès 200
-        resp_ok = await sec_client.get(
-            "/models", headers={"X-Colab-Secret": "secret-colab-42"}
-        )
+        resp_ok = await sec_client.get("/models", headers={"X-Colab-Secret": "secret-colab-42"})
         assert resp_ok.status_code == 200
 
         # 4. Avec secret valide Bearer : succès 200
@@ -255,4 +251,26 @@ async def test_idle_timeout_lifespan_trigger(temp_storage: Path) -> None:
         health_resp = await c.get("/health")
         assert health_resp.json()["state"] == "EnVeilleVRAMLibre"
         assert sw.active_model is None
+
+
+@pytest.mark.anyio
+async def test_real_callable_pipeline_execution(temp_storage: Path) -> None:
+    """Vérifie l'exécution réelle d'un pipeline callable sans simulation (Thread #1)."""
+    sw = ModelSwapper(cuda_backend=MockCudaBackend())
+    app_real = create_worker_app(
+        model_swapper=sw, storage_dir=temp_storage,
+        model_loaders={"flux-schnell": lambda _: lambda **kw: b"REAL_PNG"}, simulation_mode=False,
+    )
+    transport = ASGITransport(app=app_real)
+    async with httpx.AsyncClient(transport=transport, base_url="http://real") as c:
+        resp = await c.post("/infer", json={"taskId": "real_1", "modelId": "flux-schnell"})
+        assert resp.status_code == 200
+        for _ in range(25):
+            st = (await c.get("/tasks/real_1/status")).json()
+            if st["status"] == "completed":
+                assert (temp_storage / "real_1.png").read_bytes() == b"REAL_PNG"
+                break
+            await asyncio.sleep(0.04)
+        else:
+            pytest.fail("Tâche réelle non complétée")
 

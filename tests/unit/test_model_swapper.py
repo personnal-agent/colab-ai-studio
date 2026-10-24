@@ -140,10 +140,8 @@ def test_idle_timeout_auto_eviction(swapper: ModelSwapper, mock_cuda: MockTorchC
     evicted = swapper.check_idle_timeout(now=swapper.last_activity_time + 301.0)
     assert evicted is True
     assert swapper.state == ModelSwapperState.EN_VEILLE_VRAM_LIBRE
-    assert swapper.active_model is None
-    assert swapper.active_pipeline is None
-    assert swapper.pipeline_ready is False
-    assert mock_cuda.empty_cache_called >= 1
+    assert swapper.active_model is None and swapper.active_pipeline is None
+    assert swapper.pipeline_ready is False and mock_cuda.empty_cache_called >= 1
 
 
 def test_out_of_memory_error_recovery(swapper: ModelSwapper, mock_cuda: MockTorchCuda) -> None:
@@ -169,20 +167,16 @@ def test_stop_worker(swapper: ModelSwapper, mock_cuda: MockTorchCuda) -> None:
     assert swapper.active_model == "flux-schnell"
 
     swapper.stop()
-    assert swapper.state == ModelSwapperState.ARRETE
-    assert swapper.active_model is None
-    assert swapper.active_pipeline is None
-    assert swapper.pipeline_ready is False
+    assert swapper.state == ModelSwapperState.ARRETE and swapper.active_model is None
+    assert swapper.active_pipeline is None and swapper.pipeline_ready is False
     assert mock_cuda.empty_cache_called >= 1
 
 
 def test_telemetry(swapper: ModelSwapper) -> None:
     """Vérifie la génération de télémétrie complète pour les diagnostics /health."""
     telemetry = swapper.get_telemetry()
-    assert telemetry["state"] == "EnVeilleVRAMLibre"
-    assert telemetry["activeModel"] is None
-    assert telemetry["pipelineReady"] is False
-    assert telemetry["gpu"] == "NVIDIA Tesla T4"
+    assert telemetry["state"] == "EnVeilleVRAMLibre" and telemetry["activeModel"] is None
+    assert telemetry["pipelineReady"] is False and telemetry["gpu"] == "NVIDIA Tesla T4"
     assert isinstance(telemetry["vramFreeMb"], (int, float))
 
 

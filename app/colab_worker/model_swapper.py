@@ -66,14 +66,14 @@ class DefaultCudaBackend:
             torch.cuda.ipc_collect()
 
     def memory_allocated(self, device: int | None = None) -> int:
-        if self.is_available() and torch:
-            return torch.cuda.memory_allocated(device)
-        return 0
+        return torch.cuda.memory_allocated(device) if self.is_available() and torch else 0
 
     def get_device_name(self, device: int | None = None) -> str:
-        if self.is_available() and torch:
-            return torch.cuda.get_device_name(device)
-        return "CPU / Host (GPU non détecté)"
+        return (
+            torch.cuda.get_device_name(device)
+            if self.is_available() and torch
+            else "CPU / Host (GPU non détecté)"
+        )
 
 
 class ModelSwapper:
@@ -180,13 +180,11 @@ class ModelSwapper:
 
             return pipeline
 
-        except (CUDAOutOfMemoryError, MemoryError) as oom_err:
-            logger.error("CUDA OOM détecté lors du chargement de %s : %s", model_id, oom_err)
-            self.state = ModelSwapperState.EN_RECUPERATION_SATURATION
-            self.evict_vram()
-            raise ModelSwapperOOMError(f"Saturation VRAM CUDA : {oom_err}") from oom_err
         except Exception as err:
-            if "out of memory" in str(err).lower() or "cuda oom" in str(err).lower():
+            is_oom = isinstance(err, (CUDAOutOfMemoryError, MemoryError)) or any(
+                k in str(err).lower() for k in ("out of memory", "cuda oom")
+            )
+            if is_oom:
                 logger.error("CUDA OOM détecté lors du chargement de %s : %s", model_id, err)
                 self.state = ModelSwapperState.EN_RECUPERATION_SATURATION
                 self.evict_vram()

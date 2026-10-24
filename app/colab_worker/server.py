@@ -101,16 +101,14 @@ def make_valid_png(
 
 def make_valid_mp4() -> bytes:
     """Génère un conteneur MP4 valide avec en-têtes ftyp, moov et mvhd."""
-    ftyp_payload = b"isom\x00\x00\x02\x00isomiso2mp41"
-    ftyp_box = struct.pack(">I", 8 + len(ftyp_payload)) + b"ftyp" + ftyp_payload
-    mvhd_payload = (
-        b"\x00\x00\x00\x00" + b"\x00" * 8 + struct.pack(">II", 1000, 1000) + b"\x00" * 80
+    ftyp = struct.pack(">I", 28) + b"ftypisom\x00\x00\x02\x00isomiso2mp41"
+    mvhd = (
+        struct.pack(">I", 108) + b"mvhd" + b"\x00" * 12
+        + struct.pack(">II", 1000, 1000) + b"\x00" * 80
     )
-    mvhd_box = struct.pack(">I", 8 + len(mvhd_payload)) + b"mvhd" + mvhd_payload
-    moov_box = struct.pack(">I", 8 + len(mvhd_box)) + b"moov" + mvhd_box
-    mdat_payload = b"\x00" * 64
-    mdat_box = struct.pack(">I", 8 + len(mdat_payload)) + b"mdat" + mdat_payload
-    return ftyp_box + moov_box + mdat_box
+    moov = struct.pack(">I", 8 + len(mvhd)) + b"moov" + mvhd
+    mdat = struct.pack(">I", 72) + b"mdat" + b"\x00" * 64
+    return ftyp + moov + mdat
 
 
 class SwitchModelRequest(BaseModel):
@@ -159,6 +157,7 @@ def create_worker_app(
     worker_secret: str | None = None,
     idle_check_interval: float = 1.0,
     model_loaders: dict[str, Any] | None = None,
+    simulation_mode: bool | None = None,
 ) -> FastAPI:
     """Fabrique d'application FastAPI pour le worker Google Colab."""
     swapper = model_swapper or ModelSwapper()
@@ -166,6 +165,11 @@ def create_worker_app(
     output_dir.mkdir(parents=True, exist_ok=True)
     secret = worker_secret or os.environ.get("COLAB_STUDIO_SECRET")
     loaders = model_loaders or {}
+    sim_mode = (
+        simulation_mode
+        if simulation_mode is not None
+        else (os.environ.get("COLAB_STUDIO_SIMULATION", "1" if not loaders else "0") == "1")
+    )
 
     tasks: dict[str, dict[str, Any]] = {}
     cancel_events: dict[str, asyncio.Event] = {}
@@ -216,19 +220,12 @@ def create_worker_app(
             return await call_next(request)
 
         if secret:
-            auth_header = request.headers.get("authorization", "")
-            x_secret = request.headers.get("x-colab-secret", "")
-            query_secret = request.query_params.get("secret", "")
-            bearer_token = auth_header[7:].strip() if auth_header.startswith("Bearer ") else ""
-
-            provided = x_secret or bearer_token or query_secret
-            if not provided or provided != secret:
-                return JSONResponse(
-                    status_code=401,
-                    content={
-                        "detail": "Non autorisé : secret du worker Colab manquant ou invalide"
-                    },
-                )
+            auth = request.headers.get("authorization", "")
+            x_sec = request.headers.get("x-colab-secret", "")
+            q_sec = request.query_params.get("secret", "")
+            bearer = auth[7:].strip() if auth.startswith("Bearer ") else ""
+            if secret not in (x_sec, bearer, q_sec):
+                return JSONResponse(status_code=401, content={"detail": "Non autorisé"})
         return await call_next(request)
 
     @app.get("/health")
@@ -253,26 +250,8 @@ def create_worker_app(
         try:
             # 1. Permutation / garantie du modèle
             loader = loaders.get(payload.modelId)
-            swapper.ensure_model(payload.modelId, load_fn=loader)
+            pipeline = swapper.ensure_model(payload.modelId, load_fn=loader)
 
-            # 2. Boucle de génération interruptible
-            for step in range(1, total_steps + 1):
-                if cancel_event.is_set():
-                    tasks[task_id]["status"] = "cancelled"
-                    tasks[task_id]["errorMessage"] = "Annulée par l'utilisateur"
-                    return
-
-                await asyncio.sleep(0.04)
-                tasks[task_id]["step"] = step
-                tasks[task_id]["totalSteps"] = total_steps
-                tasks[task_id]["progress"] = int(round(step / total_steps * 100))
-
-            if cancel_event.is_set():
-                tasks[task_id]["status"] = "cancelled"
-                tasks[task_id]["errorMessage"] = "Annulée par l'utilisateur"
-                return
-
-            # 3. Création du fichier binaire produit (100% valide et conforme)
             is_video = any(
                 m["id"] == payload.modelId and m["type"] in {"video", "lipsync"}
                 for m in AVAILABLE_MODELS
@@ -283,8 +262,41 @@ def create_worker_app(
             if not file_path.is_relative_to(output_dir.resolve()):
                 raise ValueError("Tentative d'écriture hors du répertoire de sortie sécurisé")
 
-            valid_bytes = make_valid_png() if ext == ".png" else make_valid_mp4()
-            file_path.write_bytes(valid_bytes)
+            if callable(pipeline) and not sim_mode:
+                tasks[task_id]["step"] = 1
+                tasks[task_id]["progress"] = 50
+
+                def _run_real_infer():
+                    kwargs = dict(payload.parameters)
+                    if payload.prompt:
+                        kwargs["prompt"] = payload.prompt
+                    out = pipeline(**kwargs)
+                    if hasattr(out, "images") and out.images:
+                        out.images[0].save(file_path)
+                    elif hasattr(out, "save"):
+                        out.save(file_path)
+                    elif isinstance(out, bytes):
+                        file_path.write_bytes(out)
+
+                await asyncio.to_thread(_run_real_infer)
+            else:
+                for step in range(1, total_steps + 1):
+                    if cancel_event.is_set():
+                        tasks[task_id]["status"] = "cancelled"
+                        tasks[task_id]["errorMessage"] = "Annulée par l'utilisateur"
+                        return
+                    await asyncio.sleep(0.04)
+                    tasks[task_id]["step"] = step
+                    tasks[task_id]["totalSteps"] = total_steps
+                    tasks[task_id]["progress"] = int(round(step / total_steps * 100))
+
+                valid_bytes = make_valid_png() if ext == ".png" else make_valid_mp4()
+                file_path.write_bytes(valid_bytes)
+
+            if cancel_event.is_set():
+                tasks[task_id]["status"] = "cancelled"
+                tasks[task_id]["errorMessage"] = "Annulée par l'utilisateur"
+                return
 
             tasks[task_id]["status"] = "completed"
             tasks[task_id]["progress"] = 100
@@ -355,14 +367,29 @@ def create_worker_app(
     @app.post("/v1/chat/completions")
     async def chat_completions(payload: ChatCompletionRequest, request: Request) -> Any:
         chat_loader = loaders.get(payload.model)
-        swapper.ensure_model(payload.model, load_fn=chat_loader)
+        chat_model = swapper.ensure_model(payload.model, load_fn=chat_loader)
         request_id = payload.requestId or f"chat_{uuid.uuid4().hex[:10]}"
         last_user_msg = payload.messages[-1].content if payload.messages else "Bonjour"
         summary = (
             last_user_msg[:40] + "..." if len(last_user_msg) > 40 else last_user_msg
         )
 
+        real_text: str | None = None
+        if callable(chat_model) and not sim_mode:
+            prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
+
+            def _gen():
+                res = chat_model(prompt_in, max_new_tokens=150)
+                if isinstance(res, list) and res and "generated_text" in res[0]:
+                    return res[0]["generated_text"].replace(prompt_in, "").strip()
+                return str(res)
+
+            real_text = await asyncio.to_thread(_gen)
+
         if not payload.stream:
+            content = real_text or (
+                f"Voici une réponse synthétisée par {payload.model} pour : « {summary} »."
+            )
             return {
                 "id": request_id,
                 "object": "chat.completion",
@@ -371,23 +398,21 @@ def create_worker_app(
                 "choices": [
                     {
                         "index": 0,
-                        "message": {
-                            "role": "assistant",
-                            "content": (
-                                f"Voici une réponse synthétisée par {payload.model} pour : "
-                                f"« {summary} »."
-                            ),
-                        },
+                        "message": {"role": "assistant", "content": content},
                         "finish_reason": "stop",
                     }
                 ],
             }
 
         async def chat_stream_generator() -> AsyncGenerator[str, None]:
-            words = [
-                "Bonjour", " ! ", "Voici", " une", " réponse", " synthétisée", " pour",
-                f" « {summary} »", " par", " le", " worker", " distant", " Colab.",
-            ]
+            words = (
+                [w + " " for w in real_text.split()]
+                if real_text
+                else [
+                    "Bonjour", " ! ", "Voici", " une", " réponse", " synthétisée", " pour",
+                    f" « {summary} »", " par", " le", " worker", " distant", " Colab.",
+                ]
+            )
             try:
                 for word in words:
                     if request_id in active_chat_cancels or await request.is_disconnected():
