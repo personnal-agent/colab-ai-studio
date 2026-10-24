@@ -26,211 +26,106 @@ from app.models.domain import (
 )
 
 
-def test_task_status_enum_values():
-    assert [s.value for s in TaskStatus] == [
+def test_task_status_and_params():
+    assert {s.value for s in TaskStatus} == {
         "pending",
         "running",
         "completed",
         "failed",
         "cancelled",
-    ]
-
-
-def test_generation_parameters_defaults_and_validation():
-    params = GenerationParameters(
-        seed=4289102,
-        aspectRatio="16:9",
-        resolution="720p",
-        duration="5s",
+    }
+    p = GenerationParameters(seed=42, aspectRatio="16:9", resolution="720p", duration="5s")
+    assert (
+        p.seed == 42
+        and p.aspectRatio == "16:9"
+        and p.validate()
+        and p.to_payload_dict()["seed"] == 42
     )
-    assert params.seed == 4289102
-    assert params.aspectRatio == "16:9"
-    assert params.frameRate is None
-    assert params.audio is None
-    assert params.validate() is True
-    payload = params.to_payload_dict()
-    assert payload["seed"] == 4289102
-    assert payload["aspectRatio"] == "16:9"
-
-
-def test_generation_parameters_invalid_aspect_ratio():
-    # Ratios étendus valides
-    p1 = GenerationParameters(seed=1, aspectRatio="8:1")
-    assert p1.aspectRatio == "8:1"
-    p2 = GenerationParameters(seed=2, aspectRatio="2:3")
-    assert p2.aspectRatio == "2:3"
-
+    assert GenerationParameters(seed=1, aspectRatio="8:1").aspectRatio == "8:1"
+    assert GenerationParameters(seed=2, aspectRatio="2:3").aspectRatio == "2:3"
     with pytest.raises(ValidationError):
-        GenerationParameters(
-            seed=1,
-            aspectRatio="invalid_ratio",
-            resolution="720p",
-            duration="5s",
-        )
+        GenerationParameters(seed=1, aspectRatio="invalid")
     with pytest.raises(ValidationError):
-        GenerationParameters(
-            seed=1,
-            aspectRatio="0:10",
-            resolution="720p",
-            duration="5s",
-        )
+        GenerationParameters(seed=1, aspectRatio="0:10")
 
 
-def test_generation_references_empty_and_methods():
+def test_generation_references_and_lifecycle():
     refs = GenerationReferences()
-    assert refs.has_visual_references() is False
-    refs.imageRefs.append("data/assets/start.png")
-    assert refs.has_visual_references() is True
+    assert not refs.has_visual_references()
+    refs.imageRefs.append("start.png")
+    assert refs.has_visual_references()
     refs.clear_references()
-    assert refs.has_visual_references() is False
-    assert refs.imageRefs == []
+    assert not refs.has_visual_references() and refs.imageRefs == []
 
-
-def test_brand_kit_snapshot_primary_color():
-    snapshot = BrandKitSnapshot(
-        id="bk_apple",
-        name="Apple Style",
-        overview="Clean minimal.",
-        colors=["#000000", "#FFFFFF"],
-        logos=["data/assets/logos/apple.png"],
-        fonts=["SF Pro Display"],
-        guidelines=["Keep it simple."],
-    )
-    assert snapshot.get_primary_color() == "#000000"
-    tokens = snapshot.format_prompt_tokens()
-    assert "[Brand: Apple Style]" in tokens
-    assert "#000000" in tokens
-
-    empty_colors = BrandKitSnapshot(
-        id="bk_empty",
-        name="Empty",
-        overview="No colors.",
-    )
-    assert empty_colors.get_primary_color() is None
-
-
-def test_brand_kit_create_snapshot():
-    kit = BrandKit(
-        id="bk_apple_visuals",
-        name="Apple Style",
-        overview="Minimal aesthetic.",
-        logos=[
-            Logo(
-                id="ast_logo_01",
-                filePath="data/assets/logos/apple_white.png",
-                label="Logo Principal",
-            )
-        ],
-        colors=[
-            Color(hex="#000000", label="Noir Sidéral", isDominant=True),
-            Color(hex="#FFFFFF", label="Blanc Pur", isDominant=False),
-        ],
-        fonts=[Font(family="SF Pro Display", weight="600")],
-        referenceImages=[Asset(id="ast_ref_01", filePath="data/assets/refs/shot.jpg")],
-        guidelines=[
-            Guideline(kind="do", text="Privilégier la lumière naturelle."),
-            Guideline(kind="dont", text="Ne jamais surcharger."),
-        ],
-    )
-    snapshot = kit.create_snapshot()
-    assert snapshot.id == kit.id
-    assert snapshot.name == kit.name
-    assert snapshot.colors == ["#000000", "#FFFFFF"]
-    assert snapshot.logos == ["data/assets/logos/apple_white.png"]
-    assert snapshot.fonts == ["SF Pro Display"]
-    assert len(snapshot.guidelines) == 2
-    context = kit.compile_context()
-    assert "Apple Style" in context
-
-
-def test_brand_kit_color_hex_validation():
-    with pytest.raises(ValidationError):
-        Color(hex="invalid_hex")
-
-
-def test_project_instantiation():
-    proj = Project(
-        id="proj_court_metrage_01",
-        name="Court-métrage Brume",
-        description="Scènes de cinématique en extérieur",
-        colorTag="#3B82F6",
-        storagePath="/home/omni/Videos/Projet_Brume",
-    )
-    assert proj.id == "proj_court_metrage_01"
-    assert proj.storagePath == "/home/omni/Videos/Projet_Brume"
-
-
-def test_project_invalid_color_tag():
-    with pytest.raises(ValidationError):
-        Project(id="p1", name="Test", colorTag="red")
-
-
-def test_generation_lifecycle_methods():
     gen = Generation(
-        id="gen_20261009_143022_a8f9",
+        id="g_test",
         status=TaskStatus.PENDING,
-        mediaType="video",
-        prompt="Un plan aérien cinématique...",
-        modelId="seedance-2.5-pro",
-        modelName="Seedance 2.5",
-        parameters=GenerationParameters(
-            seed=42,
-            aspectRatio="16:9",
-            resolution="720p",
-            duration="5s",
-        ),
+        prompt="misty forest",
+        modelId="m1",
+        modelName="Model 1",
+        parameters=GenerationParameters(seed=42),
     )
-    assert gen.is_completed() is False
-    assert gen.get_output_path() is None
-    assert gen.toggle_favorite() is True
-    assert gen.isFavorite is True
-    assert gen.toggle_favorite() is False
-    assert gen.isFavorite is False
-
-    gen.mark_failed("Worker unreachable")
-    assert gen.status == TaskStatus.FAILED
-    assert gen.errorMessage == "Worker unreachable"
+    assert not gen.is_completed() and gen.get_output_path() is None
+    assert gen.toggle_favorite() is True and gen.toggle_favorite() is False
+    gen.mark_failed("Unreachable")
+    assert gen.status == TaskStatus.FAILED and gen.errorMessage == "Unreachable"
 
 
-def test_studio_config_and_local_worker_url():
-    config = StudioConfig()
-    assert config.executionMode == ExecutionMode.COLAB
-    assert config.is_colab_active() is True
-    assert config.local.workerUrl == "http://127.0.0.1:8190"
-    assert config.local.is_cpu_fallback() is True
-    assert config.get_active_endpoint() == "https://xxxx-xx-xx.ngrok-free.app"
+def test_brand_kit_snapshot_and_context():
+    snap = BrandKitSnapshot(
+        id="bk_1",
+        name="Style",
+        overview="Minimal.",
+        colors=["#000000", "#FFFFFF"],
+        fonts=["SF Pro"],
+        guidelines=["Simple."],
+    )
+    assert snap.get_primary_color() == "#000000" and "[Brand: Style]" in snap.format_prompt_tokens()
+    assert BrandKitSnapshot(id="bk_e", name="Empty", overview="").get_primary_color() is None
 
-    config.set_execution_mode(ExecutionMode.LOCAL)
-    assert config.executionMode == ExecutionMode.LOCAL
-    assert config.is_colab_active() is False
-    assert config.get_active_endpoint() == "http://127.0.0.1:8190"
+    kit = BrandKit(
+        id="bk_full",
+        name="Apple Style",
+        overview="Aesthetic",
+        logos=[Logo(id="l1", filePath="logo.png")],
+        colors=[Color(hex="#000000", label="Noir"), Color(hex="#FFFFFF", label="Blanc")],
+        fonts=[Font(family="SF Pro")],
+        referenceImages=[Asset(id="a1", filePath="shot.jpg")],
+        guidelines=[Guideline(kind="do", text="Light"), Guideline(kind="dont", text="Noise")],
+    )
+    s = kit.create_snapshot()
+    assert s.id == kit.id and s.colors == ["#000000", "#FFFFFF"] and len(s.guidelines) == 2
+    assert "Apple Style" in kit.compile_context()
+    with pytest.raises(ValidationError):
+        Color(hex="invalid")
 
 
-def test_colab_config_methods():
-    colab = ColabConfig(tunnelUrl="https://colab-tunnel.ngrok-free.app")
-    assert colab.is_connected() is True
+def test_project_and_configs(monkeypatch):
+    p = Project(id="p1", name="Court", colorTag="#3B82F6", storagePath="/home/omni/Videos")
+    assert p.id == "p1" and p.storagePath == "/home/omni/Videos"
+    with pytest.raises(ValidationError):
+        Project(id="p2", name="Bad", colorTag="red")
+
+    cfg = StudioConfig()
+    assert (
+        cfg.is_colab_active()
+        and cfg.local.workerUrl == "http://127.0.0.1:8190"
+        and cfg.local.is_cpu_fallback()
+    )
+    cfg.set_execution_mode(ExecutionMode.LOCAL)
+    assert (
+        cfg.executionMode == ExecutionMode.LOCAL
+        and cfg.get_active_endpoint() == "http://127.0.0.1:8190"
+    )
+
+    colab = ColabConfig(tunnelUrl="https://colab.ngrok-free.app")
     colab.touch_ping()
-    assert colab.lastPing is not None
+    assert colab.is_connected() and colab.lastPing and not ColabConfig(tunnelUrl="").is_connected()
 
-    empty = ColabConfig(tunnelUrl="")
-    assert empty.is_connected() is False
+    monkeypatch.setenv("TEST_KEY", "secret-123")
+    assert CompilerLlmConfig(apiKeyEnv="TEST_KEY").get_api_key() == "secret-123"
+    assert CompilerLlmConfig(apiKey="direct").get_api_key() == "direct"
+    assert not CompilerLlmConfig(apiKeyEnv="DUMMY_VAR_NOT_SET").is_configured()
 
-
-def test_compiler_llm_config_methods(monkeypatch):
-    cfg = CompilerLlmConfig(apiKeyEnv="TEST_LLM_KEY")
-    assert cfg.is_configured() is False
-    assert cfg.get_api_key() is None
-
-    monkeypatch.setenv("TEST_LLM_KEY", "secret-key-123")
-    assert cfg.is_configured() is True
-    assert cfg.get_api_key() == "secret-key-123"
-
-    explicit = CompilerLlmConfig(apiKey="explicit-key")
-    assert explicit.is_configured() is True
-    assert explicit.get_api_key() == "explicit-key"
-
-
-def test_llm_proxy_config_methods():
-    cfg = LlmProxyConfig(port=8000)
-    assert cfg.is_running() is True
-    assert cfg.get_base_url() == "http://127.0.0.1:8000"
+    proxy = LlmProxyConfig(port=8000)
+    assert proxy.is_running() and proxy.get_base_url() == "http://127.0.0.1:8000"

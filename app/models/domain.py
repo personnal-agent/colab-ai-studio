@@ -1,8 +1,6 @@
-"""Modèles de domaine Pydantic v2 pour Colab AI Studio.
+"""Modèles de domaine Pydantic v2 pour Colab AI Studio (app/models/domain.py).
 
-Conformes au diagramme de classes UML (04-modele-de-donnees.svg)
-et à SPECIFICATION.md §4.2.1-§4.2.4.
-Enrichi de LocalConfig.workerUrl pour l'issue #2 (runner local GPU).
+Conformes au diagramme de classes UML et à SPECIFICATION.md §4.2.1-§4.2.4.
 """
 
 from __future__ import annotations
@@ -23,9 +21,6 @@ def _utc_now_iso() -> str:
 HEX_COLOR_REGEX = re.compile(r"^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
 
-# --- Énumérations de Domaine ---
-
-
 class TaskStatus(str, Enum):
     PENDING = "pending"
     RUNNING = "running"
@@ -39,12 +34,11 @@ class ExecutionMode(str, Enum):
     LOCAL = "local"
 
 
-# --- Objets Valeurs (Value Objects) ---
-
-
-class GenerationParameters(BaseModel):
+class DomainBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
+
+class GenerationParameters(DomainBase):
     seed: int
     aspectRatio: str = "16:9"
     resolution: str = "720p"
@@ -58,12 +52,10 @@ class GenerationParameters(BaseModel):
     def validate_aspect_ratio(cls, v: str) -> str:
         clean = v.strip()
         if not re.match(r"^\d+:\d+$", clean):
-            msg = f"Format de ratio d'aspect non supporté : '{v}' (attendu 'W:H' ex: '16:9', '2:3')"
-            raise ValueError(msg)
+            raise ValueError(f"Format de ratio non supporté : '{v}' (attendu 'W:H')")
         w, h = map(int, clean.split(":"))
         if w <= 0 or h <= 0:
-            msg = f"Les dimensions du ratio d'aspect doivent être strictement positives : '{v}'"
-            raise ValueError(msg)
+            raise ValueError(f"Dimensions du ratio strictement positives requises : '{v}'")
         return clean
 
     def validate(self) -> bool:
@@ -73,9 +65,7 @@ class GenerationParameters(BaseModel):
         return self.model_dump(exclude_none=True)
 
 
-class GenerationReferences(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
+class GenerationReferences(DomainBase):
     startFrame: str | None = None
     endFrame: str | None = None
     imageRefs: list[str] = Field(default_factory=list)
@@ -88,18 +78,13 @@ class GenerationReferences(BaseModel):
         return bool(self.startFrame or self.endFrame or self.imageRefs or self.videoRefs)
 
     def clear_references(self) -> None:
-        self.startFrame = None
-        self.endFrame = None
+        self.startFrame = self.endFrame = self.upscaleSource = self.brandKitId = None
         self.imageRefs.clear()
         self.videoRefs.clear()
         self.audioRefs.clear()
-        self.upscaleSource = None
-        self.brandKitId = None
 
 
-class BrandKitSnapshot(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
+class BrandKitSnapshot(DomainBase):
     id: str
     name: str
     overview: str
@@ -112,7 +97,7 @@ class BrandKitSnapshot(BaseModel):
         return self.colors[0] if self.colors else None
 
     def format_prompt_tokens(self) -> str:
-        parts: list[str] = [f"[Brand: {self.name}]", f"Style: {self.overview}"]
+        parts = [f"[Brand: {self.name}]", f"Style: {self.overview}"]
         if self.colors:
             parts.append(f"Palette: {', '.join(self.colors)}")
         if self.fonts:
@@ -137,8 +122,7 @@ class Color(BaseModel):
     @classmethod
     def validate_hex(cls, v: str) -> str:
         if not HEX_COLOR_REGEX.match(v):
-            msg = f"Format couleur hexadécimal invalide : '{v}' (ex: #FFFFFF, #000)"
-            raise ValueError(msg)
+            raise ValueError(f"Format couleur hexadécimal invalide : '{v}'")
         return v.upper()
 
 
@@ -158,12 +142,7 @@ class Guideline(BaseModel):
     text: str
 
 
-# --- Documents Métier (Persistance Documentaire JSON) ---
-
-
-class BrandKit(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
+class BrandKit(DomainBase):
     id: str
     name: str
     overview: str
@@ -193,9 +172,7 @@ class BrandKit(BaseModel):
         )
 
 
-class Project(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
+class Project(DomainBase):
     id: str
     name: str
     description: str | None = None
@@ -207,14 +184,11 @@ class Project(BaseModel):
     @classmethod
     def validate_color_tag(cls, v: str | None) -> str | None:
         if v is not None and not HEX_COLOR_REGEX.match(v):
-            msg = f"Format colorTag invalide : '{v}' (attendu format hexadécimal, ex: #3B82F6)"
-            raise ValueError(msg)
+            raise ValueError(f"Format colorTag invalide : '{v}'")
         return v.upper() if v else None
 
 
-class Generation(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
+class Generation(DomainBase):
     id: str
     status: TaskStatus = TaskStatus.PENDING
     mediaType: str = "video"
@@ -238,8 +212,7 @@ class Generation(BaseModel):
         return self.status == TaskStatus.COMPLETED
 
     def mark_failed(self, reason: str) -> None:
-        self.status = TaskStatus.FAILED
-        self.errorMessage = reason
+        self.status, self.errorMessage = TaskStatus.FAILED, reason
 
     def get_output_path(self) -> str | None:
         return self.filePath
@@ -247,9 +220,6 @@ class Generation(BaseModel):
     def toggle_favorite(self) -> bool:
         self.isFavorite = not self.isFavorite
         return self.isFavorite
-
-
-# --- Schémas de Configuration du Studio ---
 
 
 class ColabConfig(BaseModel):
@@ -302,9 +272,7 @@ class LlmProxyConfig(BaseModel):
         return f"http://{self.host}:{self.port}"
 
 
-class StudioConfig(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
+class StudioConfig(DomainBase):
     executionMode: ExecutionMode = ExecutionMode.COLAB
     colab: ColabConfig = Field(default_factory=ColabConfig)
     local: LocalConfig = Field(default_factory=LocalConfig)
@@ -316,9 +284,11 @@ class StudioConfig(BaseModel):
         return self.executionMode == ExecutionMode.COLAB
 
     def get_active_endpoint(self) -> str:
-        if self.executionMode == ExecutionMode.COLAB:
-            return self.colab.tunnelUrl
-        return self.local.workerUrl
+        return (
+            self.colab.tunnelUrl
+            if self.executionMode == ExecutionMode.COLAB
+            else self.local.workerUrl
+        )
 
     def set_execution_mode(self, mode: ExecutionMode) -> None:
         self.executionMode = mode

@@ -33,17 +33,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configuration CORS pour le développement Vite et les communications locales
+_ORIGINS = [f"http://{h}:{p}" for h in ("localhost", "127.0.0.1") for p in (5173, 8000, 8190)]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-        "http://localhost:8190",
-        "http://127.0.0.1:8190",
-    ],
+    allow_origins=_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

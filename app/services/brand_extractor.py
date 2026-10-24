@@ -32,93 +32,86 @@ HEX_FINDER = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
 FONT_FAMILY_FINDER = re.compile(r"font-family\s*:\s*([^;\}]+)", re.IGNORECASE)
 
 
+def _rank_colors(hex_matches: list[str]) -> list[Color]:
+    counts = Counter(m.upper() for m in hex_matches)
+    colors = [
+        Color(hex=code, label=f"Teinte {i + 1}", isDominant=(i == 0))
+        for i, (code, _) in enumerate(counts.most_common(5))
+    ]
+    return colors or [
+        Color(hex="#000000", label="Noir", isDominant=True),
+        Color(hex="#FFFFFF", label="Blanc", isDominant=False),
+    ]
+
+
 async def _validate_safe_url(url: str) -> None:
     parsed = urlparse(url)
     scheme = parsed.scheme.lower()
     if scheme not in ("http", "https"):
-        msg = f"Protocole non supporté : '{scheme}'. Seuls http et https sont autorisés."
-        raise ValueError(msg)
+        raise ValueError(
+            f"Protocole non supporté : '{scheme}'. Seuls http et https sont autorisés."
+        )
 
     hostname = parsed.hostname
     if not hostname:
-        msg = f"URL invalide, nom d'hôte manquant : '{url}'"
-        raise ValueError(msg)
+        raise ValueError(f"URL invalide, nom d'hôte manquant : '{url}'")
 
     lower_host = hostname.lower()
-    if lower_host in ("localhost", "127.0.0.1", "::1"):
-        msg = f"Accès interdit aux adresses locales ou privées : '{hostname}'"
-        raise ValueError(msg)
+    if lower_host in ("localhost", "127.0.0.1", "::1") or any(
+        lower_host.endswith(s)
+        for s in (".local", ".localhost", ".internal", ".lan", ".arpa", ".home")
+    ):
+        raise ValueError(f"Accès interdit aux domaines internes ou privés : '{hostname}'")
+
+    try:
+        if not ipaddress.ip_address(hostname.strip("[]")).is_global:
+            raise ValueError(f"Accès refusé : l'adresse IP '{hostname}' est privée ou réservée.")
+    except ValueError as e:
+        if "Accès refusé" in str(e):
+            raise
 
     port = parsed.port or (443 if scheme == "https" else 80)
     try:
-        # Résolution DNS déportée hors de la boucle événementielle
-        # asyncio pour ne jamais bloquer le serveur local
         addr_infos = await asyncio.to_thread(
             socket.getaddrinfo, hostname, port, proto=socket.IPPROTO_TCP
         )
     except socket.gaierror as e:
-        msg = f"Impossible de résoudre le nom d'hôte '{hostname}' : {e}"
-        raise ValueError(msg) from e
+        raise ValueError(f"Impossible de résoudre le nom d'hôte '{hostname}' : {e}") from e
 
     for _, _, _, _, sockaddr in addr_infos:
-        ip_str = sockaddr[0]
         try:
-            ip = ipaddress.ip_address(ip_str)
-        except ValueError:
-            continue
-        if (
-            not ip.is_global
-            or ip.is_private
-            or ip.is_loopback
-            or ip.is_reserved
-            or ip.is_link_local
-            or ip.is_multicast
-            or ip.is_unspecified
-        ):
-            msg = (
-                f"Accès refusé : l'hôte '{hostname}' ({ip_str}) "
-                f"résout vers une adresse IP privée ou réservée."
-            )
-            raise ValueError(msg)
+            if not ipaddress.ip_address(sockaddr[0]).is_global:
+                raise ValueError(
+                    f"Accès refusé : l'hôte '{hostname}' ({sockaddr[0]}) résout vers une IP privée."
+                )
+        except ValueError as e:
+            if "Accès refusé" in str(e):
+                raise
 
 
 async def _fetch_safe_website(initial_url: str, max_redirects: int = 5) -> httpx.Response:
     headers = {"User-Agent": "Mozilla/5.0 (compatible; ColabAIStudio/1.0)"}
     current_url = initial_url
-    redirect_count = 0
 
-    async with httpx.AsyncClient(
-        timeout=5.0,
-        follow_redirects=False,
-        headers=headers,
-    ) as client:
-        while True:
-            # 1. Validation asynchrone non bloquante de l'adresse de destination
+    async with httpx.AsyncClient(timeout=5.0, follow_redirects=False, headers=headers) as client:
+        for _ in range(max_redirects + 1):
             await _validate_safe_url(current_url)
-
-            # 2. Requête HTTP
             try:
                 resp = await client.get(current_url)
             except (httpx.RequestError, OSError) as e:
-                msg = f"Impossible de contacter le site '{current_url}' : {e}"
-                raise ValueError(msg) from e
+                raise ValueError(f"Impossible de contacter le site '{current_url}' : {e}") from e
 
-            # 3. Contrôle des redirections (3xx)
             if resp.status_code in (301, 302, 303, 307, 308) and "location" in resp.headers:
-                redirect_count += 1
-                if redirect_count > max_redirects:
-                    msg = f"Nombre maximal de redirections dépassé ({max_redirects})"
-                    raise ValueError(msg)
-                location = resp.headers["location"]
-                current_url = urljoin(str(resp.url), location)
+                current_url = urljoin(str(resp.url), resp.headers["location"])
                 continue
 
-            # 4. Vérification code statut final
             if resp.status_code >= 400:
-                msg = f"Le site {current_url} a retourné une erreur HTTP {resp.status_code}"
-                raise ValueError(msg)
-
+                raise ValueError(
+                    f"Le site {current_url} a retourné une erreur HTTP {resp.status_code}"
+                )
             return resp
+
+    raise ValueError(f"Nombre maximal de redirections dépassé ({max_redirects})")
 
 
 class BrandKitExtractor:
@@ -127,10 +120,9 @@ class BrandKitExtractor:
         self.assets_dir.mkdir(parents=True, exist_ok=True)
 
     def create_blank(self, name: str, overview: str = "") -> BrandKit:
-        kit_id = f"bk_{uuid.uuid4().hex[:8]}"
         now = _utc_now_iso()
         return BrandKit(
-            id=kit_id,
+            id=f"bk_{uuid.uuid4().hex[:8]}",
             name=name.strip() or "Nouveau Brand Kit",
             overview=overview.strip() or f"Identité visuelle {name}",
             createdAt=now,
@@ -140,20 +132,18 @@ class BrandKitExtractor:
     async def extract_from_files(
         self,
         name: str,
-        files: list[tuple[str, bytes]],  # (filename, binary_content)
+        files: list[tuple[str, bytes]],
         overview: str = "",
     ) -> BrandKit:
         def _process_files() -> tuple[list[Logo], list[Color], list[Font]]:
             logos: list[Logo] = []
-            extracted_colors: list[Color] = []
             extracted_fonts: list[Font] = []
             color_candidates: list[str] = []
             seen_fonts: set[str] = set()
 
             for filename, content in files:
                 ext = Path(filename).suffix.lower()
-                dest_name = f"ast_{uuid.uuid4().hex[:8]}_{Path(filename).name}"
-                dest_path = self.assets_dir / dest_name
+                dest_path = self.assets_dir / f"ast_{uuid.uuid4().hex[:8]}_{Path(filename).name}"
                 dest_path.write_bytes(content)
 
                 if ext in {".png", ".svg", ".webp", ".jpg", ".jpeg"}:
@@ -165,7 +155,6 @@ class BrandKitExtractor:
                         )
                     )
 
-                # Polices de caractères binaires
                 if ext in {".ttf", ".otf", ".woff", ".woff2"}:
                     font_family = Path(filename).stem.replace("-", " ").title()
                     if font_family not in seen_fonts:
@@ -174,49 +163,26 @@ class BrandKitExtractor:
                             Font(family=font_family, filePath=str(dest_path.resolve()))
                         )
 
-                # Recherche heuristique de codes HEX et font-family dans les fichiers textuels
                 if ext in {".svg", ".txt", ".json", ".css"}:
                     with contextlib.suppress(Exception):
                         text = content.decode("utf-8", errors="ignore")
-                        for hex_match in HEX_FINDER.findall(text):
-                            color_candidates.append(hex_match.upper())
-
-                        for font_match in FONT_FAMILY_FINDER.findall(text):
-                            primary_font = font_match.split(",")[0].strip().strip("'\"")
+                        color_candidates.extend(HEX_FINDER.findall(text))
+                        for font_m in FONT_FAMILY_FINDER.findall(text):
+                            p = font_m.split(",")[0].strip().strip("'\"")
                             if (
-                                primary_font
-                                and primary_font.lower()
-                                not in {"inherit", "sans-serif", "serif", "monospace"}
-                                and primary_font not in seen_fonts
+                                p
+                                and p.lower() not in {"inherit", "sans-serif", "serif", "monospace"}
+                                and p not in seen_fonts
                             ):
-                                seen_fonts.add(primary_font)
-                                extracted_fonts.append(Font(family=primary_font))
+                                seen_fonts.add(p)
+                                extracted_fonts.append(Font(family=p))
 
-            # Si au moins une couleur est trouvée, classer par fréquence
-            counts = Counter(color_candidates)
-            for idx, (hex_code, _) in enumerate(counts.most_common(5)):
-                extracted_colors.append(
-                    Color(
-                        hex=hex_code,
-                        label=f"Teinte {idx + 1}",
-                        isDominant=(idx == 0),
-                    )
-                )
-
-            # Si aucune couleur n'a pu être extraite, palette neutre par défaut
-            if not extracted_colors:
-                extracted_colors = [
-                    Color(hex="#000000", label="Noir", isDominant=True),
-                    Color(hex="#FFFFFF", label="Blanc", isDominant=False),
-                ]
-
-            return logos, extracted_colors, extracted_fonts
+            return logos, _rank_colors(color_candidates), extracted_fonts
 
         logos, colors, fonts = await asyncio.to_thread(_process_files)
-        kit_id = f"bk_{uuid.uuid4().hex[:8]}"
         now = _utc_now_iso()
         return BrandKit(
-            id=kit_id,
+            id=f"bk_{uuid.uuid4().hex[:8]}",
             name=name.strip() or "Brand Kit extrait",
             overview=overview.strip() or f"Style extrait des fichiers de {name}",
             logos=logos,
@@ -232,46 +198,26 @@ class BrandKitExtractor:
             clean_url = f"https://{clean_url}"
 
         domain = urlparse(clean_url).netloc or clean_url
-        kit_id = f"bk_{uuid.uuid4().hex[:8]}"
-        now = _utc_now_iso()
-
-        logos: list[Logo] = []
-        colors: list[Color] = []
-        fonts: list[Font] = []
-        overview_text = f"Identité visuelle issue du site {domain}"
-
         resp = await _fetch_safe_website(clean_url)
         html = resp.text
 
-        # 1. Overview depuis <title> et <meta name="description">
-        title_match = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
-        desc_match = re.search(
-            r'<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']',
-            html,
-            re.IGNORECASE | re.DOTALL,
+        title_m = re.search(r"<title[^>]*>(.*?)</title>", html, re.I | re.S)
+        desc_m = re.search(
+            r'<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']', html, re.I | re.S
         )
-        title = title_match.group(1).strip() if title_match else ""
-        desc = desc_match.group(1).strip() if desc_match else ""
-        if desc:
-            overview_text = f"{title} - {desc}" if title else desc
-        elif title:
-            overview_text = title
+        title = title_m.group(1).strip() if title_m else ""
+        desc = desc_m.group(1).strip() if desc_m else ""
+        overview_text = (
+            f"{title} - {desc}"
+            if (title and desc)
+            else (desc or title or f"Identité visuelle {domain}")
+        )
 
-        # 2. Couleurs hex depuis HTML et styles inline, classées par fréquence
-        counts = Counter(m.upper() for m in HEX_FINDER.findall(html))
-        for idx, (hex_code, _) in enumerate(counts.most_common(5)):
-            colors.append(
-                Color(
-                    hex=hex_code,
-                    label=f"Couleur web {idx + 1}",
-                    isDominant=(idx == 0),
-                )
-            )
-
-        # 3. Polices depuis font-family
+        logos: list[Logo] = []
+        fonts: list[Font] = []
         seen_fonts = set()
-        for font_match in FONT_FAMILY_FINDER.findall(html):
-            clean_font = font_match.split(",")[0].strip().strip("'\"")
+        for font_m in FONT_FAMILY_FINDER.findall(html):
+            clean_font = font_m.split(",")[0].strip().strip("'\"")
             if (
                 clean_font
                 and clean_font.lower() not in {"inherit", "sans-serif", "serif", "monospace"}
@@ -282,35 +228,26 @@ class BrandKitExtractor:
                 if len(fonts) >= 3:
                     break
 
-        # 4. Favicon / icône (résolu depuis l'adresse finale de la réponse)
-        icon_match = re.search(
-            r'<link[^>]+rel=["\'](?:shortcut )?icon["\'][^>]+href=["\'](.*?)["\']',
-            html,
-            re.IGNORECASE,
+        icon_m = re.search(
+            r'<link[^>]+rel=["\'](?:shortcut )?icon["\'][^>]+href=["\'](.*?)["\']', html, re.I
         )
-        if icon_match:
+        if icon_m:
             base_url = str(resp.url) if hasattr(resp, "url") else clean_url
-            icon_url = urljoin(base_url, icon_match.group(1))
             logos.append(
                 Logo(
                     id=f"ast_logo_{uuid.uuid4().hex[:6]}",
-                    filePath=icon_url,
+                    filePath=urljoin(base_url, icon_m.group(1)),
                     label="Favicon",
                 )
             )
 
-        if not colors:
-            colors = [
-                Color(hex="#000000", label="Primaire", isDominant=True),
-                Color(hex="#FFFFFF", label="Fond", isDominant=False),
-            ]
-
+        now = _utc_now_iso()
         return BrandKit(
-            id=kit_id,
+            id=f"bk_{uuid.uuid4().hex[:8]}",
             name=name.strip() or domain,
             overview=overview_text,
             logos=logos,
-            colors=colors,
+            colors=_rank_colors(HEX_FINDER.findall(html)),
             fonts=fonts,
             createdAt=now,
             updatedAt=now,

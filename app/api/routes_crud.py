@@ -87,24 +87,18 @@ async def list_generations(
     q: str | None = Query(default=None),
 ) -> list[dict[str, Any]]:
     items = await _json_store.read_list("generations.json")
-    results: list[dict[str, Any]] = []
-
-    for item in items:
-        if favorite is not None and item.get("isFavorite") != favorite:
-            continue
-        if mediaType and item.get("mediaType") != mediaType:
-            continue
-        if projectId and item.get("projectId") != projectId:
-            continue
-        if q:
-            query_lower = q.lower()
-            prompt = str(item.get("prompt", "")).lower()
-            model = str(item.get("modelName", "")).lower()
-            if query_lower not in prompt and query_lower not in model:
-                continue
-        results.append(item)
-
-    # Tri antichronologique
+    results = [
+        item
+        for item in items
+        if (favorite is None or item.get("isFavorite") == favorite)
+        and (not mediaType or item.get("mediaType") == mediaType)
+        and (not projectId or item.get("projectId") == projectId)
+        and (
+            not q
+            or q.lower() in str(item.get("prompt", "")).lower()
+            or q.lower() in str(item.get("modelName", "")).lower()
+        )
+    ]
     results.sort(key=lambda x: str(x.get("createdAt", "")), reverse=True)
     return results
 
@@ -119,8 +113,7 @@ async def toggle_favorite(generation_id: str) -> dict[str, Any]:
         items = await _json_store.read_list_unlocked("generations.json")
         for item in items:
             if item.get("id") == generation_id:
-                current_fav = bool(item.get("isFavorite", False))
-                item["isFavorite"] = not current_fav
+                item["isFavorite"] = not bool(item.get("isFavorite", False))
                 await _json_store.write_list_unlocked("generations.json", items)
                 return item
     raise HTTPException(status_code=404, detail="Génération introuvable")
@@ -134,34 +127,25 @@ async def toggle_favorite(generation_id: str) -> dict[str, Any]:
 async def delete_generation(generation_id: str) -> dict[str, Any]:
     async with _json_store.lock_for("generations.json"):
         items = await _json_store.read_list_unlocked("generations.json")
-        target_item = next((item for item in items if item.get("id") == generation_id), None)
-        if target_item is None:
+        target = next((it for it in items if it.get("id") == generation_id), None)
+        if target is None:
             raise HTTPException(status_code=404, detail="Génération introuvable")
 
-        # Suppression transactionnelle via MediaFileStore avec rollback garanti
         try:
-            staged_moves = await _media_store.stage_delete_media(
-                file_path=target_item.get("filePath"),
-                thumbnail_path=target_item.get("thumbnailPath"),
+            staged = await _media_store.stage_delete_media(
+                target.get("filePath"), target.get("thumbnailPath")
             )
         except OSError as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Échec de l'opération transactionnelle de suppression : {e}",
-            ) from e
+            raise HTTPException(status_code=500, detail=f"Échec suppression : {e}") from e
 
-        # Phase 2: Persistance atomique de la collection JSON
-        remaining = [item for item in items if item.get("id") != generation_id]
         try:
-            await _json_store.write_list_unlocked("generations.json", remaining)
+            rem = [it for it in items if it.get("id") != generation_id]
+            await _json_store.write_list_unlocked("generations.json", rem)
         except Exception:
-            # Rollback : restauration intégrale des fichiers médias si l'écriture JSON échoue
-            await _media_store.rollback_delete_media(staged_moves)
+            await _media_store.rollback_delete_media(staged)
             raise
 
-        # Phase 3: Purge définitive des fichiers médias stagés après succès JSON
-        await _media_store.commit_delete_media(staged_moves)
-
+        await _media_store.commit_delete_media(staged)
     return {"deleted": True, "id": generation_id}
 
 
@@ -192,19 +176,15 @@ async def create_brand_kit(
             raise HTTPException(status_code=400, detail=str(e)) from e
     elif files:
         total_size = 0
-        max_upload_size = 50 * 1024 * 1024  # 50 Mo aggregate cap
         file_tuples: list[tuple[str, bytes]] = []
         for f in files:
-            chunks = []
-            while chunk := await f.read(1024 * 1024):
-                total_size += len(chunk)
-                if total_size > max_upload_size:
-                    raise HTTPException(
-                        status_code=413,
-                        detail="Taille cumulée des fichiers supérieure à 50 Mo",
-                    )
-                chunks.append(chunk)
-            file_tuples.append((f.filename or "upload", b"".join(chunks)))
+            content = await f.read()
+            total_size += len(content)
+            if total_size > 50 * 1024 * 1024:
+                raise HTTPException(
+                    status_code=413, detail="Taille cumulée des fichiers supérieure à 50 Mo"
+                )
+            file_tuples.append((f.filename or "upload", content))
         new_kit = await _extractor.extract_from_files(
             name=name, files=file_tuples, overview=overview
         )
@@ -245,6 +225,8 @@ async def create_project(payload: ProjectCreate) -> dict[str, Any]:
             storage_path = str(resolved_dest)
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e)) from e
+        except (FileExistsError, NotADirectoryError) as e:
+            raise HTTPException(status_code=422, detail="storagePath inutilisable") from e
 
     project = Project(
         id=proj_id,
@@ -272,11 +254,9 @@ async def create_project(payload: ProjectCreate) -> dict[str, Any]:
 )
 async def update_colab_url(payload: ColabUrlUpdate) -> dict[str, Any]:
     async with _json_store.lock_for(CONFIG_FILE.name):
-        raw_config = await _json_store.read_dict_unlocked(
+        cfg = await _json_store.read_dict_unlocked(
             CONFIG_FILE.name, default=StudioConfig().model_dump()
         )
-        if "colab" not in raw_config:
-            raw_config["colab"] = {}
-        raw_config["colab"]["tunnelUrl"] = payload.tunnelUrl.strip()
-        await _json_store.write_dict_unlocked(CONFIG_FILE.name, raw_config)
+        cfg.setdefault("colab", {})["tunnelUrl"] = payload.tunnelUrl.strip()
+        await _json_store.write_dict_unlocked(CONFIG_FILE.name, cfg)
     return {"updated": True, "tunnelUrl": payload.tunnelUrl.strip()}

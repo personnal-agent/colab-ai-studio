@@ -21,6 +21,5 @@ CONFIG_FILE: Path = DATA_DIR / "config.json"
 
 def ensure_directories() -> None:
     """Crée les répertoires obligatoires avec permissions utilisateur."""
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    ASSETS_DIR.mkdir(parents=True, exist_ok=True)
-    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    for d in (DATA_DIR, ASSETS_DIR, OUTPUTS_DIR):
+        d.mkdir(parents=True, exist_ok=True)

@@ -1,6 +1,6 @@
 target-version = "py310"
 line-length = 100
-extend-exclude = [".GCC", ".modelisation", "ui-specifications", "frontend"]
+extend-exclude = [".GCC", ".modelisation", "ui-specifications", "frontend", ".github"]
 
 [lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "S", "ASYNC"]
