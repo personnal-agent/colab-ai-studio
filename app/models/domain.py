@@ -207,6 +207,7 @@ class Generation(DomainBase):
     isFavorite: bool = False
     projectId: str | None = None
     createdAt: str = Field(default_factory=_utc_now_iso)
+    workerUrl: str | None = None
 
     def is_completed(self) -> bool:
         return self.status == TaskStatus.COMPLETED

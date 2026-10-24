@@ -23,10 +23,11 @@ class CorruptedDocumentStoreError(RuntimeError):
 
 
 class JSONDocumentStore:
+    _global_locks: dict[tuple[str, str], asyncio.Lock] = {}
+
     def __init__(self, data_dir: Path | str) -> None:
         self.data_dir = Path(data_dir)
         self.data_dir.mkdir(parents=True, exist_ok=True)
-        self._locks: dict[str, asyncio.Lock] = {}
         self._corrupted_files: set[str] = set()
 
     def is_corrupted(self, filename: str) -> bool:
@@ -37,9 +38,10 @@ class JSONDocumentStore:
 
     def lock_for(self, filename: str) -> asyncio.Lock:
         canon_name = Path(filename).name
-        if canon_name not in self._locks:
-            self._locks[canon_name] = asyncio.Lock()
-        return self._locks[canon_name]
+        key = (str(self.data_dir.resolve()), canon_name)
+        if key not in self._global_locks:
+            self._global_locks[key] = asyncio.Lock()
+        return self._global_locks[key]
 
     def _resolve(self, filename: str) -> Path:
         target = (self.data_dir / Path(filename).name).resolve()

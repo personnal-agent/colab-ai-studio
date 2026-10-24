@@ -19,6 +19,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, field_validator
 
 from app.config import (
@@ -26,10 +27,11 @@ from app.config import (
     BRAND_KITS_FILE,
     CONFIG_FILE,
     DATA_DIR,
+    GENERATIONS_FILE,
     OUTPUTS_DIR,
     PROJECTS_FILE,
 )
-from app.models.domain import HEX_COLOR_REGEX, Project, StudioConfig
+from app.models.domain import HEX_COLOR_REGEX, Project, StudioConfig, TaskStatus
 from app.services.brand_extractor import BrandKitExtractor
 from app.storage.json_store import JSONDocumentStore
 from app.storage.media_store import MediaFileStore
@@ -40,6 +42,16 @@ router = APIRouter(prefix="/api", tags=["CRUD"])
 _json_store = JSONDocumentStore(DATA_DIR)
 _media_store = MediaFileStore(OUTPUTS_DIR)
 _extractor = BrandKitExtractor(ASSETS_DIR)
+
+
+def get_json_store() -> JSONDocumentStore:
+    """Fournisseur de dépendance pour le store JSON partagé."""
+    return _json_store
+
+
+def get_media_store() -> MediaFileStore:
+    """Fournisseur de dépendance pour le store média partagé."""
+    return _media_store
 
 
 def verify_trusted_origin(request: Request) -> None:
@@ -254,11 +266,32 @@ async def create_project(payload: ProjectCreate) -> dict[str, Any]:
     response_model=dict[str, Any],
     dependencies=[Depends(verify_trusted_origin)],
 )
-async def update_colab_url(payload: ColabUrlUpdate) -> dict[str, Any]:
-    async with _json_store.lock_for(CONFIG_FILE.name):
-        cfg = await _json_store.read_dict_unlocked(
-            CONFIG_FILE.name, default=StudioConfig().model_dump()
-        )
-        cfg.setdefault("colab", {})["tunnelUrl"] = payload.tunnelUrl.strip()
-        await _json_store.write_dict_unlocked(CONFIG_FILE.name, cfg)
-    return {"updated": True, "tunnelUrl": payload.tunnelUrl.strip()}
+async def update_colab_url(payload: ColabUrlUpdate) -> Any:
+    from app.api.routes_generation import get_task_orchestrator
+
+    orchestrator = get_task_orchestrator()
+    async with orchestrator.coordination_lock:
+        async with _json_store.lock_for(CONFIG_FILE.name):
+            generations = await _json_store.read_list(GENERATIONS_FILE.name)
+            active_tasks = [
+                gen["id"]
+                for gen in generations
+                if gen.get("status") in {TaskStatus.PENDING.value, TaskStatus.RUNNING.value}
+            ]
+            if active_tasks:
+                return JSONResponse(
+                    status_code=409,
+                    content={
+                        "detail": (
+                            "Impossible de modifier le tunnel Colab pendant une tâche en cours"
+                        ),
+                        "activeTaskIds": active_tasks,
+                    },
+                )
+
+            cfg = await _json_store.read_dict_unlocked(
+                CONFIG_FILE.name, default=StudioConfig().model_dump()
+            )
+            cfg.setdefault("colab", {})["tunnelUrl"] = payload.tunnelUrl.strip()
+            await _json_store.write_dict_unlocked(CONFIG_FILE.name, cfg)
+        return {"updated": True, "tunnelUrl": payload.tunnelUrl.strip()}

@@ -316,9 +316,44 @@ async def test_brand_kit_favicon_resolves_against_redirect_url(test_env, monkeyp
 
 
 async def test_config_colab_url_update(test_env):
-    client, _, _, _ = test_env
+    client, store, _, _ = test_env
+    await store.write_list("generations.json", [])
     res = await client.post(
         "/api/config/colab-url", json={"tunnelUrl": "https://active-tunnel-123.ngrok-free.app"}
     )
     assert res.status_code == 200
     assert res.json()["tunnelUrl"] == "https://active-tunnel-123.ngrok-free.app"
+
+    # Conflit si tâche active
+    await store.write_list("generations.json", [{"id": "gen_act_colab", "status": "running"}])
+    res_conflict = await client.post(
+        "/api/config/colab-url", json={"tunnelUrl": "https://other-tunnel.ngrok-free.app"}
+    )
+    assert res_conflict.status_code == 409
+    assert "gen_act_colab" in res_conflict.json()["activeTaskIds"]
+
+
+@pytest.mark.asyncio
+async def test_lifespan_cleans_orphaned_tasks(tmp_path, monkeypatch):
+    import app.main
+    from app.config import GENERATIONS_FILE
+    from app.main import lifespan
+    from app.models.domain import TaskStatus
+
+    monkeypatch.setattr(app.main, "DATA_DIR", tmp_path)
+    store = JSONDocumentStore(tmp_path)
+    tasks = [
+        {"id": "gen_orphan_1", "status": "pending", "prompt": "test 1"},
+        {"id": "gen_orphan_2", "status": "running", "prompt": "test 2"},
+        {"id": "gen_done", "status": "completed", "prompt": "test 3"},
+    ]
+    await store.write_list(GENERATIONS_FILE.name, tasks)
+
+    async with lifespan(app):
+        pass
+
+    updated = await store.read_list(GENERATIONS_FILE.name)
+    assert updated[0]["status"] == TaskStatus.FAILED.value
+    assert "Interrompue par redémarrage" in updated[0]["errorMessage"]
+    assert updated[1]["status"] == TaskStatus.FAILED.value
+    assert updated[2]["status"] == "completed"
