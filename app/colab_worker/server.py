@@ -184,7 +184,8 @@ def create_worker_app(
             while not stop_event.is_set():
                 try:
                     await asyncio.sleep(idle_check_interval)
-                    if not any(t.get("status") == "running" for t in tasks.values()):
+                    busy = any(t.get("status") == "running" for t in tasks.values())
+                    if not busy and not gpu_lock.locked():
                         swapper.check_idle_timeout()
                 except asyncio.CancelledError:
                     break
@@ -241,8 +242,17 @@ def create_worker_app(
         raw = dict(p.parameters)
         ratio = raw.pop("aspectRatio", "1:1")
         raw.pop("duration", None)
-        raw.pop("resolution", None)
-        wh = {"16:9": (1024, 576), "9:16": (576, 1024), "4:3": (1024, 768)}.get(ratio, (1024, 1024))
+        res = raw.pop("resolution", None)
+        ratios = {
+            "16:9": (1024, 576), "9:16": (576, 1024), "4:3": (1024, 768), "3:4": (768, 1024),
+        }
+        res_map = {
+            "720p": (1280, 720) if ratio == "16:9" else (720, 1280),
+            "1080p": (1920, 1080) if ratio == "16:9" else (1080, 1920),
+            "4K": (3840, 2160) if ratio == "16:9" else (2160, 3840),
+            "1024x1024": (1024, 1024), "768x768": (768, 768), "512x512": (512, 512),
+        }
+        wh = res_map.get(res) or ratios.get(ratio, (1024, 1024))
         kw = {"width": wh[0], "height": wh[1], **raw}
         if p.prompt:
             kw["prompt"] = p.prompt
@@ -276,7 +286,10 @@ def create_worker_app(
                 if not file_path.is_relative_to(output_dir.resolve()):
                     raise ValueError("Tentative d'écriture hors du répertoire de sortie sécurisé")
 
-                if callable(pipeline) and not sim_mode:
+                if not sim_mode:
+                    if not callable(pipeline):
+                        msg = f"Modèle {payload.modelId} indisponible en mode réel"
+                        raise ValueError(msg)
                     tasks[task_id]["step"] = 1
                     tasks[task_id]["progress"] = 50
 
@@ -389,34 +402,27 @@ def create_worker_app(
 
     @app.post("/v1/chat/completions")
     async def chat_completions(payload: ChatCompletionRequest, request: Request) -> Any:
-        async with gpu_lock:
-            chat_loader = loaders.get(payload.model)
-            chat_model = swapper.ensure_model(payload.model, load_fn=chat_loader)
-            request_id = payload.requestId or f"chat_{uuid.uuid4().hex[:10]}"
-            last_user_msg = payload.messages[-1].content if payload.messages else "Bonjour"
-            summary = last_user_msg[:40] + "..." if len(last_user_msg) > 40 else last_user_msg
+        chat_loader = loaders.get(payload.model)
+        chat_model = swapper.ensure_model(payload.model, load_fn=chat_loader)
+        request_id = payload.requestId or f"chat_{uuid.uuid4().hex[:10]}"
+        last_user_msg = payload.messages[-1].content if payload.messages else "Bonjour"
+        summary = last_user_msg[:40] + "..." if len(last_user_msg) > 40 else last_user_msg
 
-            real_text: str | None = None
-            if callable(chat_model) and not sim_mode:
-                prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
-
-                def _gen():
+        if not payload.stream:
+            async with gpu_lock:
+                content = f"Voici une réponse synthétisée par {payload.model} pour : « {summary} »."
+                if callable(chat_model) and not sim_mode:
+                    prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
                     try:
-                        res = chat_model(prompt_in, max_new_tokens=150)
+                        res = await asyncio.to_thread(chat_model, prompt_in, max_new_tokens=150)
                         if isinstance(res, list) and res and "generated_text" in res[0]:
-                            return res[0]["generated_text"].replace(prompt_in, "").strip()
-                        return str(res)
+                            content = res[0]["generated_text"].replace(prompt_in, "").strip()
+                        else:
+                            content = str(res)
                     except Exception as exc:
                         if "out of memory" in str(exc).lower():
                             swapper.evict_vram()
                         raise
-
-                real_text = await asyncio.to_thread(_gen)
-
-        if not payload.stream:
-            content = real_text or (
-                f"Voici une réponse synthétisée par {payload.model} pour : « {summary} »."
-            )
             return {
                 "id": request_id,
                 "object": "chat.completion",
@@ -432,39 +438,48 @@ def create_worker_app(
             }
 
         async def chat_stream_generator() -> AsyncGenerator[str, None]:
-            words = (
-                [w + " " for w in real_text.split()]
-                if real_text
-                else [
+            async with gpu_lock:
+                words = [
                     "Bonjour", " ! ", "Voici", " une", " réponse", " synthétisée", " pour",
                     f" « {summary} »", " par", " le", " worker", " distant", " Colab.",
                 ]
-            )
-            try:
-                for word in words:
-                    if request_id in active_chat_cancels or await request.is_disconnected():
-                        logger.info("Chat LLM annulé pour %s.", request_id)
-                        return
+                if callable(chat_model) and not sim_mode:
+                    prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
+                    try:
+                        res = await asyncio.to_thread(chat_model, prompt_in, max_new_tokens=150)
+                        if isinstance(res, list) and res and "generated_text" in res[0]:
+                            txt = res[0]["generated_text"].replace(prompt_in, "").strip()
+                            words = [w + " " for w in txt.split()]
+                    except Exception as exc:
+                        if "out of memory" in str(exc).lower():
+                            swapper.evict_vram()
+                        raise
 
-                    chunk = {
-                        "id": request_id,
-                        "object": "chat.completion.chunk",
-                        "created": int(time.time()),
-                        "model": payload.model,
-                        "choices": [
-                            {
-                                "index": 0,
-                                "delta": {"content": word},
-                                "finish_reason": None,
-                            }
-                        ],
-                    }
-                    yield f"data: {json.dumps(chunk)}\n\n"
-                    await asyncio.sleep(0.04)
+                try:
+                    for word in words:
+                        if request_id in active_chat_cancels or await request.is_disconnected():
+                            logger.info("Chat LLM annulé pour %s.", request_id)
+                            return
 
-                yield "data: [DONE]\n\n"
-            finally:
-                active_chat_cancels.discard(request_id)
+                        chunk = {
+                            "id": request_id,
+                            "object": "chat.completion.chunk",
+                            "created": int(time.time()),
+                            "model": payload.model,
+                            "choices": [
+                                {
+                                    "index": 0,
+                                    "delta": {"content": word},
+                                    "finish_reason": None,
+                                }
+                            ],
+                        }
+                        yield f"data: {json.dumps(chunk)}\n\n"
+                        await asyncio.sleep(0.04)
+
+                    yield "data: [DONE]\n\n"
+                finally:
+                    active_chat_cancels.discard(request_id)
 
         return StreamingResponse(
             chat_stream_generator(),

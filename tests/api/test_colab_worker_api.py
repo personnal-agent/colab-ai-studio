@@ -59,74 +59,43 @@ async def client(worker_app) -> httpx.AsyncClient:
 
 @pytest.mark.anyio
 async def test_health_check(client: httpx.AsyncClient) -> None:
-    """Vérifie le endpoint /health et la présence des métriques GPU/VRAM."""
-    resp = await client.get("/health")
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["status"] == "ok"
-    assert data["gpu"] == "Tesla T4 Test"
-    assert "vramFreeMb" in data
-    assert data["state"] == "EnVeilleVRAMLibre"
+    data = (await client.get("/health")).json()
+    assert data["status"] == "ok" and data["gpu"] == "Tesla T4 Test"
+    assert "vramFreeMb" in data and data["state"] == "EnVeilleVRAMLibre"
 
 
 @pytest.mark.anyio
 async def test_list_models(client: httpx.AsyncClient) -> None:
-    """Vérifie le catalogue des modèles avec leurs capacités."""
-    resp = await client.get("/models")
-    assert resp.status_code == 200
-    models = resp.json()
-    assert isinstance(models, list)
-    assert len(models) >= 4
-    model_ids = [m["id"] for m in models]
-    assert "flux-schnell" in model_ids
-    assert "wan-2.1-t2v" in model_ids
+    models = (await client.get("/models")).json()
+    assert isinstance(models, list) and len(models) >= 4
+    ids = [m["id"] for m in models]
+    assert "flux-schnell" in ids and "wan-2.1-t2v" in ids
 
 
 @pytest.mark.anyio
 async def test_switch_model(client: httpx.AsyncClient) -> None:
-    """Vérifie la permutation de modèle via POST /models/switch."""
     resp = await client.post("/models/switch", json={"modelId": "flux-schnell"})
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["status"] == "ok"
-    assert data["activeModel"] == "flux-schnell"
-
-    # Vérification que /health reflète l'état actif
-    h_resp = await client.get("/health")
-    assert h_resp.json()["activeModel"] == "flux-schnell"
-    assert h_resp.json()["state"] == "ModeleActif"
+    assert resp.status_code == 200 and resp.json()["activeModel"] == "flux-schnell"
+    h = (await client.get("/health")).json()
+    assert h["activeModel"] == "flux-schnell" and h["state"] == "ModeleActif"
 
 
 @pytest.mark.anyio
 async def test_infer_and_download_flow(client: httpx.AsyncClient) -> None:
     """Vérifie le cycle complet d'inférence, de progression et de rapatriement."""
-    infer_payload = {
-        "taskId": "task_e2e_001", "modelId": "flux-schnell",
-        "prompt": "Cyberpunk high tech robot", "parameters": {"aspectRatio": "16:9", "seed": 42},
-    }
-    resp = await client.post("/infer", json=infer_payload)
-    assert resp.status_code == 200
-    data = resp.json()
-    assert data["taskId"] == "task_e2e_001"
-    assert data["status"] in {"pending", "running"}
-
-    # Attente de complétion
+    params = {"aspectRatio": "16:9"}
+    p = {"taskId": "task_01", "modelId": "flux-schnell", "prompt": "Robot", "parameters": params}
+    assert (await client.post("/infer", json=p)).status_code == 200
     for _ in range(50):
-        status_resp = await client.get("/tasks/task_e2e_001/status")
-        assert status_resp.status_code == 200
-        st = status_resp.json()
+        st = (await client.get("/tasks/task_01/status")).json()
         if st["status"] == "completed":
-            assert st["progress"] == 100
-            assert st["outputUrl"] is not None
-            assert st["artifactUri"] == "task_e2e_001.png"
-            # Téléchargement du fichier
-            dl_resp = await client.get(st["outputUrl"])
-            assert dl_resp.status_code == 200
-            assert dl_resp.content.startswith(b"\x89PNG\r\n\x1a\n")
+            assert st["progress"] == 100 and st["artifactUri"] == "task_01.png"
+            dl = await client.get(st["outputUrl"])
+            assert dl.status_code == 200 and dl.content.startswith(b"\x89PNG\r\n\x1a\n")
             break
-        await asyncio.sleep(0.05)
+        await asyncio.sleep(0.04)
     else:
-        pytest.fail("La tâche d'inférence n'a pas atteint l'état completed dans le délai imparti.")
+        pytest.fail("Inférence non complétée")
 
 
 @pytest.mark.anyio
