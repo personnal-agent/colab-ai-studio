@@ -42,13 +42,13 @@ async def lifespan(app: FastAPI):
         if modified:
             await store.write_list_unlocked(GENERATIONS_FILE.name, gens)
 
-    yield
-
-    # Arrêt propre
-    orchestrator = get_task_orchestrator()
-    await orchestrator.aclose()
-    gateway = get_worker_gateway()
-    await gateway.aclose()
+    try:
+        yield
+    finally:
+        try:
+            await get_task_orchestrator().aclose()
+        finally:
+            await get_worker_gateway().aclose()
 
 
 app = FastAPI(

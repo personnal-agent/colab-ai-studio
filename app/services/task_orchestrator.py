@@ -106,27 +106,31 @@ class TaskOrchestrator:
                     kit = BrandKit.model_validate(match)
 
             max_image_refs = 4
-            if req.type == "text" or "text" in req.modelId.lower() or "llm" in req.modelId.lower():
+            if req.type == "text":
                 max_image_refs = 0
             else:
+                found_in_catalog = False
                 try:
                     models = await self._gateway.list_models()
                     m_info = next((m for m in models if m.get("id") == req.modelId), None)
                     if m_info:
+                        found_in_catalog = True
                         if m_info.get("type") == "text":
                             max_image_refs = 0
                         else:
                             caps = m_info.get("capabilities", {})
-                            if not caps.get("supportsImageRef", True):
-                                max_image_refs = 0
-                            else:
-                                max_image_refs = caps.get("maxImageRefs", 4)
+                            max_image_refs = (
+                                caps.get("maxImageRefs", 4)
+                                if caps.get("supportsImageRef", True)
+                                else 0
+                            )
                 except Exception as e:
-                    logger.debug(
-                        "Échec détection capacités modèle %s pour max_image_refs : %s",
-                        req.modelId,
-                        e,
-                    )
+                    logger.debug("Échec détection capacités modèle %s : %s", req.modelId, e)
+
+                if not found_in_catalog and (
+                    "text" in req.modelId.lower() or "llm" in req.modelId.lower()
+                ):
+                    max_image_refs = 0
 
             # Compilation du Brand Kit avec llm_config
             compiled = await self._compiler.compile(
@@ -263,27 +267,28 @@ class TaskOrchestrator:
                         },
                     )
                 elif remote_status == "cancelled":
-                    await self._update_generation(
+                    up = await self._update_generation(
                         gen_id,
                         status=TaskStatus.CANCELLED.value,
                         errorMessage="Annulée sur le worker distant",
                     )
-                    await self._emit_event(
-                        gen_id,
-                        {"type": "cancelled", "status": "cancelled", "taskId": gen_id},
-                    )
+                    if up and up.status == TaskStatus.CANCELLED:
+                        await self._emit_event(
+                            gen_id, {"type": "cancelled", "status": "cancelled", "taskId": gen_id}
+                        )
                     break
                 elif remote_status == "completed":
                     if cancel_evt.is_set():
-                        await self._update_generation(
+                        up = await self._update_generation(
                             gen_id,
                             status=TaskStatus.CANCELLED.value,
                             errorMessage="Annulée par l'utilisateur",
                         )
-                        await self._emit_event(
-                            gen_id,
-                            {"type": "cancelled", "status": "cancelled", "taskId": gen_id},
-                        )
+                        if up and up.status == TaskStatus.CANCELLED:
+                            await self._emit_event(
+                                gen_id,
+                                {"type": "cancelled", "status": "cancelled", "taskId": gen_id},
+                            )
                         break
 
                     # Rapatriement du binaire
@@ -362,13 +367,13 @@ class TaskOrchestrator:
                     err_msg = status_resp.get("error", "Erreur distante inconnue")
                     with contextlib.suppress(Exception):
                         await self._gateway.cancel_task(gen_id, base_url=target_worker_url)
-                    await self._update_generation(
+                    up = await self._update_generation(
                         gen_id, status=TaskStatus.FAILED.value, errorMessage=err_msg
                     )
-                    await self._emit_event(
-                        gen_id,
-                        {"type": "failed", "status": "failed", "error": err_msg},
-                    )
+                    if up and up.status == TaskStatus.FAILED:
+                        await self._emit_event(
+                            gen_id, {"type": "failed", "status": "failed", "error": err_msg}
+                        )
                     break
 
                 await asyncio.sleep(self._poll_interval)
@@ -378,12 +383,13 @@ class TaskOrchestrator:
                 logger.exception("Échec exécution tâche %s : %s", gen_id, e)
                 with contextlib.suppress(Exception):
                     await self._gateway.cancel_task(gen_id, base_url=target_worker_url)
-                await self._update_generation(
+                up = await self._update_generation(
                     gen_id, status=TaskStatus.FAILED.value, errorMessage=str(e)
                 )
-                await self._emit_event(
-                    gen_id, {"type": "failed", "status": "failed", "error": str(e)}
-                )
+                if up and up.status == TaskStatus.FAILED:
+                    await self._emit_event(
+                        gen_id, {"type": "failed", "status": "failed", "error": str(e)}
+                    )
         finally:
             self._active_tasks.pop(gen_id, None)
             if not self._listeners.get(gen_id):
