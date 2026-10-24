@@ -53,9 +53,9 @@ jobs:
           set -euo pipefail
           git -c core.quotePath=false diff --name-only --no-renames -z "$BASE_SHA...$HEAD_SHA" > "$CHANGED_FILES_FILE"
           git -c core.quotePath=false diff --numstat --no-renames "$BASE_SHA...$HEAD_SHA" > "${CHANGED_FILES_FILE}.numstat"
-          # Exclude documentation and static asset files (.md, .markdown, .txt, .pdf, .svg, .png) from the code size budget
-          added=$(awk '$1 ~ /^[0-9]+$/ && tolower($0) !~ /\.(md|markdown|txt|pdf|svg|png)$/ { sum += $1 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")
-          deleted=$(awk '$2 ~ /^[0-9]+$/ && tolower($0) !~ /\.(md|markdown|txt|pdf|svg|png)$/ { sum += $2 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")
+          # Exclude documentation and static asset files (.md, .markdown, .rst, .txt, .pdf, .docx, .csv, .svg, .png, .jpg, .jpeg, .gif, .webp) from the code size budget
+          added=$(awk '$1 ~ /^[0-9]+$/ && tolower($0) !~ /\.(md|markdown|rst|txt|pdf|docx|csv|svg|png|jpg|jpeg|gif|webp)$/ { sum += $1 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")
+          deleted=$(awk '$2 ~ /^[0-9]+$/ && tolower($0) !~ /\.(md|markdown|rst|txt|pdf|docx|csv|svg|png|jpg|jpeg|gif|webp)$/ { sum += $2 } END { print sum + 0 }' "${CHANGED_FILES_FILE}.numstat")
           total=$((added + deleted))
           protected=false
           while IFS= read -r -d '' path; do
@@ -71,13 +71,10 @@ jobs:
           if [ "${{ github.event.pull_request.number }}" = "1" ]; then
             is_initial_governance=true
           fi
-          if (( total > 2500 )) && [ "$is_initial_governance" != "true" ]; then
+          if (( total > 2000 )) && [ "$is_initial_governance" != "true" ]; then
             echo 'status=fail' >> "$GITHUB_OUTPUT"
-            echo "Pull request too large: $total changed lines of code (maximum 2500, docs/assets excluded)." >&2
+            echo "::error title=Pull request too large::$total changed lines of code (maximum 2000, docs/assets excluded). Split this pull request." >&2
             exit 1
-          elif (( total > 1000 )) && [ "$is_initial_governance" != "true" ]; then
-            echo 'status=warning' >> "$GITHUB_OUTPUT"
-            echo "Pull request is large: $total changed lines of code. Consider splitting it." >&2
           else
             echo 'status=pass' >> "$GITHUB_OUTPUT"
           fi

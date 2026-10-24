@@ -9,7 +9,7 @@ Ce document régit les règles d'automatisation, le cycle de vie des signalement
 | Workflow / Gate | Fichier | Déclencheur | Rôle & Pipeline |
 |---|---|---|---|
 | **Intégration Continue (CI)** | `.github/workflows/ci.yml` | `pull_request`, `push` sur `main`, `workflow_dispatch` | Vérification des 3 volets : qualité backend Python (syntaxe, ruff, tests pytest), qualité frontend Node.js (lint, tests, build) et intégrité des workflows GitHub. |
-| **Gouvernance des PR** | `.github/workflows/governance.yml` | Événements `pull_request` | Contrôle du format Conventional Commits du titre et des commits, respect du budget de taille de code (alerte > 1000 lignes de code, rejet strict > 2500 lignes de code, hors documentation/assets) et publication du commentaire d'audit. |
+| **Gouvernance des PR** | `.github/workflows/governance.yml` | Événements `pull_request` | Contrôle du format Conventional Commits du titre et des commits, respect du budget de taille de code (rejet strict > 2000 lignes de code, hors documentation/assets) et publication du commentaire d'audit. |
 | **CodeRabbit Quality Gate** | `.coderabbit.yaml` | `pull_request` (y compris brouillons) | Barrière de fusion bloquante (*fail-closed*) exigeant un score de qualité exact de `5/5` ET exactement `0 finding` (code + documentation synchronisée). |
 | **Couverture de Tests (Codecov)** | `codecov.yml` | `pull_request`, `push` sur `main` | Exigence stricte de couverture : `90 %` sur le projet global et `100 %` sur le patch de la PR (`threshold: 0%`, zéro tolérance). |
 | **Revue des Dépendances** | `.github/workflows/security.yml` | `pull_request` | Revue des dépendances ajoutées ou modifiées sur PR (gravité élevée, filtrage des licences AGPL/GPL). |
@@ -38,7 +38,7 @@ Les agents IA ne créent pas d'issues de façon autonome sans validation préala
 
 - **Mode de livraison** : Toute modification transite par une branche dédiée et une Pull Request — voir `AGENTS.md` §4 (mode Strict Review unique actif ; le mode Light Review est désactivé).
 - **Titres et commits** : Respect impératif de la norme **Conventional Commits** (`type(scope): description`). Types autorisés : `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `ci`, `perf`, `build`, `style`, `revert`.
-- **Budget de taille** : ≤ 1000 lignes de code recommandées pour faciliter la relecture, rejet automatique au-delà de 2500 lignes de code (les fichiers `.md`, `.markdown`, `.txt`, `.pdf`, `.svg`, `.png` sont exclus du décompte ; exception historique sur la PR #1).
+- **Budget de taille** : ≤ 2000 lignes de code, rejet automatique (check en échec) au-delà (les fichiers `.md`, `.markdown`, `.rst`, `.txt`, `.pdf`, `.docx`, `.csv`, `.svg`, `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp` sont exclus du décompte ; exception historique sur la PR #1).
 - **Gabarit obligatoire** : `.github/PULL_REQUEST_TEMPLATE.md` doit être intégralement complété (cause racine, description synthétique, commandes de test exécutées, risques résiduels).
 - **Revues de code & Approbation** :
   - **L'agent IA n'approuve JAMAIS son propre code.**
