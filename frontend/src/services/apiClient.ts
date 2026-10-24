@@ -102,4 +102,97 @@ export const apiClient = {
     request<Project>('/api/projects', { method: 'POST', body: JSON.stringify(p) }),
   deleteProject: (id: string) => request<{ status: string; id: string }>(`/api/projects/${id}`, { method: 'DELETE' }),
   listBrandKits: () => request<BrandKit[]>('/api/brand-kits'),
+  createBrandKit: async (data: {
+    source: 'blank' | 'website' | 'files';
+    name: string;
+    overview?: string;
+    url?: string;
+    files?: File[];
+  }): Promise<BrandKit> => {
+    const formData = new FormData();
+    formData.append('source', data.source);
+    formData.append('name', data.name);
+    if (data.overview) formData.append('overview', data.overview);
+    if (data.url) {
+      formData.append('url', data.url);
+      formData.append('websiteUrl', data.url);
+    }
+    if (data.files) {
+      data.files.forEach((f) => formData.append('files', f));
+    }
+    const response = await fetch('/api/brand-kits', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      let detail = `Erreur HTTP ${response.status}`;
+      try {
+        const errJson = (await response.json()) as { detail?: string };
+        if (errJson?.detail) detail = errJson.detail;
+      } catch { /* ignore non-json error */ }
+      throw new ApiError(detail, response.status);
+    }
+    return (await response.json()) as BrandKit;
+  },
+  streamChatCompletion: async (
+    requestData: {
+      model: string;
+      messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
+      temperature?: number;
+      stream?: boolean;
+    },
+    onChunk: (chunk: string) => void,
+    signal?: AbortSignal
+  ): Promise<string> => {
+    const response = await fetch('/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...requestData, stream: true }),
+      signal,
+    });
+    if (!response.ok) {
+      let detail = `Erreur HTTP ${response.status}`;
+      try {
+        const errJson = (await response.json()) as { detail?: string };
+        if (errJson?.detail) detail = errJson.detail;
+      } catch { /* ignore non-json error */ }
+      throw new ApiError(detail, response.status);
+    }
+    const reader = response.body?.getReader();
+    if (!reader) throw new ApiError('No response body available to stream', 500);
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let buffer = '';
+
+    let isDone = false;
+    while (!isDone) {
+      const { done, value } = await reader.read();
+      if (done) {
+        isDone = true;
+        break;
+      }
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith(':')) continue;
+        if (trimmed === 'data: [DONE]') continue;
+        if (trimmed.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(trimmed.slice(6));
+            const delta = data.choices?.[0]?.delta?.content || '';
+            if (delta) {
+              fullText += delta;
+              onChunk(delta);
+            }
+          } catch {
+            // Ignore non-json or malformed SSE line
+          }
+        }
+      }
+    }
+    return fullText;
+  },
 };

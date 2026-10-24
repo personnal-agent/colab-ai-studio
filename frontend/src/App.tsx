@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MediaGallery } from './components/gallery/MediaGallery';
 import { MediaPlayerModal } from './components/gallery/MediaPlayerModal';
 import { TopNavBar } from './components/header/TopNavBar';
-import type { Generation } from './types/studio';
+import { FloatingPromptDock } from './components/dock/FloatingPromptDock';
+import { apiClient } from './services/apiClient';
+import type {
+  Generation,
+  ModelDefinition,
+  BrandKit,
+  GenerationSubmitRequest,
+} from './types/studio';
 
 export default function App(): React.ReactElement {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -10,9 +17,19 @@ export default function App(): React.ReactElement {
   const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null);
   const [remixContext, setRemixContext] = useState<Generation | null>(null);
   const [generations, setGenerations] = useState<Generation[]>([]);
+  const [models, setModels] = useState<ModelDefinition[]>([]);
+  const [brandKits, setBrandKits] = useState<BrandKit[]>([]);
+
+  useEffect(() => {
+    if (apiClient.listModels) {
+      apiClient.listModels().then(setModels).catch(() => {});
+    }
+    if (apiClient.listBrandKits) {
+      apiClient.listBrandKits().then(setBrandKits).catch(() => {});
+    }
+  }, []);
 
   const handleRemix = (gen: Generation) => {
-    // Le dock flottant (Plan 04) sera synchronisé avec remixContext
     setRemixContext(gen);
     setSelectedGeneration(null);
   };
@@ -24,8 +41,17 @@ export default function App(): React.ReactElement {
     }
   };
 
+  const handleSubmitGeneration = async (req: GenerationSubmitRequest) => {
+    if (apiClient.submitGeneration) {
+      await apiClient.submitGeneration(req);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-studio-canvas text-gray-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white" data-remix-active={Boolean(remixContext)}>
+    <div
+      className="min-h-screen bg-studio-canvas text-gray-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white pb-36"
+      data-remix-active={Boolean(remixContext)}
+    >
       {/* Barre supérieure unifiée */}
       <TopNavBar
         favoritesOnly={favoritesOnly}
@@ -46,6 +72,16 @@ export default function App(): React.ReactElement {
           onFavoriteToggled={handleFavoriteToggled}
         />
       </main>
+
+      {/* Floating Prompt Dock modulaire adaptatif */}
+      <FloatingPromptDock
+        models={models}
+        brandKits={brandKits}
+        activeProjectId={activeProjectId}
+        remixContext={remixContext}
+        onClearRemix={() => setRemixContext(null)}
+        onSubmitGeneration={handleSubmitGeneration}
+      />
 
       {/* Modale d'inspection grand format */}
       <MediaPlayerModal
