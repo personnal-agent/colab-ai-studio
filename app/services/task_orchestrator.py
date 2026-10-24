@@ -422,11 +422,37 @@ class TaskOrchestrator:
                 }:
                     return
 
-            # Si la tâche n'est pas ou plus active en arrière-plan, clore le flux
-            if task_id not in self._active_tasks:
-                return
-
             while True:
+                # Dépiler d'abord tous les événements disponibles dans la file
+                while not queue.empty():
+                    event = queue.get_nowait()
+                    ev_type = event.get("type", "message")
+                    yield f"event: {ev_type}\ndata: {json.dumps(event)}\n\n"
+                    if ev_type in {"completed", "failed", "cancelled"}:
+                        return
+
+                # Si la tâche n'est plus active en arrière-plan, vérifier l'état persistant final
+                if task_id not in self._active_tasks:
+                    gens = await self._json_store.read_list(GENERATIONS_FILE.name)
+                    latest = next((g for g in gens if g.get("id") == task_id), None)
+                    if latest:
+                        lat_st = latest.get("status")
+                        if lat_st in {
+                            TaskStatus.COMPLETED.value,
+                            TaskStatus.FAILED.value,
+                            TaskStatus.CANCELLED.value,
+                        }:
+                            p = {
+                                "type": lat_st,
+                                "status": lat_st,
+                                "progress": latest.get("progress", 0),
+                                "filePath": latest.get("filePath"),
+                                "error": latest.get("errorMessage"),
+                                "generation": latest,
+                            }
+                            yield f"event: {lat_st}\ndata: {json.dumps(p)}\n\n"
+                    return
+
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=keepalive_timeout)
                     ev_type = event.get("type", "message")
@@ -435,26 +461,6 @@ class TaskOrchestrator:
                         break
                 except asyncio.TimeoutError:
                     yield ": keep-alive\n\n"
-                    if task_id not in self._active_tasks:
-                        gens = await self._json_store.read_list(GENERATIONS_FILE.name)
-                        latest = next((g for g in gens if g.get("id") == task_id), None)
-                        if latest:
-                            lat_st = latest.get("status")
-                            if lat_st in {
-                                TaskStatus.COMPLETED.value,
-                                TaskStatus.FAILED.value,
-                                TaskStatus.CANCELLED.value,
-                            }:
-                                p = {
-                                    "type": lat_st,
-                                    "status": lat_st,
-                                    "progress": latest.get("progress", 0),
-                                    "filePath": latest.get("filePath"),
-                                    "error": latest.get("errorMessage"),
-                                    "generation": latest,
-                                }
-                                yield f"event: {lat_st}\ndata: {json.dumps(p)}\n\n"
-                        break
         finally:
             if task_id in self._listeners:
                 if queue in self._listeners[task_id]:

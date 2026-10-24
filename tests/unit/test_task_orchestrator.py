@@ -221,3 +221,33 @@ async def test_subscribe_task_orphaned_exits_cleanly(stores):
         events.append(evt)
     assert len(events) == 1
     assert "running" in events[0]
+
+
+@pytest.mark.asyncio
+async def test_subscribe_task_drains_queued_final_event_when_inactive(stores):
+    js, ms = stores
+    gen = Generation(
+        id="gen_queued_final",
+        status=TaskStatus.RUNNING,
+        prompt="p",
+        modelId="m",
+        modelName="M",
+        parameters=GenerationParameters(seed=0),
+    )
+    await js.write_list("generations.json", [gen.model_dump()])
+    orch = TaskOrchestrator(js, ms, MockWorkerGateway(), BrandContextCompiler())
+
+    gen_sub = orch.subscribe_task("gen_queued_final", keepalive_timeout=0.05)
+    first_evt = await gen_sub.__anext__()
+    assert "running" in first_evt
+
+    assert "gen_queued_final" in orch._listeners
+    q = orch._listeners["gen_queued_final"][0]
+    await q.put({"type": "completed", "status": "completed", "filePath": "assets/final.png"})
+
+    second_evt = await gen_sub.__anext__()
+    assert "completed" in second_evt
+    assert "assets/final.png" in second_evt
+
+    with pytest.raises(StopAsyncIteration):
+        await gen_sub.__anext__()
