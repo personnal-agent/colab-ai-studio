@@ -21,7 +21,7 @@ if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -not -path '*/.[!
     TESTS_FOUND=1
     echo -e "${BLUE}  Exécution des tests Python (pytest)...${NC}"
     if command -v pytest >/dev/null 2>&1; then
-        timeout $TEST_TIMEOUT pytest -q || {
+        timeout --foreground $TEST_TIMEOUT pytest -q || {
             echo -e "${RED}❌ Échec de la suite de tests Python.${NC}"
             exit 1
         }
