@@ -232,6 +232,7 @@ class ColabConfig(BaseModel):
     tunnelUrl: str = "https://xxxx-xx-xx.ngrok-free.app"
     accountEmail: str | None = None
     lastPing: str | None = None
+    secret: str | None = None
 
     def is_connected(self) -> bool:
         return bool(self.tunnelUrl and not self.tunnelUrl.startswith("https://xxxx"))

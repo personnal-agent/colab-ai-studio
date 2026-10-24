@@ -52,6 +52,7 @@ def test_notebook_cells_content() -> None:
     # 3. ModelSwapper & protocole VRAM
     assert "ModelSwapper" in combined_text
 
-    # 4. Tunneling & URL publique
+    # 4. Tunneling, sécurité & URL publique
     assert any(tunnel in combined_text.lower() for tunnel in ["cloudflared", "ngrok", "tunnel"])
     assert "http" in combined_text.lower()
+    assert any(secret_kw in combined_text.lower() for secret_kw in ["secret", "worker_secret"])

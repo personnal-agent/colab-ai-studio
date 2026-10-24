@@ -129,10 +129,11 @@ async def test_infer_and_download_flow(client: httpx.AsyncClient) -> None:
         if st["status"] == "completed":
             assert st["progress"] == 100
             assert st["outputUrl"] is not None
+            assert st["artifactUri"] == "task_e2e_001.png"
             # Téléchargement du fichier
             dl_resp = await client.get(st["outputUrl"])
             assert dl_resp.status_code == 200
-            assert len(dl_resp.content) > 0
+            assert dl_resp.content.startswith(b"\x89PNG\r\n\x1a\n")
             break
         await asyncio.sleep(0.05)
     else:
@@ -184,3 +185,80 @@ async def test_file_download_security(client: httpx.AsyncClient) -> None:
     """Vérifie le blocage de traversée de chemin sur /files/{filename}."""
     resp = await client.get("/files/../secret.txt")
     assert resp.status_code in {400, 403, 404}
+
+
+@pytest.mark.anyio
+async def test_task_id_validation_prevents_path_traversal(client: httpx.AsyncClient) -> None:
+    """Vérifie le rejet strict des taskId malveillants contenant des traversées de chemin."""
+    bad_payload = {
+        "taskId": "../victim",
+        "modelId": "flux-schnell",
+        "prompt": "Test path traversal",
+    }
+    resp = await client.post("/infer", json=bad_payload)
+    assert resp.status_code == 422
+
+
+@pytest.mark.anyio
+async def test_worker_secret_authentication(temp_storage: Path) -> None:
+    """Vérifie la protection par secret partagé du worker (Thread #2)."""
+    sw = ModelSwapper(cuda_backend=MockCudaBackend())
+    secured_app = create_worker_app(
+        model_swapper=sw, storage_dir=temp_storage, worker_secret="secret-colab-42"
+    )
+
+    async with httpx.AsyncClient(
+        transport=ASGITransport(app=secured_app), base_url="http://secured-colab"
+    ) as sec_client:
+        # 1. Sans secret : rejet 401
+        resp_unauth = await sec_client.get("/models")
+        assert resp_unauth.status_code == 401
+
+        # 2. Avec secret erroné : rejet 401
+        resp_bad = await sec_client.get(
+            "/models", headers={"X-Colab-Secret": "wrong-secret"}
+        )
+        assert resp_bad.status_code == 401
+
+        # 3. Avec secret valide en en-tête : succès 200
+        resp_ok = await sec_client.get(
+            "/models", headers={"X-Colab-Secret": "secret-colab-42"}
+        )
+        assert resp_ok.status_code == 200
+
+        # 4. Avec secret valide Bearer : succès 200
+        resp_bearer = await sec_client.get(
+            "/models", headers={"Authorization": "Bearer secret-colab-42"}
+        )
+        assert resp_bearer.status_code == 200
+
+
+@pytest.mark.anyio
+async def test_idle_timeout_lifespan_trigger(temp_storage: Path) -> None:
+    """Vérifie que l'inactivité déclenche l'éviction via la tâche périodique (Thread #6)."""
+    sw = ModelSwapper(cuda_backend=MockCudaBackend(), idle_timeout_seconds=0.15)
+    worker_app = create_worker_app(
+        model_swapper=sw,
+        storage_dir=temp_storage,
+        idle_check_interval=0.08,
+    )
+
+    async with (
+        worker_app.router.lifespan_context(worker_app),
+        httpx.AsyncClient(
+            transport=ASGITransport(app=worker_app), base_url="http://idle-colab"
+        ) as c,
+    ):
+        # Bascule vers un modèle actif
+        switch_resp = await c.post("/models/switch", json={"modelId": "flux-schnell"})
+        assert switch_resp.status_code == 200
+        assert sw.state.value == "ModeleActif"
+
+        # Attente que le délai d'inactivité (0.15s) et l'intervalle (0.08s) s'écoulent
+        await asyncio.sleep(0.35)
+
+        # L'automate a bien été évincé en veille par la tâche de fond
+        health_resp = await c.get("/health")
+        assert health_resp.json()["state"] == "EnVeilleVRAMLibre"
+        assert sw.active_model is None
+

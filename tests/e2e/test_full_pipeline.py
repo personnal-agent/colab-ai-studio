@@ -73,13 +73,20 @@ def e2e_env(tmp_path: Path):
     media_store = MediaFileStore(outputs_dir)
     brand_extractor = BrandKitExtractor(assets_dir)
 
+    orig_json_store = routes_crud._json_store
+    orig_media_store = routes_crud._media_store
+    orig_extractor = routes_crud._extractor
+
     routes_crud._json_store = json_store
     routes_crud._media_store = media_store
     routes_crud._extractor = brand_extractor
 
-    # 1. Instancier le worker Colab en mémoire
+    # 1. Instancier le worker Colab en mémoire avec secret (Thread #2 & #7)
+    worker_secret = "e2e-secret-key-42"
     swapper = ModelSwapper(cuda_backend=MockWorkerCuda(), idle_timeout_seconds=300.0)
-    worker_fastapi = create_worker_app(model_swapper=swapper, storage_dir=worker_storage)
+    worker_fastapi = create_worker_app(
+        model_swapper=swapper, storage_dir=worker_storage, worker_secret=worker_secret
+    )
 
     # 2. Client HTTP pontant vers le worker Colab
     worker_client = httpx.AsyncClient(
@@ -101,16 +108,21 @@ def e2e_env(tmp_path: Path):
     app.dependency_overrides[get_worker_gateway] = lambda: gateway
     app.dependency_overrides[get_task_orchestrator] = lambda: orchestrator
 
-    yield {
-        "data_dir": data_dir,
-        "outputs_dir": outputs_dir,
-        "custom_project_storage": custom_project_storage,
-        "json_store": json_store,
-        "gateway": gateway,
-        "orchestrator": orchestrator,
-    }
-
-    app.dependency_overrides.clear()
+    try:
+        yield {
+            "data_dir": data_dir,
+            "outputs_dir": outputs_dir,
+            "custom_project_storage": custom_project_storage,
+            "json_store": json_store,
+            "gateway": gateway,
+            "orchestrator": orchestrator,
+            "worker_secret": worker_secret,
+        }
+    finally:
+        routes_crud._json_store = orig_json_store
+        routes_crud._media_store = orig_media_store
+        routes_crud._extractor = orig_extractor
+        app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -130,10 +142,14 @@ async def test_full_pipeline_uc01_to_uc08(
     custom_project_storage: Path = e2e_env["custom_project_storage"]
 
     # --- UC-08 : Connecter l'environnement distant ---
-    # Initialiser config.json avec l'URL du tunnel Colab
+    # Initialiser config.json avec l'URL du tunnel Colab et le secret partagé (Thread #2)
     cfg = StudioConfig(
         executionMode=ExecutionMode.COLAB,
-        colab={"tunnelUrl": "http://test-colab-worker", "accountEmail": "creator@test.com"},
+        colab={
+            "tunnelUrl": "http://test-colab-worker",
+            "accountEmail": "creator@test.com",
+            "secret": e2e_env["worker_secret"],
+        },
     )
     await json_store.write_dict(CONFIG_FILE.name, cfg.model_dump())
 
@@ -216,10 +232,38 @@ async def test_full_pipeline_uc01_to_uc08(
     assert saved_gen["projectId"] == proj_id
     assert saved_gen["brandKitSnapshot"]["id"] == kit_id
 
+    # Génération d'image (flux-schnell) avec rapatriement en .png conforme (Thread #5)
+    img_submit_resp = await client.post(
+        "/api/generate/media",
+        json={
+            "prompt": "Portrait cyberpunk épuré",
+            "modelId": "flux-schnell",
+            "type": "image",
+            "projectId": proj_id,
+        },
+    )
+    assert img_submit_resp.status_code == 202
+    img_task_id = img_submit_resp.json()["taskId"]
+
+    async with client.stream("GET", f"/api/tasks/{img_task_id}/status") as sse_stream:
+        async for line in sse_stream.aiter_lines():
+            if line.startswith("data: "):
+                try:
+                    data = json.loads(line[6:].strip())
+                    if data.get("status") in {"completed", "failed", "cancelled"}:
+                        assert data.get("status") == "completed"
+                        break
+                except json.JSONDecodeError:
+                    pass
+
+    repatriated_pngs = list(custom_project_storage.glob("*.png"))
+    assert len(repatriated_pngs) == 1
+    assert repatriated_pngs[0].read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
+
     # --- UC-05 : Parcourir et remixer ---
     list_gens_resp = await client.get("/api/generations?projectId=" + proj_id)
     assert list_gens_resp.status_code == 200
-    assert len(list_gens_resp.json()) == 1
+    assert len(list_gens_resp.json()) == 2
 
     # Bascule Favori
     fav_resp = await client.patch(f"/api/generations/{task_id}/favorite")
@@ -264,7 +308,11 @@ async def test_full_pipeline_uc01_to_uc08(
     assert any("data: " in line for line in chat_lines)
     assert any("[DONE]" in line for line in chat_lines)
 
-    # Nettoyage final : suppression de la création UC-05
+    # Nettoyage final : suppression des créations UC-05
     del_resp = await client.delete(f"/api/generations/{task_id}")
     assert del_resp.status_code == 200
     assert len(list(custom_project_storage.glob("*.mp4"))) == 0
+
+    del_img_resp = await client.delete(f"/api/generations/{img_task_id}")
+    assert del_img_resp.status_code == 200
+    assert len(list(custom_project_storage.glob("*.png"))) == 0

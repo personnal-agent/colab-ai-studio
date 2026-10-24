@@ -18,6 +18,7 @@ import pytest
 
 from app.colab_worker.model_swapper import (
     CUDAOutOfMemoryError,
+    DefaultCudaBackend,
     ModelSwapper,
     ModelSwapperOOMError,
     ModelSwapperState,
@@ -188,3 +189,15 @@ def test_telemetry(swapper: ModelSwapper) -> None:
     assert telemetry["pipelineReady"] is False
     assert telemetry["gpu"] == "NVIDIA Tesla T4"
     assert isinstance(telemetry["vramFreeMb"], (int, float))
+
+
+def test_default_cuda_backend_execution() -> None:
+    """Vérifie que DefaultCudaBackend s'exécute sans erreur même sans GPU (Thread #3)."""
+    backend = DefaultCudaBackend()
+    assert isinstance(backend.is_available(), bool)
+    # L'appel à empty_cache et ipc_collect ne doit lever ni AttributeError ni exception
+    backend.empty_cache()
+    backend.ipc_collect()
+    assert isinstance(backend.memory_allocated(), int)
+    assert isinstance(backend.get_device_name(), str)
+

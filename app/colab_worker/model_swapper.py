@@ -62,11 +62,8 @@ class DefaultCudaBackend:
             torch.cuda.empty_cache()
 
     def ipc_collect(self) -> None:
-        if self.is_available() and torch:
-            with gc.callbacks.disable() if hasattr(gc, "callbacks") else gc:
-                pass
-            if hasattr(torch.cuda, "ipc_collect"):
-                torch.cuda.ipc_collect()
+        if self.is_available() and torch and hasattr(torch.cuda, "ipc_collect"):
+            torch.cuda.ipc_collect()
 
     def memory_allocated(self, device: int | None = None) -> int:
         if self.is_available() and torch:

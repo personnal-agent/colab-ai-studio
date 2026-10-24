@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
+import os
 import time
 from typing import Any
 
@@ -49,6 +51,23 @@ class WorkerGateway:
         if not self._custom_client and not self._http_client.is_closed:
             await self._http_client.aclose()
 
+    async def get_worker_headers(self) -> dict[str, str]:
+        """Génère les en-têtes d'authentification et de contexte vers le worker."""
+        headers: dict[str, str] = {}
+        with contextlib.suppress(Exception):
+            cfg_dict = await self._json_store.read_dict(
+                CONFIG_FILE.name, default=StudioConfig().model_dump()
+            )
+            cfg = StudioConfig.model_validate(cfg_dict)
+            if cfg.executionMode == ExecutionMode.COLAB and cfg.colab.secret:
+                headers["X-Colab-Secret"] = cfg.colab.secret
+
+        if "X-Colab-Secret" not in headers:
+            env_secret = os.environ.get("COLAB_STUDIO_SECRET")
+            if env_secret:
+                headers["X-Colab-Secret"] = env_secret
+        return headers
+
     async def get_active_worker_url(self) -> tuple[str, str]:
         """Résout dynamiquement le mode actif et l'URL de base du worker."""
         cfg_dict = await self._json_store.read_dict(
@@ -88,8 +107,9 @@ class WorkerGateway:
             }
 
         t0 = time.perf_counter()
+        headers = await self.get_worker_headers()
         try:
-            resp = await self._http_client.get(f"{base_url}/health", timeout=3.0)
+            resp = await self._http_client.get(f"{base_url}/health", headers=headers, timeout=3.0)
             resp.raise_for_status()
             latency_ms = round((time.perf_counter() - t0) * 1000.0, 1)
             data = resp.json() if resp.content else {}
@@ -119,8 +139,9 @@ class WorkerGateway:
     async def list_models(self) -> list[dict[str, Any]]:
         """Interroge le catalogue des modèles du worker actif."""
         mode, base_url = await self.get_active_worker_url()
+        headers = await self.get_worker_headers()
         try:
-            resp = await self._http_client.get(f"{base_url}/models", timeout=5.0)
+            resp = await self._http_client.get(f"{base_url}/models", headers=headers, timeout=5.0)
             resp.raise_for_status()
             data = resp.json()
             if isinstance(data, list):
@@ -133,10 +154,12 @@ class WorkerGateway:
     async def switch_model(self, model_id: str) -> dict[str, Any]:
         """Bascule le modèle actif en VRAM sur le worker distant ou local."""
         mode, base_url = await self.get_active_worker_url()
+        headers = await self.get_worker_headers()
         try:
             resp = await self._http_client.post(
                 f"{base_url}/models/switch",
                 json={"modelId": model_id},
+                headers=headers,
                 timeout=30.0,
             )
             resp.raise_for_status()
@@ -151,10 +174,12 @@ class WorkerGateway:
             mode, base_url = await self.get_active_worker_url()
         else:
             mode = "assigned_worker"
+        headers = await self.get_worker_headers()
         try:
             resp = await self._http_client.post(
                 f"{base_url}/infer",
                 json=task_spec,
+                headers=headers,
                 timeout=10.0,
             )
             resp.raise_for_status()
@@ -168,9 +193,11 @@ class WorkerGateway:
             mode, base_url = await self.get_active_worker_url()
         else:
             mode = "assigned_worker"
+        headers = await self.get_worker_headers()
         try:
             resp = await self._http_client.get(
                 f"{base_url}/tasks/{task_id}/status",
+                headers=headers,
                 timeout=5.0,
             )
             resp.raise_for_status()
@@ -184,9 +211,11 @@ class WorkerGateway:
             mode, base_url = await self.get_active_worker_url()
         else:
             mode = "assigned_worker"
+        headers = await self.get_worker_headers()
         try:
             resp = await self._http_client.post(
                 f"{base_url}/tasks/{task_id}/cancel",
+                headers=headers,
                 timeout=5.0,
             )
             resp.raise_for_status()
@@ -220,8 +249,9 @@ class WorkerGateway:
                 raise ValueError("Chemin d'artéfact interdit (path traversal détecté)")
             url = f"{base_url}/files/{clean_path}"
 
+        headers = await self.get_worker_headers()
         try:
-            resp = await self._http_client.get(url, timeout=60.0)
+            resp = await self._http_client.get(url, headers=headers, timeout=60.0)
             resp.raise_for_status()
             return resp.content
         except httpx.HTTPError as e:
