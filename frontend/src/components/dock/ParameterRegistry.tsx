@@ -33,6 +33,10 @@ export interface ParameterRegistryProps {
   onUpscaleFrameRateChange?: (fps: string) => void;
   negativePrompt?: string;
   onNegativePromptChange?: (val: string) => void;
+  steps?: number;
+  onStepsChange?: (val: number) => void;
+  guidanceScale?: number;
+  onGuidanceScaleChange?: (val: number) => void;
 }
 
 export const ParameterRegistry: React.FC<ParameterRegistryProps> = ({
@@ -54,6 +58,10 @@ export const ParameterRegistry: React.FC<ParameterRegistryProps> = ({
   onUpscaleFrameRateChange,
   negativePrompt,
   onNegativePromptChange,
+  steps,
+  onStepsChange,
+  guidanceScale,
+  onGuidanceScaleChange,
 }) => {
   const caps = model?.capabilities;
 
@@ -75,9 +83,9 @@ export const ParameterRegistry: React.FC<ParameterRegistryProps> = ({
   const showAspect =
     mode !== 'upscale' && (caps?.aspectRatios || ['image', 'video', 'lip_sync'].includes(mode));
   const showResolution =
-    mode !== 'lip_sync' && (caps?.resolutions || ['image', 'video', 'upscale'].includes(mode));
+    Boolean(caps?.resolutions?.length) || (mode !== 'lip_sync' && ['image', 'video', 'upscale'].includes(mode));
   const showDuration =
-    mode === 'video' && (caps?.durations !== undefined || true);
+    mode === 'video' && caps?.durations !== undefined;
   const showAudio =
     mode === 'video' && caps?.supportsAudio === true;
   const showLipSync =
@@ -153,6 +161,7 @@ export const ParameterRegistry: React.FC<ParameterRegistryProps> = ({
               />
               <UpscaleFrameRatePill
                 frameRate={upscaleFrameRate}
+                options={caps?.fps}
                 onChange={(fps: string) => onUpscaleFrameRateChange?.(fps)}
               />
             </>
@@ -182,6 +191,10 @@ export const ParameterRegistry: React.FC<ParameterRegistryProps> = ({
       <FineSettingsPopover
         negativePrompt={negativePrompt}
         onNegativePromptChange={onNegativePromptChange}
+        steps={steps}
+        onStepsChange={onStepsChange}
+        guidanceScale={guidanceScale}
+        onGuidanceScaleChange={onGuidanceScaleChange}
       />
     </div>
   );

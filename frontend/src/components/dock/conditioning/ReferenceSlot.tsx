@@ -45,7 +45,21 @@ export const ReferenceSlot: React.FC<ReferenceSlotProps> = ({
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
+        aria-label={fileUrl ? label : `Ajouter une référence : ${label}`}
         onClick={handleClick}
+        onDragOver={(e) => {
+          if (disabled || fileUrl) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        }}
+        onDrop={(e) => {
+          if (disabled || fileUrl) return;
+          e.preventDefault();
+          const file = e.dataTransfer.files?.[0];
+          if (file && onFileSelected) {
+            onFileSelected(file);
+          }
+        }}
         onKeyDown={(e) => {
           if ((e.key === 'Enter' || e.key === ' ') && !fileUrl) {
             e.preventDefault();

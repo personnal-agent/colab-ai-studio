@@ -45,41 +45,53 @@ export const FineSettingsPopover: React.FC<FineSettingsPopoverProps> = ({
             <span className="text-[10px] text-gray-400">Fine tuning</span>
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-[11px] font-medium text-gray-600">Prompt négatif</label>
-            <textarea
-              rows={2}
-              value={negativePrompt}
-              onChange={(e) => onNegativePromptChange?.(e.target.value)}
-              placeholder="Éléments indésirables (flou, déformation...)"
-              className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-gray-900"
-            />
-          </div>
+          {onNegativePromptChange && (
+            <div className="flex flex-col gap-1">
+              <label htmlFor="fine-settings-negative-prompt" className="text-[11px] font-medium text-gray-600">
+                Prompt négatif
+              </label>
+              <textarea
+                id="fine-settings-negative-prompt"
+                aria-label="Prompt négatif"
+                rows={2}
+                value={negativePrompt}
+                onChange={(e) => onNegativePromptChange(e.target.value)}
+                placeholder="Éléments indésirables (flou, déformation...)"
+                className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-gray-900"
+              />
+            </div>
+          )}
 
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[11px] text-gray-600">Étapes (Steps : {steps})</span>
-            <input
-              type="range"
-              min={10}
-              max={50}
-              value={steps}
-              onChange={(e) => onStepsChange?.(Number(e.target.value))}
-              className="w-32 accent-gray-900 cursor-pointer"
-            />
-          </div>
+          {onStepsChange && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[11px] text-gray-600">Étapes (Steps : {steps})</span>
+              <input
+                type="range"
+                aria-label={`Étapes : ${steps}`}
+                min={10}
+                max={50}
+                value={steps}
+                onChange={(e) => onStepsChange(Number(e.target.value))}
+                className="w-32 accent-gray-900 cursor-pointer"
+              />
+            </div>
+          )}
 
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[11px] text-gray-600">CFG Scale ({guidanceScale})</span>
-            <input
-              type="range"
-              min={1}
-              max={20}
-              step={0.5}
-              value={guidanceScale}
-              onChange={(e) => onGuidanceScaleChange?.(Number(e.target.value))}
-              className="w-32 accent-gray-900 cursor-pointer"
-            />
-          </div>
+          {onGuidanceScaleChange && (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[11px] text-gray-600">CFG Scale ({guidanceScale})</span>
+              <input
+                type="range"
+                aria-label={`CFG Scale : ${guidanceScale}`}
+                min={1}
+                max={20}
+                step={0.5}
+                value={guidanceScale}
+                onChange={(e) => onGuidanceScaleChange(Number(e.target.value))}
+                className="w-32 accent-gray-900 cursor-pointer"
+              />
+            </div>
+          )}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

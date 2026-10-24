@@ -24,9 +24,24 @@ export const DurationControlPill: React.FC<DurationControlPillProps> = ({
   const rangeMin = isRange ? config.min : 4;
   const rangeMax = isRange ? config.max : 30;
 
-  const discreteOptions = Array.isArray(config)
-    ? config
-    : config.options || ['5s', '10s', '15s'];
+  let discreteOptions: string[];
+  if (Array.isArray(config)) {
+    discreteOptions = config;
+  } else if (config.options && config.options.length > 0) {
+    discreteOptions = config.options;
+  } else if (config.min !== undefined && config.max !== undefined) {
+    const step = config.max - config.min >= 10 ? 5 : 1;
+    const opts: string[] = [];
+    for (let s = config.min; s <= config.max; s += step) {
+      opts.push(`${s}s`);
+    }
+    if (!opts.includes(`${config.max}s`)) {
+      opts.push(`${config.max}s`);
+    }
+    discreteOptions = opts;
+  } else {
+    discreteOptions = ['5s', '10s', '15s'];
+  }
 
   const numericValue = parseInt(value, 10) || rangeMin;
 

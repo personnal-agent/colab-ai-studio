@@ -3,16 +3,19 @@ import * as Popover from '@radix-ui/react-popover';
 
 interface UpscaleFrameRatePillProps {
   frameRate: string;
+  options?: string[];
   onChange: (fps: string) => void;
 }
 
-const FPS_OPTIONS = ['Same as source', '24fps', '30fps', '60fps'];
+const DEFAULT_FPS_OPTIONS = ['Same as source', '24fps', '30fps', '60fps'];
 
 export const UpscaleFrameRatePill: React.FC<UpscaleFrameRatePillProps> = ({
   frameRate,
+  options,
   onChange,
 }) => {
   const [open, setOpen] = useState(false);
+  const availableOptions = options && options.length > 0 ? options : DEFAULT_FPS_OPTIONS;
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -36,7 +39,7 @@ export const UpscaleFrameRatePill: React.FC<UpscaleFrameRatePillProps> = ({
           <div className="px-2 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
             Cadence
           </div>
-          {FPS_OPTIONS.map((opt) => (
+          {availableOptions.map((opt) => (
             <button
               key={opt}
               type="button"

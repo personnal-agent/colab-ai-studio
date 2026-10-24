@@ -84,6 +84,7 @@ export const ModelSelectorPopover: React.FC<ModelSelectorPopoverProps> = ({
             <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
+              aria-label="Rechercher un modèle"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher un modèle..."

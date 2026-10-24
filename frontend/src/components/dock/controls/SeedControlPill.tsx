@@ -52,6 +52,7 @@ export const SeedControlPill: React.FC<SeedControlPillProps> = ({ seed, onChange
           <div className="flex items-center gap-2">
             <input
               type="number"
+              aria-label="Graine (seed)"
               disabled={isRandom}
               value={isRandom ? '' : seed}
               onChange={(e) => onChange(Number(e.target.value) || 0)}
