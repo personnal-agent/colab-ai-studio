@@ -46,6 +46,10 @@ class GenerationParameters(DomainBase):
     frameRate: str | None = None
     audio: bool | None = None
     enhance: bool | None = None
+    talkingStyle: str | None = None
+    upscaleScale: str | None = None
+    upscaleQuality: str | None = None
+    upscaleFrameRate: str | None = None
 
     @field_validator("aspectRatio")
     @classmethod

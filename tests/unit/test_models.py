@@ -34,10 +34,16 @@ def test_task_status_and_params():
         "failed",
         "cancelled",
     }
-    p = GenerationParameters(seed=42, aspectRatio="16:9", resolution="720p", duration="5s")
+    p = GenerationParameters(
+        seed=42, aspectRatio="16:9", resolution="720p", duration="5s",
+        talkingStyle="Expressive", upscaleScale="4x", upscaleQuality="Slow",
+        upscaleFrameRate="60fps",
+    )
     assert (
         p.seed == 42
         and p.aspectRatio == "16:9"
+        and p.talkingStyle == "Expressive"
+        and p.upscaleScale == "4x"
         and p.validate()
         and p.to_payload_dict()["seed"] == 42
     )
