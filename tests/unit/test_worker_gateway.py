@@ -49,12 +49,10 @@ async def test_unconfigured_colab_raises_explicit_error(store):
 
 @pytest.mark.asyncio
 async def test_health_check_success_and_latency(store):
-    await store.write_dict(
-        "config.json",
-        StudioConfig(
-            executionMode=ExecutionMode.LOCAL, local=LocalConfig(workerUrl="http://127.0.0.1:8190")
-        ).model_dump(),
+    cfg = StudioConfig(
+        executionMode=ExecutionMode.LOCAL, local=LocalConfig(workerUrl="http://127.0.0.1:8190")
     )
+    await store.write_dict("config.json", cfg.model_dump())
 
     def handler(r):
         return httpx.Response(200, json={"status": "ready", "gpu": "RTX 4090", "vramFreeMb": 18450})
@@ -69,12 +67,10 @@ async def test_health_check_success_and_latency(store):
 
 @pytest.mark.asyncio
 async def test_health_check_unreachable_worker(store):
-    await store.write_dict(
-        "config.json",
-        StudioConfig(
-            executionMode=ExecutionMode.LOCAL, local=LocalConfig(workerUrl="http://127.0.0.1:8190")
-        ).model_dump(),
+    cfg = StudioConfig(
+        executionMode=ExecutionMode.LOCAL, local=LocalConfig(workerUrl="http://127.0.0.1:8190")
     )
+    await store.write_dict("config.json", cfg.model_dump())
 
     def handler(r):
         raise httpx.ConnectError("Offline")
@@ -89,13 +85,11 @@ async def test_health_check_unreachable_worker(store):
 
 @pytest.mark.asyncio
 async def test_list_and_switch_models(store):
-    await store.write_dict(
-        "config.json",
-        StudioConfig(
-            executionMode=ExecutionMode.COLAB,
-            colab=ColabConfig(tunnelUrl="https://colab.ngrok-free.app"),
-        ).model_dump(),
+    cfg = StudioConfig(
+        executionMode=ExecutionMode.COLAB,
+        colab=ColabConfig(tunnelUrl="https://colab.ngrok-free.app"),
     )
+    await store.write_dict("config.json", cfg.model_dump())
 
     def handler(r):
         if r.url.path == "/models":
@@ -113,12 +107,10 @@ async def test_list_and_switch_models(store):
 
 @pytest.mark.asyncio
 async def test_worker_unavailable_error_on_network_failure(store):
-    await store.write_dict(
-        "config.json",
-        StudioConfig(
-            executionMode=ExecutionMode.LOCAL, local=LocalConfig(workerUrl="http://127.0.0.1:8190")
-        ).model_dump(),
+    cfg = StudioConfig(
+        executionMode=ExecutionMode.LOCAL, local=LocalConfig(workerUrl="http://127.0.0.1:8190")
     )
+    await store.write_dict("config.json", cfg.model_dump())
 
     def handler(r):
         raise httpx.ConnectError("Offline")
@@ -135,13 +127,10 @@ async def test_worker_unavailable_error_on_network_failure(store):
 
 @pytest.mark.asyncio
 async def test_worker_gateway_download_file_anti_ssrf(store):
-    await store.write_dict(
-        "config.json",
-        StudioConfig(
-            executionMode=ExecutionMode.LOCAL,
-            local=LocalConfig(workerUrl="http://127.0.0.1:8190"),
-        ).model_dump(),
+    cfg = StudioConfig(
+        executionMode=ExecutionMode.LOCAL, local=LocalConfig(workerUrl="http://127.0.0.1:8190")
     )
+    await store.write_dict("config.json", cfg.model_dump())
 
     def handler(r):
         return httpx.Response(200, content=b"BIN_OK")
