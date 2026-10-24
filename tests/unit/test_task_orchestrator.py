@@ -32,7 +32,7 @@ class MockWorkerGateway:
     async def list_models(self):
         return []
 
-    async def infer(self, spec: dict):
+    async def infer(self, spec: dict, *args, **kwargs):
         self.inferred_specs.append(spec)
         return {"taskId": spec["taskId"], "status": "queued"}
 

@@ -236,7 +236,7 @@ class TaskOrchestrator:
                 "parameters": gen.parameters.model_dump(),
                 "references": gen.references.model_dump(),
             }
-            await self._gateway.infer(task_spec)
+            await self._gateway.infer(task_spec, base_url=target_worker_url)
 
             # 3. Boucle de suivi d'avancement
             while True:

@@ -145,9 +145,12 @@ class WorkerGateway:
             logger.warning("Erreur switch_model sur %s (%s): %s", mode, base_url, e)
             raise WorkerUnavailableError(f"Échec de bascule modèle sur {mode} : {e}") from e
 
-    async def infer(self, task_spec: dict[str, Any]) -> dict[str, Any]:
+    async def infer(self, task_spec: dict[str, Any], base_url: str | None = None) -> dict[str, Any]:
         """Soumet une tâche d'inférence au worker."""
-        mode, base_url = await self.get_active_worker_url()
+        if not base_url:
+            mode, base_url = await self.get_active_worker_url()
+        else:
+            mode = "assigned_worker"
         try:
             resp = await self._http_client.post(
                 f"{base_url}/infer",

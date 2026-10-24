@@ -267,25 +267,31 @@ async def create_project(payload: ProjectCreate) -> dict[str, Any]:
     dependencies=[Depends(verify_trusted_origin)],
 )
 async def update_colab_url(payload: ColabUrlUpdate) -> Any:
-    async with _json_store.lock_for(CONFIG_FILE.name):
-        generations = await _json_store.read_list(GENERATIONS_FILE.name)
-        active_tasks = [
-            gen["id"]
-            for gen in generations
-            if gen.get("status") in {TaskStatus.PENDING.value, TaskStatus.RUNNING.value}
-        ]
-        if active_tasks:
-            return JSONResponse(
-                status_code=409,
-                content={
-                    "detail": ("Impossible de modifier le tunnel Colab pendant une tâche en cours"),
-                    "activeTaskIds": active_tasks,
-                },
-            )
+    from app.api.routes_generation import get_task_orchestrator
 
-        cfg = await _json_store.read_dict_unlocked(
-            CONFIG_FILE.name, default=StudioConfig().model_dump()
-        )
-        cfg.setdefault("colab", {})["tunnelUrl"] = payload.tunnelUrl.strip()
-        await _json_store.write_dict_unlocked(CONFIG_FILE.name, cfg)
-    return {"updated": True, "tunnelUrl": payload.tunnelUrl.strip()}
+    orchestrator = get_task_orchestrator()
+    async with orchestrator.coordination_lock:
+        async with _json_store.lock_for(CONFIG_FILE.name):
+            generations = await _json_store.read_list(GENERATIONS_FILE.name)
+            active_tasks = [
+                gen["id"]
+                for gen in generations
+                if gen.get("status") in {TaskStatus.PENDING.value, TaskStatus.RUNNING.value}
+            ]
+            if active_tasks:
+                return JSONResponse(
+                    status_code=409,
+                    content={
+                        "detail": (
+                            "Impossible de modifier le tunnel Colab pendant une tâche en cours"
+                        ),
+                        "activeTaskIds": active_tasks,
+                    },
+                )
+
+            cfg = await _json_store.read_dict_unlocked(
+                CONFIG_FILE.name, default=StudioConfig().model_dump()
+            )
+            cfg.setdefault("colab", {})["tunnelUrl"] = payload.tunnelUrl.strip()
+            await _json_store.write_dict_unlocked(CONFIG_FILE.name, cfg)
+        return {"updated": True, "tunnelUrl": payload.tunnelUrl.strip()}

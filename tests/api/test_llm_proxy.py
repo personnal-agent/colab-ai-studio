@@ -119,12 +119,12 @@ async def test_llm_proxy_client_disconnect_triggers_cancel(client, tmp_path, mon
 
 
 @pytest.mark.asyncio
-async def test_llm_proxy_asgi_disconnect_during_silent_wait(client, tmp_path, monkeypatch):
+async def test_llm_proxy_asgi_disconnect_during_silent_wait(client, tmp_path):
     cancelled = []
 
     async def slow_stream():
         yield b'data: {"choices":[{"delta":{"content":"First"}}}\n\n'
-        await asyncio.sleep(0.8)
+        await asyncio.sleep(1.0)
         yield b"data: [DONE]\n\n"
 
     def handler(request: httpx.Request) -> httpx.Response:
@@ -139,38 +139,25 @@ async def test_llm_proxy_asgi_disconnect_during_silent_wait(client, tmp_path, mo
         JSONDocumentStore(tmp_path),
         http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
-
-    async def get_url():
-        return "local", "http://127.0.0.1:8190"
-
-    gw.get_active_worker_url = get_url
+    gw.get_active_worker_url = lambda: asyncio.sleep(0, result=("local", "http://127.0.0.1:8190"))
     app.dependency_overrides[get_worker_gateway] = lambda: gw
-
-    from fastapi import Request
-
-    disconnect_after = False
-
-    async def mock_is_disconnected(self):
-        return disconnect_after
-
-    monkeypatch.setattr(Request, "is_disconnected", mock_is_disconnected)
-
-    async def trigger_disconnect():
-        nonlocal disconnect_after
-        await asyncio.sleep(0.15)
-        disconnect_after = True
-
-    asyncio.create_task(trigger_disconnect())
 
     payload = {
         "model": "qwen2.5-7b",
         "messages": [{"role": "user", "content": "Hi"}],
         "stream": True,
     }
-    resp = await client.post(
-        "/v1/chat/completions", json=payload, headers={"Origin": "http://localhost:5173"}
+    task = asyncio.create_task(
+        client.post(
+            "/v1/chat/completions", json=payload, headers={"Origin": "http://localhost:5173"}
+        )
     )
-    assert resp.status_code == 200
+    await asyncio.sleep(0.1)
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+    await asyncio.sleep(0.1)
     assert len(cancelled) == 1
     assert cancelled[0].startswith("chat_")
     await gw.aclose()
