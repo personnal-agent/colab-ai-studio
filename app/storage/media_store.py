@@ -21,6 +21,7 @@ from app.config import REPO_ROOT
 from app.models.domain import Project
 
 _SYSTEM_DIRS = ("/etc", "/proc", "/sys", "/dev", "/bin", "/sbin", "/usr", "/var")
+_TEMP_DIRS = (Path("/var/folders").resolve(),)
 _REPO_DIRS = (".git", ".githooks", ".gouvernance", ".GCC")
 FORBIDDEN_PATHS = (
     *(Path(path).resolve() for path in _SYSTEM_DIRS),
@@ -38,7 +39,9 @@ class MediaFileStore:
             raw_path = Path(project.storagePath)
             # Sécurité anti-traversée
             resolved = raw_path.expanduser().resolve()
-            if any(resolved.is_relative_to(path) for path in FORBIDDEN_PATHS):
+            if not any(resolved.is_relative_to(path) for path in _TEMP_DIRS) and any(
+                resolved.is_relative_to(path) for path in FORBIDDEN_PATHS
+            ):
                 msg = (
                     f"Chemin storagePath interdit pour raisons de sécurité : {project.storagePath}"
                 )
@@ -121,19 +124,46 @@ class MediaFileStore:
 
         return await asyncio.to_thread(_sync_save)
 
+    async def stage_delete_media(
+        self,
+        file_path: str | None,
+        thumbnail_path: str | None = None,
+    ) -> list[tuple[Path, Path]]:
+        def _sync_stage() -> list[tuple[Path, Path]]:
+            staged: list[tuple[Path, Path]] = []
+            for path_str in (file_path, thumbnail_path):
+                if path_str:
+                    orig = Path(path_str)
+                    if orig.exists():
+                        target = orig.with_name(f".{orig.name}.{uuid.uuid4().hex[:8]}.del")
+                        os.replace(orig, target)
+                        staged.append((orig, target))
+            return staged
+
+        return await asyncio.to_thread(_sync_stage)
+
+    async def commit_delete_media(self, staged_moves: list[tuple[Path, Path]]) -> None:
+        def _sync_commit():
+            for _, staged_path in staged_moves:
+                if staged_path.exists():
+                    staged_path.unlink()
+
+        await asyncio.to_thread(_sync_commit)
+
+    async def rollback_delete_media(self, staged_moves: list[tuple[Path, Path]]) -> None:
+        def _sync_rollback():
+            for orig_path, staged_path in staged_moves:
+                with contextlib.suppress(OSError):
+                    if staged_path.exists():
+                        os.replace(staged_path, orig_path)
+
+        await asyncio.to_thread(_sync_rollback)
+
     async def delete_media(
         self,
         file_path: str | None,
         thumbnail_path: str | None = None,
     ) -> bool:
-        def _sync_delete() -> bool:
-            deleted_any = False
-            if file_path and os.path.exists(file_path):
-                os.unlink(file_path)
-                deleted_any = True
-            if thumbnail_path and os.path.exists(thumbnail_path):
-                os.unlink(thumbnail_path)
-                deleted_any = True
-            return deleted_any
-
-        return await asyncio.to_thread(_sync_delete)
+        staged = await self.stage_delete_media(file_path, thumbnail_path)
+        await self.commit_delete_media(staged)
+        return bool(staged)

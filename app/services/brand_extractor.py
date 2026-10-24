@@ -14,6 +14,7 @@ import ipaddress
 import re
 import socket
 import uuid
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
@@ -31,7 +32,7 @@ HEX_FINDER = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
 FONT_FAMILY_FINDER = re.compile(r"font-family\s*:\s*([^;\}]+)", re.IGNORECASE)
 
 
-def _validate_safe_url(url: str) -> None:
+async def _validate_safe_url(url: str) -> None:
     parsed = urlparse(url)
     scheme = parsed.scheme.lower()
     if scheme not in ("http", "https"):
@@ -50,7 +51,11 @@ def _validate_safe_url(url: str) -> None:
 
     port = parsed.port or (443 if scheme == "https" else 80)
     try:
-        addr_infos = socket.getaddrinfo(hostname, port, proto=socket.IPPROTO_TCP)
+        # Résolution DNS déportée hors de la boucle événementielle
+        # asyncio pour ne jamais bloquer le serveur local
+        addr_infos = await asyncio.to_thread(
+            socket.getaddrinfo, hostname, port, proto=socket.IPPROTO_TCP
+        )
     except socket.gaierror as e:
         msg = f"Impossible de résoudre le nom d'hôte '{hostname}' : {e}"
         raise ValueError(msg) from e
@@ -62,7 +67,8 @@ def _validate_safe_url(url: str) -> None:
         except ValueError:
             continue
         if (
-            ip.is_private
+            not ip.is_global
+            or ip.is_private
             or ip.is_loopback
             or ip.is_reserved
             or ip.is_link_local
@@ -87,8 +93,8 @@ async def _fetch_safe_website(initial_url: str, max_redirects: int = 5) -> httpx
         headers=headers,
     ) as client:
         while True:
-            # 1. Validation de l'adresse de destination (SSRF check à chaque saut)
-            _validate_safe_url(current_url)
+            # 1. Validation asynchrone non bloquante de l'adresse de destination
+            await _validate_safe_url(current_url)
 
             # 2. Requête HTTP
             try:
@@ -141,7 +147,7 @@ class BrandKitExtractor:
             logos: list[Logo] = []
             extracted_colors: list[Color] = []
             extracted_fonts: list[Font] = []
-            color_candidates: set[str] = set()
+            color_candidates: list[str] = []
             seen_fonts: set[str] = set()
 
             for filename, content in files:
@@ -173,7 +179,7 @@ class BrandKitExtractor:
                     with contextlib.suppress(Exception):
                         text = content.decode("utf-8", errors="ignore")
                         for hex_match in HEX_FINDER.findall(text):
-                            color_candidates.add(hex_match.upper())
+                            color_candidates.append(hex_match.upper())
 
                         for font_match in FONT_FAMILY_FINDER.findall(text):
                             primary_font = font_match.split(",")[0].strip().strip("'\"")
@@ -186,8 +192,9 @@ class BrandKitExtractor:
                                 seen_fonts.add(primary_font)
                                 extracted_fonts.append(Font(family=primary_font))
 
-            # Si au moins une couleur est trouvée, on l'ajoute
-            for idx, hex_code in enumerate(sorted(color_candidates)[:5]):
+            # Si au moins une couleur est trouvée, classer par fréquence
+            counts = Counter(color_candidates)
+            for idx, (hex_code, _) in enumerate(counts.most_common(5)):
                 extracted_colors.append(
                     Color(
                         hex=hex_code,
@@ -250,12 +257,12 @@ class BrandKitExtractor:
         elif title:
             overview_text = title
 
-        # 2. Couleurs hex depuis HTML et styles inline
-        hex_candidates = set(HEX_FINDER.findall(html))
-        for idx, hex_code in enumerate(sorted(hex_candidates)[:5]):
+        # 2. Couleurs hex depuis HTML et styles inline, classées par fréquence
+        counts = Counter(m.upper() for m in HEX_FINDER.findall(html))
+        for idx, (hex_code, _) in enumerate(counts.most_common(5)):
             colors.append(
                 Color(
-                    hex=hex_code.upper(),
+                    hex=hex_code,
                     label=f"Couleur web {idx + 1}",
                     isDominant=(idx == 0),
                 )

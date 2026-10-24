@@ -13,6 +13,8 @@ Expose :
 
 from __future__ import annotations
 
+import asyncio
+import uuid
 from typing import Any
 from urllib.parse import urlparse
 
@@ -136,21 +138,29 @@ async def delete_generation(generation_id: str) -> dict[str, Any]:
         if target_item is None:
             raise HTTPException(status_code=404, detail="Génération introuvable")
 
-        # 1. Suppression physique sur le disque en priorité (sans masquer les erreurs d'I/O)
+        # Suppression transactionnelle via MediaFileStore avec rollback garanti
         try:
-            await _media_store.delete_media(
+            staged_moves = await _media_store.stage_delete_media(
                 file_path=target_item.get("filePath"),
                 thumbnail_path=target_item.get("thumbnailPath"),
             )
         except OSError as e:
             raise HTTPException(
                 status_code=500,
-                detail=f"Échec de la suppression physique du média sur disque : {e}",
+                detail=f"Échec de l'opération transactionnelle de suppression : {e}",
             ) from e
 
-        # 2. Suppression de l'entrée JSON uniquement après confirmation physique
+        # Phase 2: Persistance atomique de la collection JSON
         remaining = [item for item in items if item.get("id") != generation_id]
-        await _json_store.write_list_unlocked("generations.json", remaining)
+        try:
+            await _json_store.write_list_unlocked("generations.json", remaining)
+        except Exception:
+            # Rollback : restauration intégrale des fichiers médias si l'écriture JSON échoue
+            await _media_store.rollback_delete_media(staged_moves)
+            raise
+
+        # Phase 3: Purge définitive des fichiers médias stagés après succès JSON
+        await _media_store.commit_delete_media(staged_moves)
 
     return {"deleted": True, "id": generation_id}
 
@@ -224,9 +234,6 @@ async def list_projects() -> list[dict[str, Any]]:
     dependencies=[Depends(verify_trusted_origin)],
 )
 async def create_project(payload: ProjectCreate) -> dict[str, Any]:
-    import asyncio
-    import uuid
-
     proj_id = f"proj_{uuid.uuid4().hex[:8]}"
     storage_path = payload.storagePath
     if storage_path:

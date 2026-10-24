@@ -48,6 +48,18 @@ async def test_env(tmp_path: Path):
         yield client, store, media_store, data_dir
 
 
+@pytest.fixture(autouse=True)
+def mock_dns_resolution(monkeypatch):
+    import socket
+
+    def deterministic_getaddrinfo(host, port, *args, **kwargs):
+        if host in ("127.0.0.1", "localhost", "::1"):
+            return [(2, 1, 6, "", ("127.0.0.1", port))]
+        return [(2, 1, 6, "", ("93.184.216.34", port))]
+
+    monkeypatch.setattr(socket, "getaddrinfo", deterministic_getaddrinfo)
+
+
 async def test_health_check(test_env):
     client, _, _, _ = test_env
     res = await client.get("/api/health")
@@ -122,13 +134,45 @@ async def test_generations_crud_and_filters(test_env):
     # 7. Physical deletion failure propagates 500 and preserves JSON record
     import unittest.mock
 
-    patch_del = unittest.mock.patch.object(media_store, "delete_media", side_effect=OSError("Disk"))
+    patch_del = unittest.mock.patch.object(
+        media_store, "stage_delete_media", side_effect=OSError("Disk")
+    )
     with patch_del:
         res_fail_del = await client.delete("/api/generations/gen_2")
         assert res_fail_del.status_code == 500
 
     intact_rem = await store.read_list("generations.json")
     assert any(item["id"] == "gen_2" for item in intact_rem)
+
+
+async def test_delete_generation_transactional_rollback(test_env, monkeypatch):
+    client, store, _, data_dir = test_env
+    file_path = data_dir / "rollback_gen.mp4"
+    thumb_path = data_dir / "rollback_gen.jpg"
+    file_path.write_bytes(b"VIDEO_BYTES")
+    thumb_path.write_bytes(b"THUMB_BYTES")
+
+    gen_item = {
+        "id": "gen_rollback",
+        "mediaType": "video",
+        "prompt": "Test rollback",
+        "filePath": str(file_path),
+        "thumbnailPath": str(thumb_path),
+    }
+    await store.write_list("generations.json", [gen_item])
+
+    async def failing_write_list_unlocked(filename, data):
+        raise OSError("Disque plein lors de l'écriture JSON")
+
+    monkeypatch.setattr(store, "write_list_unlocked", failing_write_list_unlocked)
+
+    with pytest.raises(OSError, match="Disque plein"):
+        await client.delete("/api/generations/gen_rollback")
+
+    # Les fichiers médias physiques ont été restaurés par le rollback
+    assert file_path.exists()
+    assert thumb_path.exists()
+    assert file_path.read_bytes() == b"VIDEO_BYTES"
 
 
 async def test_projects_crud_and_storage_path_validation(test_env):
@@ -179,7 +223,7 @@ async def test_projects_crud_and_storage_path_validation(test_env):
     assert res_bad_color.status_code == 422
 
 
-async def test_brand_kits_crud_blank_and_files(test_env):
+async def test_brand_kits_crud_blank_and_files(test_env, monkeypatch):
     client, _, _, _ = test_env
 
     # 1. Blank
@@ -205,7 +249,30 @@ async def test_brand_kits_crud_blank_and_files(test_env):
     hex_colors = [c["hex"] for c in bk_files["colors"]]
     assert "#FF0000" in hex_colors or "#00FF00" in hex_colors
 
-    # 3. Extract from website
+    # 3. Extract from website (mock hermétique sans dépendance réseau)
+    class MockGoogleClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def get(self, url):
+            class MockGoogleResponse:
+                status_code = 200
+                headers = {}
+                url = httpx.URL("https://google.com")
+                text = (
+                    "<title>Google Search</title>"
+                    "<meta name='description' content='Recherche mondiale'>"
+                )
+
+            return MockGoogleResponse()
+
+    monkeypatch.setattr(httpx, "AsyncClient", MockGoogleClient)
     res_web = await client.post(
         "/api/brand-kits",
         data={"name": "Google", "websiteUrl": "https://google.com"},

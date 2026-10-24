@@ -138,3 +138,29 @@ async def test_direct_write_to_damaged_file_is_refused(store: JSONDocumentStore,
 
     with pytest.raises(CorruptedDocumentStoreError, match="Écriture refusée"):
         await store.write_dict("config.json", {"key": "val"})
+
+
+async def test_repaired_file_recovers_and_allows_write(store: JSONDocumentStore, tmp_path: Path):
+    target_file = tmp_path / "projects.json"
+    target_file.write_text("CORRUPTED_CONTENT", encoding="utf-8")
+
+    # 1. Échec initial de lecture
+    with pytest.raises(CorruptedDocumentStoreError):
+        await store.read_list("projects.json")
+
+    assert store.is_corrupted("projects.json")
+
+    # 2. Réparation du fichier sur le disque
+    target_file.write_text('[{"id": "proj_1", "name": "Repaired"}]', encoding="utf-8")
+
+    # 3. La lecture réussie lève la marque de corruption
+    data = await store.read_list("projects.json")
+    assert len(data) == 1
+    assert data[0]["id"] == "proj_1"
+    assert not store.is_corrupted("projects.json")
+
+    # 4. L'écriture est à nouveau autorisée
+    data.append({"id": "proj_2", "name": "Second"})
+    await store.write_list("projects.json", data)
+    reloaded = await store.read_list("projects.json")
+    assert len(reloaded) == 2

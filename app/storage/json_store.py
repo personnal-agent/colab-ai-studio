@@ -87,6 +87,7 @@ class JSONDocumentStore:
             msg = f"Type inattendu dans {filename} : attendu 'list', obtenu '{actual}'"
             raise CorruptedDocumentStoreError(msg)
 
+        self._corrupted_files.discard(filename)
         return loaded
 
     async def write_list(self, filename: str, data: list[dict[str, Any]]) -> None:
@@ -137,6 +138,7 @@ class JSONDocumentStore:
             msg = f"Type inattendu dans {filename} : attendu 'dict', obtenu '{actual}'"
             raise CorruptedDocumentStoreError(msg)
 
+        self._corrupted_files.discard(filename)
         return loaded
 
     async def write_dict(self, filename: str, data: dict[str, Any]) -> None:
@@ -153,13 +155,6 @@ class JSONDocumentStore:
 
     def _perform_atomic_write(self, target: Path, serialized: str) -> None:
         filename = target.name
-        if filename in self._corrupted_files:
-            msg = (
-                f"Écriture refusée : le fichier {filename} a été marqué comme corrompu "
-                f"lors d'une lecture précédente et ne doit pas être écrasé."
-            )
-            raise CorruptedDocumentStoreError(msg)
-
         if target.exists():
             try:
                 existing_raw = target.read_text(encoding="utf-8")
@@ -168,10 +163,22 @@ class JSONDocumentStore:
                     msg = f"Écriture refusée : le fichier existant {filename} est vide ou corrompu."
                     raise CorruptedDocumentStoreError(msg)
                 json.loads(existing_raw)
+                # Le fichier existant est désormais valide : levée de la marque si réparé
+                self._corrupted_files.discard(filename)
             except (json.JSONDecodeError, OSError) as e:
                 self._corrupted_files.add(filename)
                 msg = f"Écriture refusée : le fichier existant {filename} est corrompu ({e})."
                 raise CorruptedDocumentStoreError(msg) from e
+        elif filename in self._corrupted_files:
+            # Fichier absent du disque : levée de la marque pour nouvelle création
+            self._corrupted_files.discard(filename)
+
+        if filename in self._corrupted_files:
+            msg = (
+                f"Écriture refusée : le fichier {filename} a été marqué comme corrompu "
+                f"lors d'une lecture précédente et ne doit pas être écrasé."
+            )
+            raise CorruptedDocumentStoreError(msg)
         tmp_fd, tmp_path_str = tempfile.mkstemp(
             dir=self.data_dir,
             prefix=f".{target.name}.",
