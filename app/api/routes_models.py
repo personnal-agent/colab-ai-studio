@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from app.api.routes_crud import verify_trusted_origin
 from app.services.worker_gateway import (
     WorkerGateway,
     WorkerNotConfiguredError,
@@ -38,7 +39,11 @@ async def list_models(
         raise HTTPException(status_code=503, detail=str(e)) from e
 
 
-@router.post("/switch", response_model=dict[str, Any])
+@router.post(
+    "/switch",
+    response_model=dict[str, Any],
+    dependencies=[Depends(verify_trusted_origin)],
+)
 async def switch_model(
     payload: ModelSwitchRequest,
     gateway: WorkerGateway = Depends(get_worker_gateway),

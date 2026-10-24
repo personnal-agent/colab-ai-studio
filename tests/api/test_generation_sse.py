@@ -10,13 +10,25 @@ from httpx import ASGITransport, AsyncClient
 
 from app.api.routes_generation import get_task_orchestrator
 from app.main import app
-from app.models.domain import Generation
+from app.models.domain import Generation, GenerationParameters
 
 
 class StubOrchestrator:
     def __init__(self):
         self.submitted = []
         self.cancelled = []
+        self.coordination_lock = asyncio.Lock()
+
+    async def get_task(self, task_id: str) -> Generation | None:
+        if task_id == "gen_mock123":
+            return Generation(
+                id="gen_mock123",
+                prompt="Test prompt",
+                modelId="mock-model",
+                modelName="Mock Model",
+                parameters=GenerationParameters(seed=0),
+            )
+        return None
 
     async def submit_generation(self, payload):
         self.submitted.append(payload)
@@ -42,6 +54,9 @@ class StubOrchestrator:
     async def cancel_task(self, task_id: str):
         self.cancelled.append(task_id)
         return {"status": "cancelled", "taskId": task_id}
+
+    async def aclose(self):
+        pass
 
 
 @pytest.mark.asyncio
@@ -86,5 +101,9 @@ async def test_generation_workflow_and_sse():
         assert cancel_resp.status_code == 200
         assert cancel_resp.json()["status"] == "cancelled"
         assert "gen_mock123" in stub.cancelled
+
+        # 4. GET /api/tasks/{unknown}/status returns 404
+        not_found_resp = await client.get("/api/tasks/gen_unknown_404/status")
+        assert not_found_resp.status_code == 404
 
     app.dependency_overrides.clear()

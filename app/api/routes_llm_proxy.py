@@ -10,6 +10,8 @@ Conforme à 08-sequence-proxy-llm.svg :
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import json
 import logging
 import uuid
@@ -18,7 +20,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.routes_models import get_worker_gateway
 from app.services.worker_gateway import (
@@ -34,10 +36,12 @@ router = APIRouter(prefix="/v1", tags=["LLM Proxy"])
 
 class ChatMessage(BaseModel):
     role: str
-    content: str
+    content: str | list[Any]
 
 
 class ChatCompletionRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     model: str = "default"
     messages: list[ChatMessage]
     stream: bool = True
@@ -77,6 +81,40 @@ async def chat_completions_proxy(
 
     async def stream_generator() -> AsyncGenerator[str, None]:
         url = f"{base_url}/v1/chat/completions"
+        stop_event = asyncio.Event()
+        is_cancelled = False
+
+        async def cancel_upstream() -> None:
+            nonlocal is_cancelled
+            if not is_cancelled:
+                is_cancelled = True
+                logger.info(
+                    "Interruption client sur %s. Annulation sur le worker %s.",
+                    request_id,
+                    base_url,
+                )
+                try:
+                    await gateway._http_client.post(
+                        f"{base_url}/v1/chat/cancel",
+                        json={"requestId": request_id},
+                        timeout=5.0,
+                    )
+                except Exception as cancel_err:
+                    logger.warning(
+                        "Échec notification annulation LLM sur %s : %s",
+                        base_url,
+                        cancel_err,
+                    )
+
+        async def watch_disconnect() -> None:
+            while not stop_event.is_set():
+                if await request.is_disconnected():
+                    stop_event.set()
+                    await cancel_upstream()
+                    return
+                await asyncio.sleep(0.1)
+
+        disconnect_task = asyncio.create_task(watch_disconnect())
         try:
             async with gateway._http_client.stream(
                 "POST",
@@ -86,35 +124,23 @@ async def chat_completions_proxy(
             ) as upstream_resp:
                 upstream_resp.raise_for_status()
                 async for line in upstream_resp.aiter_lines():
-                    # Branche alt : Interruption client (request.is_disconnected() == True)
-                    if await request.is_disconnected():
-                        logger.info(
-                            "Interruption client sur %s. Annulation sur le worker %s.",
-                            request_id,
-                            base_url,
-                        )
-                        try:
-                            await gateway._http_client.post(
-                                f"{base_url}/v1/chat/cancel",
-                                json={"requestId": request_id},
-                                timeout=5.0,
-                            )
-                        except Exception as cancel_err:
-                            logger.warning(
-                                "Échec notification annulation LLM sur %s : %s",
-                                base_url,
-                                cancel_err,
-                            )
-                        # Rupture immédiate, fermeture socket sans émettre [DONE]
+                    if stop_event.is_set() or await request.is_disconnected():
+                        stop_event.set()
+                        await cancel_upstream()
                         return
 
                     if line:
                         yield f"{line}\n\n"
         except Exception as e:
-            logger.error("Erreur relayage stream LLM %s : %s", request_id, e)
-            if not await request.is_disconnected():
+            if not stop_event.is_set() and not await request.is_disconnected():
+                logger.error("Erreur relayage stream LLM %s : %s", request_id, e)
                 err_data = json.dumps({"error": {"message": str(e), "type": "upstream_error"}})
                 yield f"data: {err_data}\n\n"
+        finally:
+            stop_event.set()
+            disconnect_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await disconnect_task
 
     headers = {
         "Content-Type": "text/event-stream",

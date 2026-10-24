@@ -131,3 +131,39 @@ async def test_worker_unavailable_error_on_network_failure(store):
     with pytest.raises(WorkerUnavailableError):
         await gw.switch_model("wan2.1")
     await gw.aclose()
+
+
+@pytest.mark.asyncio
+async def test_worker_gateway_download_file_anti_ssrf(store):
+    await store.write_dict(
+        "config.json",
+        StudioConfig(
+            executionMode=ExecutionMode.LOCAL,
+            local=LocalConfig(workerUrl="http://127.0.0.1:8190"),
+        ).model_dump(),
+    )
+
+    def handler(r):
+        return httpx.Response(200, content=b"BIN_OK")
+
+    gw = WorkerGateway(
+        json_store=store,
+        http_client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
+    )
+
+    # 1. Path traversal rejeté
+    with pytest.raises(ValueError, match="path traversal"):
+        await gw.download_file("../../etc/passwd")
+
+    # 2. SSRF vers hôte externe non autorisé rejeté
+    with pytest.raises(ValueError, match="Accès refusé"):
+        await gw.download_file("http://attacker.com/steal")
+
+    # 3. URL légitime vers le worker local autorisée
+    res1 = await gw.download_file("output.mp4")
+    assert res1 == b"BIN_OK"
+
+    res2 = await gw.download_file("http://127.0.0.1:8190/files/output.mp4")
+    assert res2 == b"BIN_OK"
+
+    await gw.aclose()

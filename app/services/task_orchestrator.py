@@ -19,13 +19,21 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.config import BRAND_KITS_FILE, DATA_DIR, GENERATIONS_FILE, OUTPUTS_DIR, PROJECTS_FILE
+from app.config import (
+    BRAND_KITS_FILE,
+    CONFIG_FILE,
+    DATA_DIR,
+    GENERATIONS_FILE,
+    OUTPUTS_DIR,
+    PROJECTS_FILE,
+)
 from app.models.domain import (
     BrandKit,
     Generation,
     GenerationParameters,
     GenerationReferences,
     Project,
+    StudioConfig,
     TaskStatus,
 )
 from app.services.brand_compiler import BrandContextCompiler
@@ -66,59 +74,100 @@ class TaskOrchestrator:
         self._compiler = brand_compiler or BrandContextCompiler()
         self._poll_interval = poll_interval
         self._task_timeout = task_timeout
+        self.coordination_lock: asyncio.Lock = asyncio.Lock()
 
         self._active_tasks: dict[str, asyncio.Task[None]] = {}
         self._listeners: dict[str, list[asyncio.Queue[dict[str, Any]]]] = defaultdict(list)
         self._cancel_events: dict[str, asyncio.Event] = {}
 
+    async def get_task(self, task_id: str) -> Generation | None:
+        """Récupère une génération par son identifiant."""
+        gens = await self._json_store.read_list(GENERATIONS_FILE.name)
+        match = next((g for g in gens if g.get("id") == task_id), None)
+        return Generation.model_validate(match) if match else None
+
     async def submit_generation(self, req: GenerationCreateRequest) -> Generation:
         """Crée une tâche de génération, compile la marque si demandée et lance le worker."""
-        kit: BrandKit | None = None
-        if req.brandKitId:
-            kits = await self._json_store.read_list(BRAND_KITS_FILE.name)
-            match = next((k for k in kits if k.get("id") == req.brandKitId), None)
-            if match:
-                kit = BrandKit.model_validate(match)
+        async with self.coordination_lock:
+            cfg_dict = await self._json_store.read_dict(
+                CONFIG_FILE.name, default=StudioConfig().model_dump()
+            )
+            cfg = StudioConfig.model_validate(cfg_dict)
 
-        # Compilation du Brand Kit
-        compiled = await self._compiler.compile(
-            prompt=req.prompt,
-            brand_kit=kit,
-            user_refs=req.references.imageRefs,
-            max_image_refs=4,
-        )
+            worker_url = None
+            if hasattr(self._gateway, "get_active_worker_url"):
+                try:
+                    _, worker_url = await self._gateway.get_active_worker_url()
+                except Exception:
+                    worker_url = None
+            else:
+                worker_url = getattr(self._gateway, "base_url", "http://127.0.0.1:8190")
 
-        gen_id = f"gen_{uuid.uuid4().hex[:10]}"
-        refs = req.references.model_copy()
-        if compiled.image_refs:
-            refs.imageRefs = compiled.image_refs
+            kit: BrandKit | None = None
+            if req.brandKitId:
+                kits = await self._json_store.read_list(BRAND_KITS_FILE.name)
+                match = next((k for k in kits if k.get("id") == req.brandKitId), None)
+                if match:
+                    kit = BrandKit.model_validate(match)
 
-        gen = Generation(
-            id=gen_id,
-            status=TaskStatus.PENDING,
-            mediaType=req.type,
-            prompt=req.prompt,
-            negativePrompt=req.negativePrompt or compiled.negative_prompt,
-            compiledPrompt=compiled.prompt,
-            modelId=req.modelId,
-            modelName=req.modelName or req.modelId,
-            parameters=req.parameters,
-            references=refs,
-            brandKitSnapshot=compiled.snapshot,
-            projectId=req.projectId,
-            progress=0,
-        )
+            max_image_refs = 4
+            try:
+                models = await self._gateway.list_models()
+                m_info = next((m for m in models if m.get("id") == req.modelId), None)
+                if m_info:
+                    caps = m_info.get("capabilities", {})
+                    if not caps.get("supportsImageRef", True):
+                        max_image_refs = 0
+                    else:
+                        max_image_refs = caps.get("maxImageRefs", 4)
+            except Exception as e:
+                logger.debug(
+                    "Échec détection capacités modèle %s pour max_image_refs : %s",
+                    req.modelId,
+                    e,
+                )
 
-        async with self._json_store.lock_for(GENERATIONS_FILE.name):
-            gens = await self._json_store.read_list_unlocked(GENERATIONS_FILE.name)
-            gens.insert(0, gen.model_dump())
-            await self._json_store.write_list_unlocked(GENERATIONS_FILE.name, gens)
+            # Compilation du Brand Kit avec llm_config
+            compiled = await self._compiler.compile(
+                prompt=req.prompt,
+                brand_kit=kit,
+                user_refs=req.references.imageRefs,
+                max_image_refs=max_image_refs,
+                llm_config=cfg.compilerLlm,
+            )
 
-        self._cancel_events[gen_id] = asyncio.Event()
-        bg_task = asyncio.create_task(self._run_task(gen_id, req, gen))
-        self._active_tasks[gen_id] = bg_task
+            gen_id = f"gen_{uuid.uuid4().hex[:10]}"
+            refs = req.references.model_copy()
+            if compiled.image_refs:
+                refs.imageRefs = compiled.image_refs
 
-        return gen
+            gen = Generation(
+                id=gen_id,
+                status=TaskStatus.PENDING,
+                mediaType=req.type,
+                prompt=req.prompt,
+                negativePrompt=req.negativePrompt or compiled.negative_prompt,
+                compiledPrompt=compiled.prompt,
+                modelId=req.modelId,
+                modelName=req.modelName or req.modelId,
+                parameters=req.parameters,
+                references=refs,
+                brandKitSnapshot=compiled.snapshot,
+                projectId=req.projectId,
+                progress=0,
+                workerUrl=worker_url,
+            )
+
+            async with self._json_store.lock_for(GENERATIONS_FILE.name):
+                gens = await self._json_store.read_list_unlocked(GENERATIONS_FILE.name)
+                gens.insert(0, gen.model_dump())
+                await self._json_store.write_list_unlocked(GENERATIONS_FILE.name, gens)
+
+            self._cancel_events[gen_id] = asyncio.Event()
+            bg_task = asyncio.create_task(self._run_task(gen_id, req, gen))
+            self._active_tasks[gen_id] = bg_task
+
+            return gen
 
     async def wait_task(self, task_id: str, timeout: float = 10.0) -> None:
         """Attente de fin d'une tâche de fond (utilitaire de synchronisation)."""
@@ -148,11 +197,12 @@ class TaskOrchestrator:
         """Cycle de vie asynchrone d'exécution de la tâche."""
         cancel_evt = self._cancel_events.get(gen_id) or asyncio.Event()
         start_time = time.monotonic()
+        target_worker_url = gen.workerUrl
 
         try:
             # 1. Passage à RUNNING
             await self._update_generation(gen_id, status=TaskStatus.RUNNING.value, progress=5)
-            await self._emit_event(gen_id, {"type": "status", "status": "running", "progress": 5})
+            await self._emit_event(gen_id, {"type": "running", "status": "running", "progress": 5})
 
             # 2. Soumission au worker
             task_spec = {
@@ -173,9 +223,13 @@ class TaskOrchestrator:
                     break
 
                 if (time.monotonic() - start_time) > self._task_timeout:
+                    with contextlib.suppress(Exception):
+                        await self._gateway.cancel_task(gen_id, base_url=target_worker_url)
                     raise TimeoutError(f"Timeout d'exécution dépassé ({self._task_timeout}s)")
 
-                status_resp = await self._gateway.get_task_status(gen_id)
+                status_resp = await self._gateway.get_task_status(
+                    gen_id, base_url=target_worker_url
+                )
                 remote_status = status_resp.get("status")
                 progress_pct = status_resp.get("progress", 0)
 
@@ -184,16 +238,53 @@ class TaskOrchestrator:
                     await self._emit_event(
                         gen_id,
                         {
-                            "type": "progress",
+                            "type": "running",
                             "status": "running",
                             "progress": progress_pct,
                             "step": status_resp.get("step"),
                         },
                     )
+                elif remote_status == "cancelled":
+                    await self._update_generation(
+                        gen_id,
+                        status=TaskStatus.CANCELLED.value,
+                        errorMessage="Annulée sur le worker distant",
+                    )
+                    await self._emit_event(
+                        gen_id,
+                        {"type": "cancelled", "status": "cancelled", "taskId": gen_id},
+                    )
+                    break
                 elif remote_status == "completed":
+                    if cancel_evt.is_set():
+                        await self._update_generation(
+                            gen_id,
+                            status=TaskStatus.CANCELLED.value,
+                            errorMessage="Annulée par l'utilisateur",
+                        )
+                        await self._emit_event(
+                            gen_id,
+                            {"type": "cancelled", "status": "cancelled", "taskId": gen_id},
+                        )
+                        break
+
                     # Rapatriement du binaire
                     artifact_uri = status_resp.get("artifactUri") or f"{gen_id}.mp4"
-                    media_bytes = await self._gateway.download_file(artifact_uri)
+                    media_bytes = await self._gateway.download_file(
+                        artifact_uri, base_url=target_worker_url
+                    )
+
+                    if cancel_evt.is_set():
+                        await self._update_generation(
+                            gen_id,
+                            status=TaskStatus.CANCELLED.value,
+                            errorMessage="Annulée par l'utilisateur",
+                        )
+                        await self._emit_event(
+                            gen_id,
+                            {"type": "cancelled", "status": "cancelled", "taskId": gen_id},
+                        )
+                        break
 
                     # Résolution du projet et sauvegarde
                     project: Project | None = None
@@ -208,6 +299,21 @@ class TaskOrchestrator:
                     dest_file, thumb_file = await self._media_store.save_media(
                         filename, media_bytes, project=project
                     )
+
+                    if cancel_evt.is_set():
+                        dest_file.unlink(missing_ok=True)
+                        if thumb_file:
+                            thumb_file.unlink(missing_ok=True)
+                        await self._update_generation(
+                            gen_id,
+                            status=TaskStatus.CANCELLED.value,
+                            errorMessage="Annulée par l'utilisateur",
+                        )
+                        await self._emit_event(
+                            gen_id,
+                            {"type": "cancelled", "status": "cancelled", "taskId": gen_id},
+                        )
+                        break
 
                     saved_gen = await self._update_generation(
                         gen_id,
@@ -248,6 +354,8 @@ class TaskOrchestrator:
             await self._emit_event(gen_id, {"type": "failed", "status": "failed", "error": str(e)})
         finally:
             self._active_tasks.pop(gen_id, None)
+            if not self._listeners.get(gen_id):
+                self._cancel_events.pop(gen_id, None)
 
     async def subscribe_task(self, task_id: str) -> AsyncGenerator[str, None]:
         """Générateur SSE pour streamer les événements d'une tâche en temps réel."""
@@ -259,20 +367,21 @@ class TaskOrchestrator:
             current = next((g for g in gens if g.get("id") == task_id), None)
             if current:
                 cur_status = current.get("status")
-                if cur_status == TaskStatus.COMPLETED.value:
-                    yield f"event: completed\ndata: {json.dumps(current)}\n\n"
-                    return
-                if cur_status == TaskStatus.FAILED.value:
-                    yield f"event: failed\ndata: {json.dumps(current)}\n\n"
-                    return
-                if cur_status == TaskStatus.CANCELLED.value:
-                    yield f"event: cancelled\ndata: {json.dumps(current)}\n\n"
-                    return
                 init_payload = {
+                    "type": cur_status,
                     "status": cur_status,
                     "progress": current.get("progress", 0),
+                    "filePath": current.get("filePath"),
+                    "error": current.get("errorMessage"),
+                    "generation": current,
                 }
-                yield f"event: status\ndata: {json.dumps(init_payload)}\n\n"
+                yield f"event: {cur_status}\ndata: {json.dumps(init_payload)}\n\n"
+                if cur_status in {
+                    TaskStatus.COMPLETED.value,
+                    TaskStatus.FAILED.value,
+                    TaskStatus.CANCELLED.value,
+                }:
+                    return
 
             while True:
                 event = await queue.get()
@@ -281,8 +390,13 @@ class TaskOrchestrator:
                 if ev_type in {"completed", "failed", "cancelled"}:
                     break
         finally:
-            if queue in self._listeners.get(task_id, []):
-                self._listeners[task_id].remove(queue)
+            if task_id in self._listeners:
+                if queue in self._listeners[task_id]:
+                    self._listeners[task_id].remove(queue)
+                if not self._listeners[task_id]:
+                    self._listeners.pop(task_id, None)
+                    if task_id not in self._active_tasks:
+                        self._cancel_events.pop(task_id, None)
 
     async def cancel_task(self, task_id: str) -> dict[str, Any]:
         """Annule une tâche de façon idempotente."""
@@ -305,7 +419,8 @@ class TaskOrchestrator:
         if evt:
             evt.set()
 
-        await self._gateway.cancel_task(task_id)
+        worker_url = current.get("workerUrl")
+        await self._gateway.cancel_task(task_id, base_url=worker_url)
 
         await self._update_generation(
             task_id,
@@ -323,3 +438,14 @@ class TaskOrchestrator:
         )
 
         return {"status": "cancelled", "taskId": task_id}
+
+    async def aclose(self) -> None:
+        """Ferme proprement l'orchestrateur, annule les tâches actives et ferme la passerelle."""
+        for _tid, task in list(self._active_tasks.items()):
+            task.cancel()
+        if self._active_tasks:
+            await asyncio.gather(*self._active_tasks.values(), return_exceptions=True)
+        self._active_tasks.clear()
+        self._listeners.clear()
+        self._cancel_events.clear()
+        await self._gateway.aclose()

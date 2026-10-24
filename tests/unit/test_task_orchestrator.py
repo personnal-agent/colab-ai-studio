@@ -25,19 +25,28 @@ class MockWorkerGateway:
         self.inferred_specs, self.cancelled_tasks = [], []
         self.default_status = {"status": "completed", "progress": 100, "artifactUri": "output.mp4"}
 
+    async def get_active_worker_url(self):
+        return "local", "http://127.0.0.1:8190"
+
+    async def list_models(self):
+        return []
+
     async def infer(self, spec: dict):
         self.inferred_specs.append(spec)
         return {"taskId": spec["taskId"], "status": "queued"}
 
-    async def get_task_status(self, task_id: str):
+    async def get_task_status(self, task_id: str, *args, **kwargs):
         return self.default_status
 
-    async def cancel_task(self, task_id: str):
+    async def cancel_task(self, task_id: str, *args, **kwargs):
         self.cancelled_tasks.append(task_id)
         return {"status": "cancelled", "taskId": task_id}
 
-    async def download_file(self, path: str):
+    async def download_file(self, path: str, *args, **kwargs):
         return b"MOCK_MP4_BINARY_DATA"
+
+    async def aclose(self):
+        pass
 
 
 @pytest.fixture

@@ -29,7 +29,10 @@ async def test_llm_proxy_nominal_streaming(client, tmp_path):
         "data: [DONE]\n\n",
     ]
 
+    received_requests = []
+
     def handler(request: httpx.Request) -> httpx.Response:
+        received_requests.append(json.loads(request.content.decode("utf-8")))
         return httpx.Response(
             200, headers={"Content-Type": "text/event-stream"}, text="".join(chunks)
         )
@@ -47,8 +50,10 @@ async def test_llm_proxy_nominal_streaming(client, tmp_path):
 
     payload = {
         "model": "qwen2.5-7b",
-        "messages": [{"role": "user", "content": "Hi"}],
+        "messages": [{"role": "user", "content": [{"type": "text", "text": "Hi"}]}],
         "stream": True,
+        "seed": 42,
+        "custom_param": "foo",
     }
     resp = await client.post(
         "/v1/chat/completions", json=payload, headers={"Origin": "http://localhost:5173"}
@@ -57,6 +62,9 @@ async def test_llm_proxy_nominal_streaming(client, tmp_path):
     assert "Bonjour " in resp.text
     assert "monde !" in resp.text
     assert "data: [DONE]" in resp.text
+    assert received_requests[0]["seed"] == 42
+    assert received_requests[0]["custom_param"] == "foo"
+    assert received_requests[0]["messages"][0]["content"] == [{"type": "text", "text": "Hi"}]
     await gw.aclose()
 
 

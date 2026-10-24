@@ -15,21 +15,38 @@ from fastapi.responses import JSONResponse
 
 from app.api.routes_config import router as config_router
 from app.api.routes_crud import router as crud_router
+from app.api.routes_generation import get_task_orchestrator
 from app.api.routes_generation import router as generation_router
 from app.api.routes_llm_proxy import router as llm_proxy_router
 from app.api.routes_models import get_worker_gateway
 from app.api.routes_models import router as models_router
-from app.config import ensure_directories
+from app.config import DATA_DIR, GENERATIONS_FILE, ensure_directories
+from app.models.domain import TaskStatus
 from app.services.worker_gateway import WorkerGateway
-from app.storage.json_store import CorruptedDocumentStoreError
+from app.storage.json_store import CorruptedDocumentStoreError, JSONDocumentStore
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Démarrage
     ensure_directories()
+    store = JSONDocumentStore(DATA_DIR)
+    async with store.lock_for(GENERATIONS_FILE.name):
+        gens = await store.read_list_unlocked(GENERATIONS_FILE.name)
+        modified = False
+        for g in gens:
+            if g.get("status") in {TaskStatus.PENDING.value, TaskStatus.RUNNING.value}:
+                g["status"] = TaskStatus.FAILED.value
+                g["errorMessage"] = "Interrompue par redémarrage du serveur"
+                modified = True
+        if modified:
+            await store.write_list_unlocked(GENERATIONS_FILE.name, gens)
+
     yield
+
     # Arrêt propre
+    orchestrator = get_task_orchestrator()
+    await orchestrator.aclose()
     gateway = get_worker_gateway()
     await gateway.aclose()
 

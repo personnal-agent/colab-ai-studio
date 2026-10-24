@@ -82,6 +82,8 @@ async def test_compile_llm_synthesis_success(sample_brand_kit, monkeypatch):
         ]
     }
 
+    captured_calls = []
+
     class MockAsyncClient:
         async def __aenter__(self):
             return self
@@ -90,6 +92,7 @@ async def test_compile_llm_synthesis_success(sample_brand_kit, monkeypatch):
             pass
 
         async def post(self, *args, **kwargs):
+            captured_calls.append((args, kwargs))
             return httpx.Response(
                 200,
                 request=httpx.Request("POST", "https://mock.url"),
@@ -100,6 +103,10 @@ async def test_compile_llm_synthesis_success(sample_brand_kit, monkeypatch):
     res = await compiler.compile("A hovercar in rain", sample_brand_kit, [], 2, cfg)
     assert "electric blue accents" in res.prompt
     assert "cartoonish shaders" in res.negative_prompt
+    assert len(captured_calls) == 1
+    args, kwargs = captured_calls[0]
+    assert "?key=" not in args[0]
+    assert kwargs.get("headers", {}).get("x-goog-api-key") == "valid_secret_key"
 
 
 @pytest.mark.asyncio

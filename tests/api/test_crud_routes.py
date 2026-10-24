@@ -322,3 +322,29 @@ async def test_config_colab_url_update(test_env):
     )
     assert res.status_code == 200
     assert res.json()["tunnelUrl"] == "https://active-tunnel-123.ngrok-free.app"
+
+
+@pytest.mark.asyncio
+async def test_lifespan_cleans_orphaned_tasks(tmp_path, monkeypatch):
+    import app.main
+    from app.config import GENERATIONS_FILE
+    from app.main import lifespan
+    from app.models.domain import TaskStatus
+
+    monkeypatch.setattr(app.main, "DATA_DIR", tmp_path)
+    store = JSONDocumentStore(tmp_path)
+    tasks = [
+        {"id": "gen_orphan_1", "status": "pending", "prompt": "test 1"},
+        {"id": "gen_orphan_2", "status": "running", "prompt": "test 2"},
+        {"id": "gen_done", "status": "completed", "prompt": "test 3"},
+    ]
+    await store.write_list(GENERATIONS_FILE.name, tasks)
+
+    async with lifespan(app):
+        pass
+
+    updated = await store.read_list(GENERATIONS_FILE.name)
+    assert updated[0]["status"] == TaskStatus.FAILED.value
+    assert "Interrompue par redémarrage" in updated[0]["errorMessage"]
+    assert updated[1]["status"] == TaskStatus.FAILED.value
+    assert updated[2]["status"] == "completed"

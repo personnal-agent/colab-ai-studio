@@ -51,6 +51,10 @@ async def get_task_status_stream(
     orchestrator: TaskOrchestrator = Depends(get_task_orchestrator),
 ) -> StreamingResponse:
     """Abonnement au flux SSE temps réel d'une tâche de génération."""
+    task = await orchestrator.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Tâche introuvable")
+
     headers = {
         "Cache-Control": "no-cache",
         "Connection": "keep-alive",

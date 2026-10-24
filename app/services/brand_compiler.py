@@ -169,7 +169,8 @@ class BrandContextCompiler:
         headers = {"Content-Type": "application/json"}
         async with httpx.AsyncClient(timeout=5.0) as client:
             if config.provider == "gemini":
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/{config.model}:generateContent?key={api_key}"
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/{config.model}:generateContent"
+                headers["x-goog-api-key"] = api_key
                 payload = {
                     "contents": [{"parts": [{"text": f"{system_instruction}\n\n{user_content}"}]}],
                     "generationConfig": {

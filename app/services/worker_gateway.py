@@ -157,9 +157,12 @@ class WorkerGateway:
         except httpx.HTTPError as e:
             raise WorkerUnavailableError(f"Échec soumission inférence sur {mode} : {e}") from e
 
-    async def get_task_status(self, task_id: str) -> dict[str, Any]:
+    async def get_task_status(self, task_id: str, base_url: str | None = None) -> dict[str, Any]:
         """Récupère l'avancement d'une tâche auprès du worker."""
-        mode, base_url = await self.get_active_worker_url()
+        if not base_url:
+            mode, base_url = await self.get_active_worker_url()
+        else:
+            mode = "assigned_worker"
         try:
             resp = await self._http_client.get(
                 f"{base_url}/tasks/{task_id}/status",
@@ -170,9 +173,12 @@ class WorkerGateway:
         except httpx.HTTPError as e:
             raise WorkerUnavailableError(f"Échec suivi tâche {task_id} sur {mode} : {e}") from e
 
-    async def cancel_task(self, task_id: str) -> dict[str, Any]:
+    async def cancel_task(self, task_id: str, base_url: str | None = None) -> dict[str, Any]:
         """Notifie le worker d'interrompre immédiatement la tâche."""
-        mode, base_url = await self.get_active_worker_url()
+        if not base_url:
+            mode, base_url = await self.get_active_worker_url()
+        else:
+            mode = "assigned_worker"
         try:
             resp = await self._http_client.post(
                 f"{base_url}/tasks/{task_id}/cancel",
@@ -184,13 +190,26 @@ class WorkerGateway:
             logger.warning("Échec notification annulation tâche %s vers %s : %s", task_id, mode, e)
             return {"status": "cancelled", "remoteError": str(e)}
 
-    async def download_file(self, file_path_or_url: str) -> bytes:
-        """Télécharge un artéfact binaire produit par le worker."""
-        if file_path_or_url.startswith(("http://", "https://")):
-            url = file_path_or_url
-        else:
+    async def download_file(self, file_path_or_url: str, base_url: str | None = None) -> bytes:
+        """Télécharge un artéfact binaire produit par le worker avec protection anti-SSRF."""
+        if not base_url:
             _, base_url = await self.get_active_worker_url()
-            url = f"{base_url}/files/{file_path_or_url.lstrip('/')}"
+
+        parsed_base = httpx.URL(base_url)
+        if file_path_or_url.startswith(("http://", "https://")):
+            parsed_target = httpx.URL(file_path_or_url)
+            if parsed_target.host != parsed_base.host or parsed_target.port != parsed_base.port:
+                msg = (
+                    f"Accès refusé : l'artéfact {file_path_or_url} n'appartient pas au worker "
+                    f"({parsed_base.host})"
+                )
+                raise ValueError(msg)
+            url = str(parsed_target)
+        else:
+            clean_path = file_path_or_url.lstrip("/")
+            if ".." in clean_path:
+                raise ValueError("Chemin d'artéfact interdit (path traversal détecté)")
+            url = f"{base_url}/files/{clean_path}"
 
         try:
             resp = await self._http_client.get(url, timeout=60.0)

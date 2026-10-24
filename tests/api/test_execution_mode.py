@@ -40,7 +40,11 @@ async def test_get_config_masks_api_key(client, store):
 @pytest.mark.asyncio
 async def test_switch_execution_mode_success(client, store):
     await store.write_dict(
-        "config.json", StudioConfig(executionMode=ExecutionMode.COLAB).model_dump()
+        "config.json",
+        StudioConfig(
+            executionMode=ExecutionMode.COLAB,
+            compilerLlm=CompilerLlmConfig(apiKey="mock_dummy_key"),
+        ).model_dump(),
     )
     await store.write_list("generations.json", [])
     resp = await client.post(
@@ -48,9 +52,12 @@ async def test_switch_execution_mode_success(client, store):
         json={"executionMode": "local"},
         headers={"Origin": "http://localhost:5173"},
     )
-    assert resp.status_code == 200 and resp.json()["executionMode"] == "local"
+    assert resp.status_code == 200
+    assert resp.json()["executionMode"] == "local"
+    assert resp.json()["compilerLlm"]["apiKey"] == "***"
     saved = await store.read_dict("config.json")
     assert saved["executionMode"] == "local"
+    assert saved["compilerLlm"]["apiKey"] == "mock_dummy_key"
 
 
 @pytest.mark.asyncio

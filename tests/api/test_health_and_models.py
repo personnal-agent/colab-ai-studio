@@ -75,3 +75,10 @@ async def test_switch_model_success_and_failure(client):
 
     r2 = await client.post("/api/models/switch", json={"modelId": "unknown"})
     assert r2.status_code == 503 and "Modèle non supporté" in r2.json()["detail"]
+
+    r3 = await client.post(
+        "/api/models/switch",
+        json={"modelId": "wan2.1-t2v-14b"},
+        headers={"Sec-Fetch-Site": "cross-site"},
+    )
+    assert r3.status_code == 403
