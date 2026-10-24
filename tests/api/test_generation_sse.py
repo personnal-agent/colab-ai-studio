@@ -72,7 +72,7 @@ async def test_generation_workflow_and_sse():
             "prompt": "A cyber cat running in rain",
             "modelId": "wan2.1-t2v-14b",
             "type": "video",
-            "parameters": {"seed": 42, "aspectRatio": "16:9"},
+            "parameters": {"seed": 42},
         }
         post_resp = await client.post(
             "/api/generate/media",

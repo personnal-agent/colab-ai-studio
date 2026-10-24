@@ -1,15 +1,4 @@
-"""Compilateur de contexte de marque (BrandContextCompiler).
-
-Implémente la compilation de Brand Kit selon SPECIFICATION.md §4.4 :
-1. Synthèse par LLM externe (Gemini / OpenAI) si une clé API est configurée.
-2. Repli déterministe anglais immédiat et transparent sans clé, timeout ou 5xx.
-3. Priorité stricte des fentes d'images de référence :
-   - Priorité 1 : userRefs (sanctuarisées, tronquées à N si dépassement).
-   - Priorité 2 : kitRefs (images du kit dans la limite des slots restants).
-   - Priorité 3 : logo (avec consigne explicite en anglais dans le prompt).
-4. Repli texte seul si maxImageRefs == 0.
-5. Création et intégrité du BrandKitSnapshot.
-"""
+"""Compilateur de contexte de marque (BrandContextCompiler)."""
 
 from __future__ import annotations
 

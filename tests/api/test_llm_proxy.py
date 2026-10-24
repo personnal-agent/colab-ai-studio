@@ -51,10 +51,10 @@ async def test_llm_proxy_nominal_streaming(client, tmp_path):
 
     payload = {
         "model": "qwen2.5-7b",
-        "messages": [{"role": "user", "content": [{"type": "text", "text": "Hi"}]}],
         "stream": True,
         "seed": 42,
         "custom_param": "foo",
+        "messages": [{"role": "user", "content": [{"type": "text", "text": "Hi"}]}],
     }
     resp = await client.post(
         "/v1/chat/completions", json=payload, headers={"Origin": "http://localhost:5173"}

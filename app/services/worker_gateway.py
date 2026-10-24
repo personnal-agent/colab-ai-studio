@@ -1,7 +1,4 @@
-"""Passerelle de communication unifiée vers le worker actif (app/services/worker_gateway.py).
-
-Gère la bascule dynamique à chaud entre Colab et Local Runner selon Issue #2 et SPECIFICATION.md.
-"""
+"""Passerelle de communication unifiée vers le worker actif (app/services/worker_gateway.py)."""
 
 from __future__ import annotations
 

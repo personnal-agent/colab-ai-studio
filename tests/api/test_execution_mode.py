@@ -27,8 +27,7 @@ async def client(store):
 @pytest.mark.asyncio
 async def test_get_config_masks_api_key(client, store):
     cfg = StudioConfig(
-        executionMode=ExecutionMode.LOCAL,
-        compilerLlm=CompilerLlmConfig(apiKey="mock_dummy_key"),
+        executionMode=ExecutionMode.LOCAL, compilerLlm=CompilerLlmConfig(apiKey="mock_dummy_key")
     )
     await store.write_dict("config.json", cfg.model_dump())
     resp = await client.get("/api/config")
@@ -39,13 +38,10 @@ async def test_get_config_masks_api_key(client, store):
 
 @pytest.mark.asyncio
 async def test_switch_execution_mode_success(client, store):
-    await store.write_dict(
-        "config.json",
-        StudioConfig(
-            executionMode=ExecutionMode.COLAB,
-            compilerLlm=CompilerLlmConfig(apiKey="mock_dummy_key"),
-        ).model_dump(),
+    cfg = StudioConfig(
+        executionMode=ExecutionMode.COLAB, compilerLlm=CompilerLlmConfig(apiKey="mock_dummy_key")
     )
+    await store.write_dict("config.json", cfg.model_dump())
     await store.write_list("generations.json", [])
     resp = await client.post(
         "/api/config/execution-mode",

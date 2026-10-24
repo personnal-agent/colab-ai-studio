@@ -65,22 +65,8 @@ async def test_compile_llm_synthesis_success(sample_brand_kit, monkeypatch):
     compiler = BrandContextCompiler()
     cfg = CompilerLlmConfig(apiKey="valid_secret_key")
 
-    mock_resp = {
-        "candidates": [
-            {
-                "content": {
-                    "parts": [
-                        {
-                            "text": (
-                                '{"prompt": "Cinematic hovercar with electric blue accents", '
-                                '"negative_prompt": "cartoonish shaders"}'
-                            )
-                        }
-                    ]
-                }
-            }
-        ]
-    }
+    t = '{"prompt": "electric blue accents", "negative_prompt": "cartoonish shaders"}'
+    mock_resp = {"candidates": [{"content": {"parts": [{"text": t}]}}]}
 
     captured_calls = []
 

@@ -23,13 +23,7 @@ async def test_health_endpoint_includes_worker_status(client):
         async def health(self):
             return {
                 "executionMode": "local",
-                "worker": {
-                    "reachable": True,
-                    "latencyMs": 12.5,
-                    "gpu": "RTX 3080",
-                    "vramFreeMb": 8192,
-                    "error": None,
-                },
+                "worker": {"reachable": True, "latencyMs": 12.5, "gpu": "RTX 3080", "error": None},
             }
 
     app.dependency_overrides[get_worker_gateway] = lambda: Fake()

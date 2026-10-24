@@ -1,9 +1,4 @@
-"""Orchestrateur de tâches asynchrones et flux SSE (app/services/task_orchestrator.py).
-
-Gère le cycle de vie des tâches de génération multimédia :
-pending -> running -> completed / cancelled / failed.
-Diffuse les événements temps réel via SSE et synchronise les médias via MediaFileStore.
-"""
+"""Orchestrateur de tâches asynchrones et flux SSE (app/services/task_orchestrator.py)."""
 
 from __future__ import annotations
 
@@ -401,20 +396,24 @@ class TaskOrchestrator:
         queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
         self._listeners[task_id].append(queue)
 
+        def _sse_event(g: dict[str, Any]) -> str:
+            st = g.get("status")
+            p = {
+                "type": st,
+                "status": st,
+                "progress": g.get("progress", 0),
+                "filePath": g.get("filePath"),
+                "error": g.get("errorMessage"),
+                "generation": g,
+            }
+            return f"event: {st}\ndata: {json.dumps(p)}\n\n"
+
         try:
             gens = await self._json_store.read_list(GENERATIONS_FILE.name)
             current = next((g for g in gens if g.get("id") == task_id), None)
             if current:
                 cur_status = current.get("status")
-                init_payload = {
-                    "type": cur_status,
-                    "status": cur_status,
-                    "progress": current.get("progress", 0),
-                    "filePath": current.get("filePath"),
-                    "error": current.get("errorMessage"),
-                    "generation": current,
-                }
-                yield f"event: {cur_status}\ndata: {json.dumps(init_payload)}\n\n"
+                yield _sse_event(current)
                 if cur_status in {
                     TaskStatus.COMPLETED.value,
                     TaskStatus.FAILED.value,
@@ -435,22 +434,12 @@ class TaskOrchestrator:
                 if task_id not in self._active_tasks:
                     gens = await self._json_store.read_list(GENERATIONS_FILE.name)
                     latest = next((g for g in gens if g.get("id") == task_id), None)
-                    if latest:
-                        lat_st = latest.get("status")
-                        if lat_st in {
-                            TaskStatus.COMPLETED.value,
-                            TaskStatus.FAILED.value,
-                            TaskStatus.CANCELLED.value,
-                        }:
-                            p = {
-                                "type": lat_st,
-                                "status": lat_st,
-                                "progress": latest.get("progress", 0),
-                                "filePath": latest.get("filePath"),
-                                "error": latest.get("errorMessage"),
-                                "generation": latest,
-                            }
-                            yield f"event: {lat_st}\ndata: {json.dumps(p)}\n\n"
+                    if latest and latest.get("status") in {
+                        TaskStatus.COMPLETED.value,
+                        TaskStatus.FAILED.value,
+                        TaskStatus.CANCELLED.value,
+                    }:
+                        yield _sse_event(latest)
                     return
 
                 try:
