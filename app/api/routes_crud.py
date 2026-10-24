@@ -178,13 +178,15 @@ async def create_brand_kit(
         total_size = 0
         file_tuples: list[tuple[str, bytes]] = []
         for f in files:
-            content = await f.read()
-            total_size += len(content)
-            if total_size > 50 * 1024 * 1024:
-                raise HTTPException(
-                    status_code=413, detail="Taille cumulée des fichiers supérieure à 50 Mo"
-                )
-            file_tuples.append((f.filename or "upload", content))
+            chunks: list[bytes] = []
+            while chunk := await f.read(1024 * 1024):
+                total_size += len(chunk)
+                if total_size > 50 * 1024 * 1024:
+                    raise HTTPException(
+                        status_code=413, detail="Taille cumulée des fichiers supérieure à 50 Mo"
+                    )
+                chunks.append(chunk)
+            file_tuples.append((f.filename or "upload", b"".join(chunks)))
         new_kit = await _extractor.extract_from_files(
             name=name, files=file_tuples, overview=overview
         )

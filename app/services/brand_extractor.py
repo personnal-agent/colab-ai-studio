@@ -101,8 +101,20 @@ async def _fetch_safe_website(initial_url: str, max_redirects: int = 5) -> httpx
             except (httpx.RequestError, OSError) as e:
                 raise ValueError(f"Impossible de contacter le site '{current_url}' : {e}") from e
 
+            # Contrôle anti-DNS-rebinding sur la socket connectée
+            stream = getattr(resp, "extensions", {}).get("network_stream")
+            if (
+                stream
+                and (addr := stream.get_extra_info("server_addr"))
+                and isinstance(addr, tuple)
+            ):
+                with contextlib.suppress(ValueError):
+                    if not ipaddress.ip_address(addr[0]).is_global:
+                        raise ValueError(f"Accès refusé : l'adresse IP '{addr[0]}' est privée.")
+
             if resp.status_code in (301, 302, 303, 307, 308) and "location" in resp.headers:
                 current_url = urljoin(str(resp.url), resp.headers["location"])
+                await _validate_safe_url(current_url)
                 continue
 
             if resp.status_code >= 400:

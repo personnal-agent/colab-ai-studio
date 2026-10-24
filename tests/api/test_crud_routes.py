@@ -41,6 +41,7 @@ class MockResp:
         self.text = text
         self.headers = headers or {}
         self.url = httpx.URL(url)
+        self.extensions: dict = {}
 
 
 def mock_http(monkeypatch, responses):
@@ -64,23 +65,24 @@ def mock_http(monkeypatch, responses):
 
 def _gen(
     gid: str,
-    mtype: str,
+    mt: str,
     prompt: str,
     fav: bool = False,
     proj: str = "p",
     fp: str = "",
     tp: str = "",
+    dt: str = "2026-10-09T10:00:00Z",
 ):
     return {
         "id": gid,
-        "mediaType": mtype,
+        "mediaType": mt,
         "prompt": prompt,
         "modelName": "Seedance 2.5",
         "isFavorite": fav,
         "projectId": proj,
         "filePath": fp,
         "thumbnailPath": tp,
-        "createdAt": "2026-10-09T10:00:00Z",
+        "createdAt": dt,
     }
 
 
@@ -134,11 +136,13 @@ async def test_health_check(test_env):
 async def test_generations_crud_and_filters(test_env):
     client, store, media_store, data_dir = test_env
     fp, tp = str(data_dir / "gen_1.mp4"), str(data_dir / "gen_1.jpg")
-    g1 = _gen("gen_1", "video", "Aerial view of a misty forest", False, "proj_a", fp, tp)
-    g2 = _gen("gen_2", "image", "Cyberpunk city night", True, "proj_b")
+    g1 = _gen("gen_1", "video", "Aerial misty forest", False, "proj_a", fp, tp)
+    g2 = _gen("gen_2", "image", "Cyberpunk night", True, "proj_b", dt="2026-10-09T11:00:00Z")
     await store.write_list("generations.json", [g1, g2])
 
-    assert len((await client.get("/api/generations")).json()) == 2
+    res_all = (await client.get("/api/generations")).json()
+    assert len(res_all) == 2
+    assert res_all[0]["id"] == "gen_2" and res_all[1]["id"] == "gen_1"
     assert (await client.get("/api/generations?favorite=true")).json()[0]["id"] == "gen_2"
     assert (await client.get("/api/generations?mediaType=video")).json()[0]["id"] == "gen_1"
     assert (await client.get("/api/generations?q=misty")).json()[0]["id"] == "gen_1"
@@ -187,18 +191,14 @@ async def test_projects_crud_and_storage_path_validation(test_env, tmp_path):
     )
     assert res_c.status_code == 201 and custom_dir.exists()
 
-    for bad in ("/etc/shadow", ".githooks", "not_a_hex_color"):
+    file_as_dir = tmp_path / "file_exists.txt"
+    file_as_dir.write_text("hello")
+    for bad in ("/etc/shadow", ".githooks", "not_a_hex", str(file_as_dir)):
         key = "storagePath" if "/" in bad or "." in bad else "colorTag"
         assert (
             await client.post("/api/projects", json={"name": "Bad", key: bad})
         ).status_code == 422
 
-    file_as_dir = tmp_path / "file_exists.txt"
-    file_as_dir.write_text("hello")
-    res_f = await client.post(
-        "/api/projects", json={"name": "Bad File", "storagePath": str(file_as_dir)}
-    )
-    assert res_f.status_code == 422
     assert len((await client.get("/api/projects")).json()) == 2
 
 
@@ -217,15 +217,21 @@ async def test_brand_kits_crud_blank_and_files(test_env, monkeypatch):
     )
     assert res_f.status_code == 201 and len(res_f.json()["logos"]) == 1
 
-    # 3. Extract from website
-    mock_http(
-        monkeypatch,
-        MockResp(text="<title>Google</title><meta name='description' content='Search'>"),
+    # 3. Extract from website with title, description, colors and fonts
+    html = (
+        "<html><head><title>Horizon</title><meta name='description' content='Cinematic AI'>"
+        "<link rel='icon' href='/favicon.ico'>"
+        "<style>:root{--primary:#0A84FF;}body{font-family:'Cabinet Grotesk';}</style>"
+        "</head><body><h1>Horizon</h1></body></html>"
     )
+    mock_http(monkeypatch, MockResp(text=html, url="https://horizon.ai"))
     res_w = await client.post(
-        "/api/brand-kits", data={"name": "Google", "websiteUrl": "https://google.com"}
+        "/api/brand-kits", data={"name": "Horizon", "websiteUrl": "https://horizon.ai"}
     )
-    assert res_w.status_code == 201 and "google" in res_w.json()["overview"].lower()
+    assert res_w.status_code == 201
+    bk = res_w.json()
+    assert "Cinematic AI" in bk["overview"] and "#0A84FF" in [c["hex"] for c in bk["colors"]]
+    assert any("Cabinet Grotesk" in f["family"] for f in bk["fonts"]) and len(bk["logos"]) >= 1
     assert len((await client.get("/api/brand-kits")).json()) == 3
 
     # 4. Over 50 MB cap returns 413
@@ -261,35 +267,15 @@ async def test_csrf_and_untrusted_origin_rejection(test_env):
     assert res_bad.status_code == 403
 
 
-async def test_brand_kit_extract_from_website_parsing(test_env, monkeypatch):
+async def test_brand_kit_ssrf_rejects_private_and_redirects(test_env, monkeypatch):
     client, _, _, _ = test_env
-    html = (
-        "<html><head><title>Horizon</title><meta name='description' content='Cinematic AI'>"
-        "<link rel='icon' href='/favicon.ico'>"
-        "<style>:root{--primary:#0A84FF;}body{font-family:'Cabinet Grotesk';}</style>"
-        "</head><body><h1>Horizon</h1></body></html>"
-    )
-    mock_http(monkeypatch, MockResp(text=html, url="https://horizon.ai"))
-    res = await client.post(
-        "/api/brand-kits", data={"name": "Horizon", "websiteUrl": "https://horizon.ai"}
-    )
-    assert res.status_code == 201
-    bk = res.json()
-    assert "Cinematic AI" in bk["overview"] and "#0A84FF" in [c["hex"] for c in bk["colors"]]
-    assert any("Cabinet Grotesk" in f["family"] for f in bk["fonts"]) and len(bk["logos"]) >= 1
-
-
-async def test_brand_kit_ssrf_rejects_private_and_local_ips(test_env):
-    client, _, _, _ = test_env
+    # 1. Direct IPs & local hostnames
     for url in ("http://127.0.0.1:8190/secret", "http://localhost:8000/private"):
         res = await client.post("/api/brand-kits", data={"name": "Attacker", "websiteUrl": url})
         assert res.status_code == 400 and (
             "interdit" in res.json()["detail"].lower() or "privée" in res.json()["detail"].lower()
         )
-
-
-async def test_brand_kit_ssrf_rejects_redirect_to_private_ip(test_env, monkeypatch):
-    client, _, _, _ = test_env
+    # 2. Redirect to private IP
     mock_http(
         monkeypatch,
         MockResp(302, headers={"location": "http://127.0.0.1:8190/admin"}, url="https://pub.com"),
@@ -304,32 +290,29 @@ async def test_brand_kit_ssrf_rejects_redirect_to_private_ip(test_env, monkeypat
 
 async def test_brand_kit_website_http_error_returns_400(test_env, monkeypatch):
     client, _, _, _ = test_env
-    mock_http(monkeypatch, MockResp(404, text="Not Found", url="https://google.com/notfound"))
+    mock_http(monkeypatch, MockResp(404, text="Not Found", url="https://google.com/404"))
     res = await client.post(
-        "/api/brand-kits", data={"name": "Broken", "websiteUrl": "https://google.com/notfound"}
+        "/api/brand-kits", data={"name": "Broken", "websiteUrl": "https://google.com/404"}
     )
     assert res.status_code == 400 and "404" in res.json()["detail"]
 
 
 async def test_brand_kit_favicon_resolves_against_redirect_url(test_env, monkeypatch):
     client, _, _, _ = test_env
-    mock_http(
-        monkeypatch,
-        [
-            MockResp(
-                301, headers={"location": "https://google.com/home"}, url="https://google.com/old"
-            ),
-            MockResp(
-                200, text='<link rel="icon" href="favicon.ico">', url="https://google.com/home"
-            ),
-        ],
-    )
+    resps = [
+        MockResp(
+            301, headers={"location": "https://google.com/brand/home"}, url="https://g.com/old"
+        ),
+        MockResp(
+            200, text='<link rel="icon" href="favicon.ico">', url="https://google.com/brand/home"
+        ),
+    ]
+    mock_http(monkeypatch, resps)
     res = await client.post(
-        "/api/brand-kits",
-        data={"name": "Fav", "websiteUrl": "https://google.com/old"},
+        "/api/brand-kits", data={"name": "Fav", "websiteUrl": "https://g.com/old"}
     )
     assert res.status_code == 201
-    assert res.json()["logos"][0]["filePath"] == "https://google.com/favicon.ico"
+    assert res.json()["logos"][0]["filePath"] == "https://google.com/brand/favicon.ico"
 
 
 async def test_config_colab_url_update(test_env):

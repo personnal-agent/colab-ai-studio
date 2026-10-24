@@ -43,10 +43,9 @@ def test_task_status_and_params():
     )
     assert GenerationParameters(seed=1, aspectRatio="8:1").aspectRatio == "8:1"
     assert GenerationParameters(seed=2, aspectRatio="2:3").aspectRatio == "2:3"
-    with pytest.raises(ValidationError):
-        GenerationParameters(seed=1, aspectRatio="invalid")
-    with pytest.raises(ValidationError):
-        GenerationParameters(seed=1, aspectRatio="0:10")
+    for bad in ("invalid", "0:10"):
+        with pytest.raises(ValidationError):
+            GenerationParameters(seed=1, aspectRatio=bad)
 
 
 def test_generation_references_and_lifecycle():
