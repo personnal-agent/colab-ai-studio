@@ -2,48 +2,56 @@
 
 ## 🎯 Functional Outcome & Task Reality
 
-- **Requested Task**: Résoudre les retours de revue CodeRabbit sur la [PR #19](https://github.com/personnal-agent/colab-ai-studio/pull/19) (`chore/setup-hooks-automation`).
+- **Requested Task**: Remplacer les faux déploiements GitHub par de vraies releases automatisées via Semantic Release (`chore/configure-semantic-release`, [PR #21](https://github.com/personnal-agent/colab-ai-studio/pull/21)).
 - **Functional Status**: SUCCESS
 - **Behavioral Proof**:
-  - **Commentaire 1 (Major - `scripts/setup-dev.ps1`)** : `$LASTEXITCODE` est désormais vérifié explicitement après chaque appel `git config` (écriture et lecture). En cas de code de sortie non-zéro ou valeur différente de `.githooks`, le script s'interrompt immédiatement avec `exit 1` au lieu d'afficher un faux succès.
-  - **Commentaire 2 (Major - `scripts/setup-dev.sh` & `scripts/setup-dev.ps1`)** : Normalisation active implémentée sous `.githooks/` pour convertir les fichiers contenant des retours chariot CRLF (`\r`) en LF sans écraser ni altérer les modifications de code.
-  - **Commentaire 3 (Minor - `scripts/setup-dev.sh` & `scripts/setup-dev.ps1`)** : Comparaison numérique stricte des versions de runtimes (`Python >= 3.10` et `Node.js >= 20`) avec messages de rejet explicites et code de retour non-zéro (`exit 1`) si un runtime est manquant ou obsolète.
+  - **Suppression des déploiements parasites** : Retrait de `environment: name: release` dans `.github/workflows/release.yml`, éliminant la création de faux "Deployments" dans l'UI GitHub à chaque push sur `main`.
+  - **Configuration Semantic Release** : Création de `.releaserc.json` configuré pour `main` avec `@semantic-release/commit-analyzer`, `@semantic-release/release-notes-generator` et `@semantic-release/github`.
+  - **Exécution autonome** : Remplacement de la dépendance locale absente par l'appel direct `npx --yes semantic-release@^24`.
+  - **Permissions du job dry-run** : Attribution de `contents: write` au job `dry-run` afin que semantic-release puisse exécuter son test d'authentification Git push (`git push --dry-run`) sans échouer.
   - **Validation Locale & Multi-Environnement** :
-    - `powershell.exe -ExecutionPolicy Bypass -File .\scripts\setup-dev.ps1` : Exécuté avec succès (code 0), Python 3.14 validé, Node.js v26.12.0 validé, gitleaks 8.30.1 validé.
-    - `bash scripts/setup-dev.sh` (WSL / Linux) : Exécuté avec succès (code 0), Python 3.13.5 validé, Node.js validé, gitleaks validé.
+    - 72 tests unitaires Python `pytest` passés avec succès.
+    - 31 tests frontend Vitest (`npm --prefix frontend test -- --run`) passés avec succès.
+    - Ruff linter et ESLint passés sans avertissement.
+    - Typecheck TypeScript (`tsc --noEmit`) sans erreur.
+    - 82 commits Git scannés sans fuite par Gitleaks.
+    - 0 vulnérabilité détectée par Semgrep SAST.
+    - 7 workflows validés par `.github/scripts/verify_workflows.py`.
   - **Quality Gates & CI** :
-    - Commit `3debc14` créé et vérifié par les hooks locaux (Gitleaks, Ruff, Semgrep).
-    - Push validé par le hook `pre-push` (76 commits scannés sans secret, 71 tests pytest passés, Quality Gate full validée).
-    - 7/7 checks GitHub Actions passés au vert sur la PR #19. Re-revue déclenchée auprès de `@coderabbitai review`.
+    - Commit créé et vérifié par les hooks locaux.
+    - 7/7 checks GitHub Actions passés au vert sur la PR #21.
 
 ## ⚡ Technical Diffs / Atomic Modifications
 
-- **File**: `scripts/setup-dev.ps1`
-  - **Scope**: Contrôle de sortie Git natif, normalisation active LF et validation de version runtime.
-  - **Exact Technical Change**: Ajout du test `$LASTEXITCODE -ne 0`, conversion des octets `0x0D` vers `0x0A` sur `.githooks/*`, parsing de `sys.version_info` (Python >= 3.10) et `node -v` (Node.js >= 20).
-- **File**: `scripts/setup-dev.sh`
-  - **Scope**: Normalisation active LF, détection multi-binaire et validation de seuils de version.
-  - **Exact Technical Change**: Boucle `tr -d '\r'` sur les fichiers de `.githooks`, fallback de détection (`python3`/`python`/`python.exe`, `node`/`nodejs`/`node.exe`), contrôle `RUNTIME_FAILED` et sortie `exit 1` en cas d'incompatibilité.
+- **File**: `.releaserc.json`
+  - **Scope**: Configuration de semantic-release sans publication npm.
+  - **Exact Technical Change**: Définition des branches (`main`) et des plugins (`commit-analyzer`, `release-notes-generator`, `github`).
+- **File**: `.github/workflows/release.yml`
+  - **Scope**: Workflow de release et dry-run.
+  - **Exact Technical Change**: Suppression de `environment: name: release`, exécution de `npx --yes semantic-release@^24`, permissions `contents: write` sur `dry-run` et `publish`.
 
 ## 🛠️ Static Codebase Health
 
-- **Verification Command Run**: `powershell -File .\scripts\setup-dev.ps1 && wsl -e bash scripts/setup-dev.sh`
+- **Verification Command Run**: `pytest tests/ -q && npm --prefix frontend test -- --run && python .github/scripts/verify_workflows.py`
 - **Linter/Compiler Status**:
 
 ```text
-71 passed, 1 warning in 4.21s
+72 passed in 4.35s
+31 passed in 1.42s
+7 workflows checked, 0 errors found.
 All checks passed! (Ruff)
 0 vulnerabilities found (Semgrep SAST)
-76 commits scanned, no leaks found (Gitleaks)
-7/7 GitHub Actions checks passed (CI, Hygiene, Dependency Review, Governance)
+82 commits scanned, no leaks found (Gitleaks)
 ```
 
 ## 🚧 Unfinished Work & Technical Failures
 
-- **Blocker / Failure Explanation**: Aucun bloqueur. Les 3 remarques de CodeRabbit ont été implémentées et validées.
+- **Blocker / Failure Explanation**: Aucun bloqueur.
 
 ## 👉 Handover Directives for the Next Agent
 
-1. **Target File**: [PR #19](https://github.com/personnal-agent/colab-ai-studio/pull/19)
-2. **Immediate Action**: Consulter la ré-évaluation de CodeRabbit sur la PR #19. Une fois approuvée par le mainteneur, fusionner la PR sur `main` puis reprendre le Plan 02 (`BrandContextCompiler` et `TaskOrchestrator`).
-3. **Verification Command**: `gh pr view 19 --json reviewDecision,statusCheckRollup`
+1. **Target File**: [PR #21](https://github.com/personnal-agent/colab-ai-studio/pull/21)
+2. **Immediate Action**: Consulter la ré-évaluation de CodeRabbit sur la PR #21. Une fois validée par le mainteneur, fusionner la PR sur `main` pour déclencher la première release GitHub via semantic-release.
+3. **Verification Command**:
+   - `gh pr view 21 --json state,mergeStateStatus,reviewDecision,statusCheckRollup,reviews,comments`
+   - `gh api repos/personnal-agent/colab-ai-studio/pulls/21/comments --paginate`
