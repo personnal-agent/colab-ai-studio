@@ -174,6 +174,7 @@ def create_worker_app(
     tasks: dict[str, dict[str, Any]] = {}
     cancel_events: dict[str, asyncio.Event] = {}
     active_chat_cancels: set[str] = set()
+    gpu_lock = asyncio.Lock()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -236,10 +237,23 @@ def create_worker_app(
     async def list_models() -> list[dict[str, Any]]:
         return AVAILABLE_MODELS
 
+    def _prepare_pipeline_kwargs(p: InferRequest) -> dict[str, Any]:
+        raw = dict(p.parameters)
+        ratio = raw.pop("aspectRatio", "1:1")
+        raw.pop("duration", None)
+        raw.pop("resolution", None)
+        wh = {"16:9": (1024, 576), "9:16": (576, 1024), "4:3": (1024, 768)}.get(ratio, (1024, 1024))
+        kw = {"width": wh[0], "height": wh[1], **raw}
+        if p.prompt:
+            kw["prompt"] = p.prompt
+        if p.negativePrompt:
+            kw["negative_prompt"] = p.negativePrompt
+        return kw
+
     @app.post("/models/switch")
     async def switch_model(payload: SwitchModelRequest) -> dict[str, Any]:
-        loader = loaders.get(payload.modelId)
-        swapper.ensure_model(payload.modelId, load_fn=loader)
+        async with gpu_lock:
+            swapper.ensure_model(payload.modelId, load_fn=loaders.get(payload.modelId))
         return {"status": "ok", "activeModel": payload.modelId}
 
     async def _execute_inference_task(task_id: str, payload: InferRequest) -> None:
@@ -248,50 +262,57 @@ def create_worker_app(
         total_steps = max(1, payload.steps)
 
         try:
-            # 1. Permutation / garantie du modèle
-            loader = loaders.get(payload.modelId)
-            pipeline = swapper.ensure_model(payload.modelId, load_fn=loader)
+            async with gpu_lock:
+                loader = loaders.get(payload.modelId)
+                pipeline = swapper.ensure_model(payload.modelId, load_fn=loader)
 
-            is_video = any(
-                m["id"] == payload.modelId and m["type"] in {"video", "lipsync"}
-                for m in AVAILABLE_MODELS
-            )
-            ext = ".mp4" if is_video else ".png"
-            filename = f"{task_id}{ext}"
-            file_path = (output_dir / filename).resolve()
-            if not file_path.is_relative_to(output_dir.resolve()):
-                raise ValueError("Tentative d'écriture hors du répertoire de sortie sécurisé")
+                is_video = any(
+                    m["id"] == payload.modelId and m["type"] in {"video", "lipsync"}
+                    for m in AVAILABLE_MODELS
+                )
+                ext = ".mp4" if is_video else ".png"
+                filename = f"{task_id}{ext}"
+                file_path = (output_dir / filename).resolve()
+                if not file_path.is_relative_to(output_dir.resolve()):
+                    raise ValueError("Tentative d'écriture hors du répertoire de sortie sécurisé")
 
-            if callable(pipeline) and not sim_mode:
-                tasks[task_id]["step"] = 1
-                tasks[task_id]["progress"] = 50
+                if callable(pipeline) and not sim_mode:
+                    tasks[task_id]["step"] = 1
+                    tasks[task_id]["progress"] = 50
 
-                def _run_real_infer():
-                    kwargs = dict(payload.parameters)
-                    if payload.prompt:
-                        kwargs["prompt"] = payload.prompt
-                    out = pipeline(**kwargs)
-                    if hasattr(out, "images") and out.images:
-                        out.images[0].save(file_path)
-                    elif hasattr(out, "save"):
-                        out.save(file_path)
-                    elif isinstance(out, bytes):
-                        file_path.write_bytes(out)
+                    def _run_real_infer():
+                        kw = _prepare_pipeline_kwargs(payload)
+                        if hasattr(pipeline, "callback_on_step_end"):
+                            def _cb(p, s, t, cb_kw):
+                                if cancel_event.is_set():
+                                    p._interrupt = True
+                                return cb_kw
+                            kw["callback_on_step_end"] = _cb
 
-                await asyncio.to_thread(_run_real_infer)
-            else:
-                for step in range(1, total_steps + 1):
-                    if cancel_event.is_set():
-                        tasks[task_id]["status"] = "cancelled"
-                        tasks[task_id]["errorMessage"] = "Annulée par l'utilisateur"
-                        return
-                    await asyncio.sleep(0.04)
-                    tasks[task_id]["step"] = step
-                    tasks[task_id]["totalSteps"] = total_steps
-                    tasks[task_id]["progress"] = int(round(step / total_steps * 100))
+                        out = pipeline(**kw)
+                        if cancel_event.is_set():
+                            return
+                        if hasattr(out, "images") and out.images:
+                            out.images[0].save(file_path)
+                        elif hasattr(out, "save"):
+                            out.save(file_path)
+                        elif isinstance(out, bytes):
+                            file_path.write_bytes(out)
 
-                valid_bytes = make_valid_png() if ext == ".png" else make_valid_mp4()
-                file_path.write_bytes(valid_bytes)
+                    await asyncio.to_thread(_run_real_infer)
+                else:
+                    for step in range(1, total_steps + 1):
+                        if cancel_event.is_set():
+                            tasks[task_id]["status"] = "cancelled"
+                            tasks[task_id]["errorMessage"] = "Annulée par l'utilisateur"
+                            return
+                        await asyncio.sleep(0.04)
+                        tasks[task_id]["step"] = step
+                        tasks[task_id]["totalSteps"] = total_steps
+                        tasks[task_id]["progress"] = int(round(step / total_steps * 100))
+
+                    valid_bytes = make_valid_png() if ext == ".png" else make_valid_mp4()
+                    file_path.write_bytes(valid_bytes)
 
             if cancel_event.is_set():
                 tasks[task_id]["status"] = "cancelled"
@@ -304,6 +325,8 @@ def create_worker_app(
             tasks[task_id]["outputUrl"] = f"/files/{filename}"
 
         except Exception as exc:
+            if "out of memory" in str(exc).lower():
+                swapper.evict_vram()
             logger.exception("Erreur durant l'inférence tâche %s : %s", task_id, exc)
             tasks[task_id]["status"] = "failed"
             tasks[task_id]["error"] = str(exc)
@@ -366,25 +389,29 @@ def create_worker_app(
 
     @app.post("/v1/chat/completions")
     async def chat_completions(payload: ChatCompletionRequest, request: Request) -> Any:
-        chat_loader = loaders.get(payload.model)
-        chat_model = swapper.ensure_model(payload.model, load_fn=chat_loader)
-        request_id = payload.requestId or f"chat_{uuid.uuid4().hex[:10]}"
-        last_user_msg = payload.messages[-1].content if payload.messages else "Bonjour"
-        summary = (
-            last_user_msg[:40] + "..." if len(last_user_msg) > 40 else last_user_msg
-        )
+        async with gpu_lock:
+            chat_loader = loaders.get(payload.model)
+            chat_model = swapper.ensure_model(payload.model, load_fn=chat_loader)
+            request_id = payload.requestId or f"chat_{uuid.uuid4().hex[:10]}"
+            last_user_msg = payload.messages[-1].content if payload.messages else "Bonjour"
+            summary = last_user_msg[:40] + "..." if len(last_user_msg) > 40 else last_user_msg
 
-        real_text: str | None = None
-        if callable(chat_model) and not sim_mode:
-            prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
+            real_text: str | None = None
+            if callable(chat_model) and not sim_mode:
+                prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
 
-            def _gen():
-                res = chat_model(prompt_in, max_new_tokens=150)
-                if isinstance(res, list) and res and "generated_text" in res[0]:
-                    return res[0]["generated_text"].replace(prompt_in, "").strip()
-                return str(res)
+                def _gen():
+                    try:
+                        res = chat_model(prompt_in, max_new_tokens=150)
+                        if isinstance(res, list) and res and "generated_text" in res[0]:
+                            return res[0]["generated_text"].replace(prompt_in, "").strip()
+                        return str(res)
+                    except Exception as exc:
+                        if "out of memory" in str(exc).lower():
+                            swapper.evict_vram()
+                        raise
 
-            real_text = await asyncio.to_thread(_gen)
+                real_text = await asyncio.to_thread(_gen)
 
         if not payload.stream:
             content = real_text or (

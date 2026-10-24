@@ -64,20 +64,11 @@ def test_isolated_backend_memory_footprint(tmp_path) -> None:
                 f"STDERR: {stderr.decode(errors='ignore')}"
             )
 
-        # Mesure RSS portable via psutil
-        process = psutil.Process(proc.pid)
-        rss_bytes = process.memory_info().rss
-        rss_mb = rss_bytes / (1024 * 1024)
-
-        # Invariant de sobriété : empreinte mémoire < 80 Mo RAM
-        assert (
-            rss_mb < 80.0
-        ), f"L'empreinte mémoire du backend ({rss_mb:.2f} Mo) dépasse le plafond strict de 80 Mo."
-
+        rss_mb = psutil.Process(proc.pid).memory_info().rss / (1024 * 1024)
+        assert rss_mb < 80.0, f"Backend RSS ({rss_mb:.2f} Mo) >= 80 Mo."
     finally:
         proc.terminate()
         try:
-            proc.wait(timeout=5.0)
+            proc.wait(timeout=2.0)
         except subprocess.TimeoutExpired:
             proc.kill()
-            proc.wait()

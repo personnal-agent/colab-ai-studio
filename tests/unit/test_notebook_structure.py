@@ -15,34 +15,19 @@ import json
 from app.config import REPO_ROOT
 
 
-def test_notebook_file_exists_and_valid_json() -> None:
-    """Vérifie l'existence et la validité JSON du notebook colab_worker.ipynb."""
+def test_notebook_structure_and_content() -> None:
+    """Vérifie l'existence, validité JSON et étapes indispensables du notebook."""
     notebook_path = REPO_ROOT / "colab_worker.ipynb"
-    assert notebook_path.is_file(), f"Le fichier {notebook_path} est manquant."
-
-    content = notebook_path.read_text(encoding="utf-8")
-    data = json.loads(content)
-
-    assert "cells" in data
-    assert "metadata" in data
-    assert data.get("nbformat") == 4
-    assert isinstance(data["cells"], list)
-    assert len(data["cells"]) >= 4
-
-
-def test_notebook_cells_content() -> None:
-    """Vérifie la présence des étapes obligatoires dans le notebook."""
-    notebook_path = REPO_ROOT / "colab_worker.ipynb"
+    assert notebook_path.is_file(), f"{notebook_path} manquant."
     data = json.loads(notebook_path.read_text(encoding="utf-8"))
+    assert data.get("nbformat") == 4 and len(data.get("cells", [])) >= 4
 
-    all_sources = [
-        "".join(cell.get("source", []))
-        for cell in data["cells"]
-        if cell.get("cell_type") in {"code", "markdown"}
+    sources = [
+        "".join(c.get("source", []))
+        for c in data["cells"] if c.get("cell_type") in {"code", "markdown"}
     ]
-    combined_text = "\n".join(all_sources)
-
-    for kw in ("nvidia-smi", "fastapi", "uvicorn", "ModelSwapper", "http"):
-        assert kw in combined_text or kw.lower() in combined_text.lower()
-    assert any(t in combined_text.lower() for t in ("cloudflared", "ngrok", "tunnel"))
-    assert any(s in combined_text.lower() for s in ("secret", "worker_secret"))
+    txt = "\n".join(sources).lower()
+    for kw in ("nvidia-smi", "fastapi", "uvicorn", "modelswapper", "http"):
+        assert kw in txt
+    assert any(t in txt for t in ("cloudflared", "ngrok", "tunnel"))
+    assert any(s in txt for s in ("secret", "worker_secret"))

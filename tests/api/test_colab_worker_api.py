@@ -25,20 +25,11 @@ from app.colab_worker.server import create_worker_app
 
 
 class MockCudaBackend:
-    def is_available(self) -> bool:
-        return True
-
-    def empty_cache(self) -> None:
-        pass
-
-    def ipc_collect(self) -> None:
-        pass
-
-    def memory_allocated(self, device: int | None = None) -> int:
-        return 2 * 1024 * 1024 * 1024  # 2 Go
-
-    def get_device_name(self, device: int | None = None) -> str:
-        return "Tesla T4 Test"
+    def is_available(self) -> bool: return True
+    def empty_cache(self) -> None: pass
+    def ipc_collect(self) -> None: pass
+    def memory_allocated(self, device: int | None = None) -> int: return 2 * 1024 * 1024 * 1024
+    def get_device_name(self, device: int | None = None) -> str: return "Tesla T4 Test"
 
 
 @pytest.fixture
@@ -255,22 +246,56 @@ async def test_idle_timeout_lifespan_trigger(temp_storage: Path) -> None:
 
 @pytest.mark.anyio
 async def test_real_callable_pipeline_execution(temp_storage: Path) -> None:
-    """Vérifie l'exécution réelle d'un pipeline callable sans simulation (Thread #1)."""
+    """Vérifie l'exécution réelle d'un pipeline, la conversion des kwargs et la purge sur OOM."""
+    received_kwargs = {}
+
+    def mock_pipe(**kw):
+        received_kwargs.update(kw)
+        if kw.get("prompt") == "trigger_oom":
+            raise RuntimeError("CUDA out of memory in computation")
+        return b"REAL_PNG"
+
     sw = ModelSwapper(cuda_backend=MockCudaBackend())
     app_real = create_worker_app(
         model_swapper=sw, storage_dir=temp_storage,
-        model_loaders={"flux-schnell": lambda _: lambda **kw: b"REAL_PNG"}, simulation_mode=False,
+        model_loaders={"flux-schnell": lambda _: mock_pipe}, simulation_mode=False,
     )
     transport = ASGITransport(app=app_real)
     async with httpx.AsyncClient(transport=transport, base_url="http://real") as c:
-        resp = await c.post("/infer", json={"taskId": "real_1", "modelId": "flux-schnell"})
+        # 1. Test conversion de paramètres (Issue 1)
+        resp = await c.post(
+            "/infer",
+            json={
+                "taskId": "real_1", "modelId": "flux-schnell",
+                "parameters": {"aspectRatio": "16:9", "duration": "5s"},
+            },
+        )
         assert resp.status_code == 200
         for _ in range(25):
             st = (await c.get("/tasks/real_1/status")).json()
             if st["status"] == "completed":
                 assert (temp_storage / "real_1.png").read_bytes() == b"REAL_PNG"
+                assert "aspectRatio" not in received_kwargs and "duration" not in received_kwargs
+                assert received_kwargs.get("width") == 1024 and received_kwargs.get("height") == 576
                 break
             await asyncio.sleep(0.04)
         else:
             pytest.fail("Tâche réelle non complétée")
+
+        # 2. Test éviction sur OOM en cours de calcul (Issue 4)
+        oom_resp = await c.post(
+            "/infer",
+            json={"taskId": "oom_task", "modelId": "flux-schnell", "prompt": "trigger_oom"},
+        )
+        assert oom_resp.status_code == 200
+        for _ in range(25):
+            st = (await c.get("/tasks/oom_task/status")).json()
+            if st["status"] == "failed":
+                assert "out of memory" in st["error"].lower()
+                assert sw.state.value == "EnVeilleVRAMLibre"
+                assert sw.active_model is None
+                break
+            await asyncio.sleep(0.04)
+        else:
+            pytest.fail("Tâche OOM non échouée")
 

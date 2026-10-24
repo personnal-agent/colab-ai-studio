@@ -42,86 +42,56 @@ from app.storage.media_store import MediaFileStore
 
 
 class MockWorkerCuda:
-    def is_available(self) -> bool:
-        return True
-
-    def empty_cache(self) -> None:
-        pass
-
-    def ipc_collect(self) -> None:
-        pass
-
-    def memory_allocated(self, device: int | None = None) -> int:
-        return 2 * 1024 * 1024 * 1024
-
-    def get_device_name(self, device: int | None = None) -> str:
-        return "Tesla T4 Test"
+    def is_available(self) -> bool: return True
+    def empty_cache(self) -> None: pass
+    def ipc_collect(self) -> None: pass
+    def memory_allocated(self, device: int | None = None) -> int: return 2 * 1024 * 1024 * 1024
+    def get_device_name(self, device: int | None = None) -> str: return "Tesla T4 Test"
 
 
 @pytest.fixture
 def e2e_env(tmp_path: Path):
-    data_dir = tmp_path / "data"
-    outputs_dir = tmp_path / "outputs"
-    assets_dir = data_dir / "assets"
-    worker_storage = tmp_path / "worker_storage"
-    custom_project_storage = tmp_path / "custom_project_storage"
-
-    for d in (data_dir, outputs_dir, assets_dir, worker_storage, custom_project_storage):
+    d_dir, out_dir = tmp_path / "data", tmp_path / "outputs"
+    ast_dir, w_storage = d_dir / "assets", tmp_path / "w_storage"
+    c_storage = tmp_path / "c_storage"
+    for d in (d_dir, out_dir, ast_dir, w_storage, c_storage):
         d.mkdir(parents=True, exist_ok=True)
 
-    json_store = JSONDocumentStore(data_dir)
-    media_store = MediaFileStore(outputs_dir)
-    brand_extractor = BrandKitExtractor(assets_dir)
+    json_store = JSONDocumentStore(d_dir)
+    media_store = MediaFileStore(out_dir)
+    brand_extractor = BrandKitExtractor(ast_dir)
 
-    orig_json_store = routes_crud._json_store
-    orig_media_store = routes_crud._media_store
-    orig_extractor = routes_crud._extractor
-
-    routes_crud._json_store = json_store
-    routes_crud._media_store = media_store
+    orig_j, orig_m = routes_crud._json_store, routes_crud._media_store
+    orig_e = routes_crud._extractor
+    routes_crud._json_store, routes_crud._media_store = json_store, media_store
     routes_crud._extractor = brand_extractor
 
-    # 1. Instancier le worker Colab en mémoire avec secret (Thread #2 & #7)
     worker_secret = "e2e-secret-key-42"
     swapper = ModelSwapper(cuda_backend=MockWorkerCuda(), idle_timeout_seconds=300.0)
     worker_fastapi = create_worker_app(
-        model_swapper=swapper, storage_dir=worker_storage, worker_secret=worker_secret
+        model_swapper=swapper, storage_dir=w_storage, worker_secret=worker_secret
     )
-
-    # 2. Client HTTP pontant vers le worker Colab
     worker_client = httpx.AsyncClient(
-        transport=ASGITransport(app=worker_fastapi),
-        base_url="http://test-colab-worker",
+        transport=ASGITransport(app=worker_fastapi), base_url="http://test-colab-worker"
     )
-
-    # 3. Passerelle et orchestrateur branchés sur l'environnement de test
     gateway = WorkerGateway(json_store=json_store, http_client=worker_client)
     orchestrator = TaskOrchestrator(
-        json_store=json_store,
-        media_store=media_store,
-        worker_gateway=gateway,
-        brand_compiler=BrandContextCompiler(),
-        poll_interval=0.02,
-        task_timeout=15.0,
+        json_store=json_store, media_store=media_store, worker_gateway=gateway,
+        brand_compiler=BrandContextCompiler(), poll_interval=0.02, task_timeout=15.0,
     )
-
     app.dependency_overrides[get_worker_gateway] = lambda: gateway
     app.dependency_overrides[get_task_orchestrator] = lambda: orchestrator
 
     try:
         yield {
-            "data_dir": data_dir,
-            "outputs_dir": outputs_dir,
-            "custom_project_storage": custom_project_storage,
-            "json_store": json_store,
-            "gateway": gateway,
-            "orchestrator": orchestrator,
+            "data_dir": d_dir, "outputs_dir": out_dir, "custom_project_storage": c_storage,
+            "json_store": json_store, "gateway": gateway, "orchestrator": orchestrator,
             "worker_secret": worker_secret,
         }
     finally:
-        routes_crud._json_store = orig_json_store
-        routes_crud._media_store = orig_media_store
-        routes_crud._extractor = orig_extractor
+        routes_crud._json_store = orig_j
+        routes_crud._media_store = orig_m
+        routes_crud._extractor = orig_e
         app.dependency_overrides.clear()
 
 
