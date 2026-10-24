@@ -12,7 +12,8 @@ export interface GenerationParameters {
 }
 export interface GenerationReferences {
   startFrame?: string | null; endFrame?: string | null; imageRefs?: string[];
-  videoRefs?: string[]; audioRefs?: string[]; upscaleSource?: string | null; brandKitId?: string | null;
+  videoRefs?: string[]; audioRefs?: string[]; upscaleSource?: string | null;
+  upscaleSourceType?: 'image' | 'video' | null; brandKitId?: string | null;
 }
 export interface BrandKitSnapshot {
   id: string; name: string; overview: string; colors: string[]; logos: string[]; fonts: string[]; guidelines: string[];

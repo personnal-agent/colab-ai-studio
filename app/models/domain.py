@@ -72,6 +72,7 @@ class GenerationReferences(DomainBase):
     videoRefs: list[str] = Field(default_factory=list)
     audioRefs: list[str] = Field(default_factory=list)
     upscaleSource: str | None = None
+    upscaleSourceType: str | None = None
     brandKitId: str | None = None
 
     def has_visual_references(self) -> bool:
