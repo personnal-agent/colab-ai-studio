@@ -176,7 +176,10 @@ async def create_brand_kit(
     files: list[UploadFile] = File(default=[]),
 ) -> dict[str, Any]:
     if websiteUrl and websiteUrl.strip():
-        new_kit = await _extractor.extract_from_website(name=name, website_url=websiteUrl)
+        try:
+            new_kit = await _extractor.extract_from_website(name=name, website_url=websiteUrl)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
     elif files:
         total_size = 0
         max_upload_size = 50 * 1024 * 1024  # 50 Mo aggregate cap

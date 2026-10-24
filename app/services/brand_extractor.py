@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import ipaddress
 import re
+import socket
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -27,6 +29,90 @@ def _utc_now_iso() -> str:
 
 HEX_FINDER = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b")
 FONT_FAMILY_FINDER = re.compile(r"font-family\s*:\s*([^;\}]+)", re.IGNORECASE)
+
+
+def _validate_safe_url(url: str) -> None:
+    parsed = urlparse(url)
+    scheme = parsed.scheme.lower()
+    if scheme not in ("http", "https"):
+        msg = f"Protocole non supporté : '{scheme}'. Seuls http et https sont autorisés."
+        raise ValueError(msg)
+
+    hostname = parsed.hostname
+    if not hostname:
+        msg = f"URL invalide, nom d'hôte manquant : '{url}'"
+        raise ValueError(msg)
+
+    lower_host = hostname.lower()
+    if lower_host in ("localhost", "127.0.0.1", "::1"):
+        msg = f"Accès interdit aux adresses locales ou privées : '{hostname}'"
+        raise ValueError(msg)
+
+    port = parsed.port or (443 if scheme == "https" else 80)
+    try:
+        addr_infos = socket.getaddrinfo(hostname, port, proto=socket.IPPROTO_TCP)
+    except socket.gaierror as e:
+        msg = f"Impossible de résoudre le nom d'hôte '{hostname}' : {e}"
+        raise ValueError(msg) from e
+
+    for _, _, _, _, sockaddr in addr_infos:
+        ip_str = sockaddr[0]
+        try:
+            ip = ipaddress.ip_address(ip_str)
+        except ValueError:
+            continue
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_reserved
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            msg = (
+                f"Accès refusé : l'hôte '{hostname}' ({ip_str}) "
+                f"résout vers une adresse IP privée ou réservée."
+            )
+            raise ValueError(msg)
+
+
+async def _fetch_safe_website(initial_url: str, max_redirects: int = 5) -> httpx.Response:
+    headers = {"User-Agent": "Mozilla/5.0 (compatible; ColabAIStudio/1.0)"}
+    current_url = initial_url
+    redirect_count = 0
+
+    async with httpx.AsyncClient(
+        timeout=5.0,
+        follow_redirects=False,
+        headers=headers,
+    ) as client:
+        while True:
+            # 1. Validation de l'adresse de destination (SSRF check à chaque saut)
+            _validate_safe_url(current_url)
+
+            # 2. Requête HTTP
+            try:
+                resp = await client.get(current_url)
+            except (httpx.RequestError, OSError) as e:
+                msg = f"Impossible de contacter le site '{current_url}' : {e}"
+                raise ValueError(msg) from e
+
+            # 3. Contrôle des redirections (3xx)
+            if resp.status_code in (301, 302, 303, 307, 308) and "location" in resp.headers:
+                redirect_count += 1
+                if redirect_count > max_redirects:
+                    msg = f"Nombre maximal de redirections dépassé ({max_redirects})"
+                    raise ValueError(msg)
+                location = resp.headers["location"]
+                current_url = urljoin(str(resp.url), location)
+                continue
+
+            # 4. Vérification code statut final
+            if resp.status_code >= 400:
+                msg = f"Le site {current_url} a retourné une erreur HTTP {resp.status_code}"
+                raise ValueError(msg)
+
+            return resp
 
 
 class BrandKitExtractor:
@@ -147,72 +233,64 @@ class BrandKitExtractor:
         fonts: list[Font] = []
         overview_text = f"Identité visuelle issue du site {domain}"
 
-        with contextlib.suppress(Exception):
-            headers = {"User-Agent": "Mozilla/5.0 (compatible; ColabAIStudio/1.0)"}
-            async with httpx.AsyncClient(
-                timeout=5.0, follow_redirects=True, headers=headers
-            ) as client:
-                resp = await client.get(clean_url)
-                if resp.status_code < 400:
-                    html = resp.text
+        resp = await _fetch_safe_website(clean_url)
+        html = resp.text
 
-                    # 1. Overview depuis <title> et <meta name="description">
-                    title_match = re.search(
-                        r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL
-                    )
-                    desc_match = re.search(
-                        r'<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']',
-                        html,
-                        re.IGNORECASE | re.DOTALL,
-                    )
-                    title = title_match.group(1).strip() if title_match else ""
-                    desc = desc_match.group(1).strip() if desc_match else ""
-                    if desc:
-                        overview_text = f"{title} - {desc}" if title else desc
-                    elif title:
-                        overview_text = title
+        # 1. Overview depuis <title> et <meta name="description">
+        title_match = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
+        desc_match = re.search(
+            r'<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']',
+            html,
+            re.IGNORECASE | re.DOTALL,
+        )
+        title = title_match.group(1).strip() if title_match else ""
+        desc = desc_match.group(1).strip() if desc_match else ""
+        if desc:
+            overview_text = f"{title} - {desc}" if title else desc
+        elif title:
+            overview_text = title
 
-                    # 2. Couleurs hex depuis HTML et styles inline
-                    hex_candidates = set(HEX_FINDER.findall(html))
-                    for idx, hex_code in enumerate(sorted(hex_candidates)[:5]):
-                        colors.append(
-                            Color(
-                                hex=hex_code.upper(),
-                                label=f"Couleur web {idx + 1}",
-                                isDominant=(idx == 0),
-                            )
-                        )
+        # 2. Couleurs hex depuis HTML et styles inline
+        hex_candidates = set(HEX_FINDER.findall(html))
+        for idx, hex_code in enumerate(sorted(hex_candidates)[:5]):
+            colors.append(
+                Color(
+                    hex=hex_code.upper(),
+                    label=f"Couleur web {idx + 1}",
+                    isDominant=(idx == 0),
+                )
+            )
 
-                    # 3. Polices depuis font-family
-                    seen_fonts = set()
-                    for font_match in FONT_FAMILY_FINDER.findall(html):
-                        clean_font = font_match.split(",")[0].strip().strip("'\"")
-                        if (
-                            clean_font
-                            and clean_font.lower()
-                            not in {"inherit", "sans-serif", "serif", "monospace"}
-                            and clean_font not in seen_fonts
-                        ):
-                            seen_fonts.add(clean_font)
-                            fonts.append(Font(family=clean_font))
-                            if len(fonts) >= 3:
-                                break
+        # 3. Polices depuis font-family
+        seen_fonts = set()
+        for font_match in FONT_FAMILY_FINDER.findall(html):
+            clean_font = font_match.split(",")[0].strip().strip("'\"")
+            if (
+                clean_font
+                and clean_font.lower() not in {"inherit", "sans-serif", "serif", "monospace"}
+                and clean_font not in seen_fonts
+            ):
+                seen_fonts.add(clean_font)
+                fonts.append(Font(family=clean_font))
+                if len(fonts) >= 3:
+                    break
 
-                    # 4. Favicon / icône
-                    icon_match = re.search(
-                        r'<link[^>]+rel=["\'](?:shortcut )?icon["\'][^>]+href=["\'](.*?)["\']',
-                        html,
-                        re.IGNORECASE,
-                    )
-                    if icon_match:
-                        icon_url = urljoin(clean_url, icon_match.group(1))
-                        logos.append(
-                            Logo(
-                                id=f"ast_logo_{uuid.uuid4().hex[:6]}",
-                                filePath=icon_url,
-                                label="Favicon",
-                            )
-                        )
+        # 4. Favicon / icône (résolu depuis l'adresse finale de la réponse)
+        icon_match = re.search(
+            r'<link[^>]+rel=["\'](?:shortcut )?icon["\'][^>]+href=["\'](.*?)["\']',
+            html,
+            re.IGNORECASE,
+        )
+        if icon_match:
+            base_url = str(resp.url) if hasattr(resp, "url") else clean_url
+            icon_url = urljoin(base_url, icon_match.group(1))
+            logos.append(
+                Logo(
+                    id=f"ast_logo_{uuid.uuid4().hex[:6]}",
+                    filePath=icon_url,
+                    label="Favicon",
+                )
+            )
 
         if not colors:
             colors = [

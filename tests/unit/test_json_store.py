@@ -103,3 +103,38 @@ async def test_invalid_json_type_raises_corrupted_document_store_error(
 
     with pytest.raises(CorruptedDocumentStoreError, match="Type inattendu dans generations.json"):
         await store.read_list("generations.json")
+
+
+async def test_corrupted_json_refuses_subsequent_writes(store: JSONDocumentStore, tmp_path: Path):
+    target_file = tmp_path / "generations.json"
+    target_file.write_text("{ corrupted invalid json ...", encoding="utf-8")
+
+    # 1. La lecture échoue et marque le fichier comme corrompu
+    with pytest.raises(CorruptedDocumentStoreError):
+        await store.read_list("generations.json")
+
+    # 2. Toute tentative d'écriture ultérieure est rejetée pour préserver l'intégrité
+    with pytest.raises(CorruptedDocumentStoreError, match="Écriture refusée"):
+        await store.write_list("generations.json", [{"id": "new_item"}])
+
+
+async def test_empty_existing_file_raises_and_refuses_overwrite(
+    store: JSONDocumentStore, tmp_path: Path
+):
+    target_file = tmp_path / "brand-kits.json"
+    target_file.write_text("", encoding="utf-8")
+
+    # Un fichier existant vide est corrompu et ne doit pas être traité comme absent
+    with pytest.raises(CorruptedDocumentStoreError, match="vide ou corrompu"):
+        await store.read_list("brand-kits.json")
+
+    with pytest.raises(CorruptedDocumentStoreError, match="Écriture refusée"):
+        await store.write_list("brand-kits.json", [{"id": "bk_1"}])
+
+
+async def test_direct_write_to_damaged_file_is_refused(store: JSONDocumentStore, tmp_path: Path):
+    target_file = tmp_path / "config.json"
+    target_file.write_text("NOT_JSON", encoding="utf-8")
+
+    with pytest.raises(CorruptedDocumentStoreError, match="Écriture refusée"):
+        await store.write_dict("config.json", {"key": "val"})

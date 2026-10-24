@@ -315,6 +315,143 @@ async def test_brand_kit_extract_from_website_parsing(test_env, monkeypatch):
     assert len(bk["logos"]) >= 1
 
 
+async def test_brand_kit_ssrf_rejects_private_and_local_ips(test_env):
+    client, _, _, _ = test_env
+
+    # 1. Adresse locale 127.0.0.1
+    res1 = await client.post(
+        "/api/brand-kits",
+        data={"name": "Attacker", "websiteUrl": "http://127.0.0.1:8190/secret"},
+    )
+    assert res1.status_code == 400
+    assert "interdit" in res1.json()["detail"].lower() or "privée" in res1.json()["detail"].lower()
+
+    # 2. Nom d'hôte localhost
+    res2 = await client.post(
+        "/api/brand-kits",
+        data={"name": "Attacker", "websiteUrl": "http://localhost:8000/private"},
+    )
+    assert res2.status_code == 400
+    assert "interdit" in res2.json()["detail"].lower() or "privée" in res2.json()["detail"].lower()
+
+
+async def test_brand_kit_ssrf_rejects_redirect_to_private_ip(test_env, monkeypatch):
+    client, _, _, _ = test_env
+    import httpx
+
+    class RedirectMockAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def get(self, url):
+            class RedirectResponse:
+                status_code = 302
+                headers = {"location": "http://127.0.0.1:8190/admin"}
+                url = httpx.URL("https://public-site.com")
+                text = ""
+
+            return RedirectResponse()
+
+    monkeypatch.setattr(httpx, "AsyncClient", RedirectMockAsyncClient)
+
+    # Note: public-site.com resolves to public IP, but its redirect points to 127.0.0.1
+    res = await client.post(
+        "/api/brand-kits",
+        data={"name": "Sneaky", "websiteUrl": "https://google.com"},
+    )
+    assert res.status_code == 400
+    assert "interdit" in res.json()["detail"].lower() or "privée" in res.json()["detail"].lower()
+
+
+async def test_brand_kit_website_http_error_returns_400(test_env, monkeypatch):
+    client, _, _, _ = test_env
+    import httpx
+
+    class ErrorMockAsyncClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def get(self, url):
+            class ErrorResponse:
+                status_code = 404
+                headers = {}
+                url = httpx.URL("https://google.com/notfound")
+                text = "Not Found"
+
+            return ErrorResponse()
+
+    monkeypatch.setattr(httpx, "AsyncClient", ErrorMockAsyncClient)
+
+    res = await client.post(
+        "/api/brand-kits",
+        data={"name": "Broken", "websiteUrl": "https://google.com/notfound"},
+    )
+    assert res.status_code == 400
+    assert "404" in res.json()["detail"]
+
+
+async def test_brand_kit_favicon_resolves_against_redirect_url(test_env, monkeypatch):
+    client, _, _, _ = test_env
+    import httpx
+
+    call_count = 0
+
+    class MultiStepClient:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        async def get(self, url):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+
+                class Step1Response:
+                    status_code = 301
+                    headers = {"location": "https://google.com/brand/home"}
+                    url = httpx.URL("https://google.com/old-page")
+                    text = ""
+
+                return Step1Response()
+
+            class FinalResponse:
+                status_code = 200
+                headers = {}
+                url = httpx.URL("https://google.com/brand/home")
+                text = '<link rel="icon" href="favicon.ico">'
+
+            return FinalResponse()
+
+    monkeypatch.setattr(httpx, "AsyncClient", MultiStepClient)
+
+    res = await client.post(
+        "/api/brand-kits",
+        data={"name": "RedirectFavicon", "websiteUrl": "https://google.com/old-page"},
+    )
+    assert res.status_code == 201
+    bk = res.json()
+    assert len(bk["logos"]) == 1
+    # Résolu depuis l'URL finale (https://google.com/brand/home -> https://google.com/brand/favicon.ico)
+    assert bk["logos"][0]["filePath"] == "https://google.com/brand/favicon.ico"
+
+
 async def test_config_colab_url_update(test_env):
     client, _, _, _ = test_env
     res = await client.post(

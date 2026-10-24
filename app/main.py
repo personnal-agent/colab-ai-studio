@@ -9,11 +9,13 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api.routes_crud import router as crud_router
 from app.config import ensure_directories
+from app.storage.json_store import CorruptedDocumentStoreError
 
 
 @asynccontextmanager
@@ -46,6 +48,17 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(CorruptedDocumentStoreError)
+async def corrupted_store_exception_handler(
+    request: Request, exc: CorruptedDocumentStoreError
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Stockage de données corrompu : {exc}"},
+    )
+
 
 app.include_router(crud_router)
 

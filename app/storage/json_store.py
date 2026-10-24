@@ -28,6 +28,13 @@ class JSONDocumentStore:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self._locks: dict[str, asyncio.Lock] = {}
         self._registry_lock = asyncio.Lock()
+        self._corrupted_files: set[str] = set()
+
+    def is_corrupted(self, filename: str) -> bool:
+        return Path(filename).name in self._corrupted_files
+
+    def mark_corrupted(self, filename: str) -> None:
+        self._corrupted_files.add(Path(filename).name)
 
     def lock_for(self, filename: str) -> asyncio.Lock:
         canon_name = Path(filename).name
@@ -52,26 +59,32 @@ class JSONDocumentStore:
         return await asyncio.to_thread(self._perform_read_list, target)
 
     def _perform_read_list(self, target: Path) -> list[dict[str, Any]]:
+        filename = target.name
         if not target.exists():
             return []
         try:
             content = target.read_text(encoding="utf-8")
         except OSError as e:
-            msg = f"Impossible de lire le fichier {target.name} : {e}"
+            self._corrupted_files.add(filename)
+            msg = f"Impossible de lire le fichier {filename} : {e}"
             raise CorruptedDocumentStoreError(msg) from e
 
         if not content.strip():
-            return []
+            self._corrupted_files.add(filename)
+            msg = f"Fichier JSON vide ou corrompu {filename}"
+            raise CorruptedDocumentStoreError(msg)
 
         try:
             loaded = json.loads(content)
         except json.JSONDecodeError as e:
-            msg = f"Fichier JSON corrompu {target.name} à la position {e.pos} : {e.msg}"
+            self._corrupted_files.add(filename)
+            msg = f"Fichier JSON corrompu {filename} à la position {e.pos} : {e.msg}"
             raise CorruptedDocumentStoreError(msg) from e
 
         if not isinstance(loaded, list):
+            self._corrupted_files.add(filename)
             actual = type(loaded).__name__
-            msg = f"Type inattendu dans {target.name} : attendu 'list', obtenu '{actual}'"
+            msg = f"Type inattendu dans {filename} : attendu 'list', obtenu '{actual}'"
             raise CorruptedDocumentStoreError(msg)
 
         return loaded
@@ -96,26 +109,32 @@ class JSONDocumentStore:
         return await asyncio.to_thread(self._perform_read_dict, target, default)
 
     def _perform_read_dict(self, target: Path, default: dict[str, Any] | None) -> dict[str, Any]:
+        filename = target.name
         if not target.exists():
             return dict(default or {})
         try:
             content = target.read_text(encoding="utf-8")
         except OSError as e:
-            msg = f"Impossible de lire le fichier {target.name} : {e}"
+            self._corrupted_files.add(filename)
+            msg = f"Impossible de lire le fichier {filename} : {e}"
             raise CorruptedDocumentStoreError(msg) from e
 
         if not content.strip():
-            return dict(default or {})
+            self._corrupted_files.add(filename)
+            msg = f"Fichier JSON vide ou corrompu {filename}"
+            raise CorruptedDocumentStoreError(msg)
 
         try:
             loaded = json.loads(content)
         except json.JSONDecodeError as e:
-            msg = f"Fichier JSON corrompu {target.name} à la position {e.pos} : {e.msg}"
+            self._corrupted_files.add(filename)
+            msg = f"Fichier JSON corrompu {filename} à la position {e.pos} : {e.msg}"
             raise CorruptedDocumentStoreError(msg) from e
 
         if not isinstance(loaded, dict):
+            self._corrupted_files.add(filename)
             actual = type(loaded).__name__
-            msg = f"Type inattendu dans {target.name} : attendu 'dict', obtenu '{actual}'"
+            msg = f"Type inattendu dans {filename} : attendu 'dict', obtenu '{actual}'"
             raise CorruptedDocumentStoreError(msg)
 
         return loaded
@@ -133,6 +152,26 @@ class JSONDocumentStore:
         await asyncio.to_thread(self._perform_atomic_write, target, serialized)
 
     def _perform_atomic_write(self, target: Path, serialized: str) -> None:
+        filename = target.name
+        if filename in self._corrupted_files:
+            msg = (
+                f"Écriture refusée : le fichier {filename} a été marqué comme corrompu "
+                f"lors d'une lecture précédente et ne doit pas être écrasé."
+            )
+            raise CorruptedDocumentStoreError(msg)
+
+        if target.exists():
+            try:
+                existing_raw = target.read_text(encoding="utf-8")
+                if not existing_raw.strip():
+                    self._corrupted_files.add(filename)
+                    msg = f"Écriture refusée : le fichier existant {filename} est vide ou corrompu."
+                    raise CorruptedDocumentStoreError(msg)
+                json.loads(existing_raw)
+            except (json.JSONDecodeError, OSError) as e:
+                self._corrupted_files.add(filename)
+                msg = f"Écriture refusée : le fichier existant {filename} est corrompu ({e})."
+                raise CorruptedDocumentStoreError(msg) from e
         tmp_fd, tmp_path_str = tempfile.mkstemp(
             dir=self.data_dir,
             prefix=f".{target.name}.",
