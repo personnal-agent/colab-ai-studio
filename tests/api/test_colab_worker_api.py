@@ -126,6 +126,13 @@ async def test_chat_completions_streaming(client: httpx.AsyncClient) -> None:
                 c_lines.append(line)
     assert not c_lines
 
+    # Interruption mi-flux pour vérifier la libération saine du verrou
+    async with client.stream("POST", "/v1/chat/completions", json=req_body) as s_resp:
+        async for line in s_resp.aiter_lines():
+            if line:
+                break
+    assert (await client.get("/health")).json()["status"] == "ok"
+
 
 @pytest.mark.anyio
 async def test_file_download_security(client: httpx.AsyncClient) -> None:
@@ -185,14 +192,11 @@ async def test_real_callable_pipeline_execution(temp_storage: Path) -> None:
     transport = ASGITransport(app=app_real)
     async with httpx.AsyncClient(transport=transport, base_url="http://real") as c:
         # 1. Test conversion de paramètres et respect du format (Issue 1)
-        resp = await c.post(
-            "/infer",
-            json={
-                "taskId": "real_1", "modelId": "flux-schnell",
-                "parameters": {"aspectRatio": "16:9", "resolution": "1024x1024", "duration": "5s"},
-            },
-        )
-        assert resp.status_code == 200
+        p_real = {
+            "taskId": "real_1", "modelId": "flux-schnell",
+            "parameters": {"aspectRatio": "16:9", "resolution": "1024x1024"},
+        }
+        assert (await c.post("/infer", json=p_real)).status_code == 200
         for _ in range(25):
             st = (await c.get("/tasks/real_1/status")).json()
             if st["status"] == "completed":
@@ -205,11 +209,8 @@ async def test_real_callable_pipeline_execution(temp_storage: Path) -> None:
             pytest.fail("Tâche réelle non complétée")
 
         # 2. Test éviction sur OOM en cours de calcul (Issue 4)
-        oom_resp = await c.post(
-            "/infer",
-            json={"taskId": "oom_task", "modelId": "flux-schnell", "prompt": "trigger_oom"},
-        )
-        assert oom_resp.status_code == 200
+        p_oom = {"taskId": "oom_task", "modelId": "flux-schnell", "prompt": "trigger_oom"}
+        assert (await c.post("/infer", json=p_oom)).status_code == 200
         for _ in range(25):
             st = (await c.get("/tasks/oom_task/status")).json()
             if st["status"] == "failed":

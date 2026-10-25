@@ -436,18 +436,11 @@ def create_worker_app(
                         if "out of memory" in str(exc).lower():
                             swapper.evict_vram()
                         raise
+            msg = {"role": "assistant", "content": content}
+            choice = {"index": 0, "message": msg, "finish_reason": "stop"}
             return {
-                "id": request_id,
-                "object": "chat.completion",
-                "created": int(time.time()),
-                "model": payload.model,
-                "choices": [
-                    {
-                        "index": 0,
-                        "message": {"role": "assistant", "content": content},
-                        "finish_reason": "stop",
-                    }
-                ],
+                "id": request_id, "object": "chat.completion", "created": int(time.time()),
+                "model": payload.model, "choices": [choice],
             }
 
         async def chat_stream_generator() -> AsyncGenerator[str, None]:
@@ -554,8 +547,16 @@ def create_worker_app(
                             finally:
                                 active_chat_cancels.add(request_id)
                                 streamer.end()
-                                await asyncio.to_thread(th_m.join, 30.0)
-                                await asyncio.to_thread(th_s.join, 2.0)
+                                was_c = False
+                                for th, to in ((th_m, 30.0), (th_s, 2.0)):
+                                    fut = loop.run_in_executor(None, th.join, to)
+                                    while not fut.done():
+                                        try:
+                                            await asyncio.shield(fut)
+                                        except asyncio.CancelledError:
+                                            was_c = True
+                                if was_c:
+                                    raise asyncio.CancelledError()
                             yield "data: [DONE]\n\n"
                             return
 
