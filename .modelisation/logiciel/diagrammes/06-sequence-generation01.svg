@@ -1,0 +1,268 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1960" height="1520" viewBox="0 0 1960 1520">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#405364"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#166534"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#BA3C2A"/>
+    </marker>
+    <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/>
+    </marker>
+    <marker id="openArrowRed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#BA3C2A" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <!-- Fond d'écran -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- Cartouche de titre de séquence -->
+  <rect x="48" y="22" width="440" height="30" rx="0" fill="#EDF5F6" stroke="#126A78" stroke-width="1.5"/>
+  <text x="60" y="42" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#126A78">sd</text>
+  <text x="88" y="42" font-family="Arial, sans-serif" font-size="13.5" font-weight="600" fill="#17212B">Génération Multimédia — Cinématique Métier Canonique</text>
+
+  <text x="48" y="76" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">06 · Diagramme de Séquence — Génération Asynchrone &amp; Contrôle d'Inférence (Omniforge)</text>
+  <text x="48" y="100" font-family="Arial, sans-serif" font-size="13" fill="#596875">Cinématique canonique UML 2.5 alignée sur le modèle du domaine 04 · SessionPrompt, Generation, GenerationParameter, ModelSpec et systèmes externes stéréotypés</text>
+  <line x1="48" y1="114" x2="1912" y2="114" stroke="#D8E0E5" stroke-width="1.5"/>
+
+  <!-- ========================================== -->
+  <!-- PARTICIPANTS ET LIGNES DE VIE              -->
+  <!-- ========================================== -->
+
+  <!-- 1. Acteur Humain : c : Créateur de contenu (x = 85) -->
+  <circle cx="85" cy="132" r="9" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+  <line x1="85" y1="141" x2="85" y2="167" stroke="#17212B" stroke-width="2"/>
+  <line x1="69" y1="151" x2="101" y2="151" stroke="#17212B" stroke-width="2"/>
+  <line x1="85" y1="167" x2="71" y2="187" stroke="#17212B" stroke-width="2"/>
+  <line x1="85" y1="167" x2="99" y2="187" stroke="#17212B" stroke-width="2"/>
+  <text x="85" y="204" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#17212B">c : Créateur de contenu</text>
+  <line x1="85" y1="212" x2="85" y2="1420" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 2. s : SessionPrompt (x = 370) -->
+  <rect x="285" y="140" width="170" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+  <text x="370" y="161" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">s : SessionPrompt</text>
+  <text x="370" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#596875">Classe Métier (Domaine 04)</text>
+  <line x1="370" y1="186" x2="370" y2="1420" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 3. g : Generation (x = 670) -->
+  <rect x="585" y="140" width="170" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+  <text x="670" y="161" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">g : Generation</text>
+  <text x="670" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#596875">Entité Pivot (Domaine 04)</text>
+  <line x1="670" y1="186" x2="670" y2="1420" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 4. p : GenerationParameter (x = 970) -->
+  <rect x="870" y="140" width="200" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+  <text x="970" y="161" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">p : GenerationParameter</text>
+  <text x="970" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#596875">Value Object (Domaine 04)</text>
+  <line x1="970" y1="186" x2="970" y2="1420" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 5. m : ModelSpec (x = 1240) -->
+  <rect x="1150" y="140" width="180" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+  <text x="1240" y="161" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">m : ModelSpec</text>
+  <text x="1240" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#596875">Spécification (Domaine 04)</text>
+  <line x1="1240" y1="186" x2="1240" y2="1420" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 6. «système externe» :ComfyUIHeadless (x = 1540) -->
+  <rect x="1430" y="140" width="220" height="46" rx="3" fill="#F0FDF4" stroke="#166534" stroke-width="1.8"/>
+  <text x="1540" y="156" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">«système externe»</text>
+  <text x="1540" y="174" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#14532D">:ComfyUIHeadless</text>
+  <line x1="1540" y1="186" x2="1540" y2="1420" stroke="#166534" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 7. «système externe» :ColabWorker (x = 1810) -->
+  <rect x="1700" y="140" width="220" height="46" rx="3" fill="#EDF5F6" stroke="#405364" stroke-width="1.6"/>
+  <text x="1810" y="156" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#596875">«système externe»</text>
+  <text x="1810" y="174" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#17212B">:ColabWorker</text>
+  <line x1="1810" y1="186" x2="1810" y2="1420" stroke="#405364" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- ========================================== -->
+  <!-- BARRES D'ACTIVATION                        -->
+  <!-- ========================================== -->
+  <rect x="363" y="225" width="14" height="45" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+  <rect x="363" y="295" width="14" height="255" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+  <rect x="363" y="855" width="14" height="465" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+  <rect x="663" y="330" width="14" height="190" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+  <rect x="663" y="615" width="14" height="155" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+  <rect x="663" y="830" width="14" height="460" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+  <rect x="963" y="370" width="14" height="40" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+  <rect x="1233" y="440" width="14" height="40" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+  <rect x="1533" y="650" width="14" height="40" fill="#FFFFFF" stroke="#166534" stroke-width="1.4"/>
+  <rect x="1803" y="735" width="14" height="30" fill="#FFFFFF" stroke="#405364" stroke-width="1.4"/>
+
+  <!-- ========================================== -->
+  <!-- PHASE 1 : CONFIGURATION ET VALIDATION      -->
+  <!-- ========================================== -->
+
+  <!-- Message 1 -->
+  <path d="M85 235 L363 235" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="110" y="222" width="230" height="16" fill="#FFFFFF"/>
+  <text x="224" y="234" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">1: saisirConfiguration(prompt, type)</text>
+
+  <path d="M363 268 L85 268" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="140" y="256" width="160" height="15" fill="#FFFFFF"/>
+  <text x="224" y="267" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">1.1: configurationValidee</text>
+
+  <!-- Message 2 -->
+  <path d="M85 300 L363 300" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="135" y="287" width="180" height="16" fill="#FFFFFF"/>
+  <text x="224" y="299" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">2: soumettreGeneration()</text>
+
+  <!-- Message 2.1 -->
+  <path d="M377 330 L663 330" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="520" y="322" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">2.1: soumettreRequete(prompt, mode)</text>
+
+  <!-- Message 2.2 -->
+  <path d="M677 370 L963 370" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="705" y="357" width="230" height="17" fill="#FFFFFF"/>
+  <text x="820" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">2.2: verifierBornesDimensionnelles()</text>
+
+  <path d="M963 405 L677 405" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="735" y="392" width="170" height="17" fill="#FFFFFF"/>
+  <text x="820" y="405" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">2.2.1: dimensionsConformes</text>
+
+  <!-- Message 2.3 -->
+  <path d="M677 440 L1233 440" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="805" y="427" width="300" height="17" fill="#FFFFFF"/>
+  <text x="955" y="440" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">2.3: verifierEligibiliteMaterielle(vramLibre)</text>
+
+  <path d="M1233 475 L677 475" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="860" y="462" width="180" height="16" fill="#FFFFFF"/>
+  <text x="955" y="474" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">2.3.1: ressourceEligible</text>
+
+  <!-- Message 2.4 -->
+  <path d="M663 510 L377 510" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="425" y="497" width="190" height="16" fill="#FFFFFF"/>
+  <text x="520" y="509" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">2.4: tacheInitiee(id, "QUEUED")</text>
+
+  <!-- Message 2.5 (B-011 : retour propre à l'acteur) -->
+  <path d="M363 540 L85 540" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="135" y="527" width="180" height="16" fill="#FFFFFF"/>
+  <text x="224" y="539" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#17212B">2.5: generationAcquittee(id)</text>
+
+  <!-- ========================================== -->
+  <!-- PHASE 2 : ROUTAGE ET INITIALISATION MOTEUR -->
+  <!-- ========================================== -->
+
+  <!-- Fragment ALT : Routage selon le mode d'inférence -->
+  <rect x="620" y="575" width="1240" height="205" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <rect x="620" y="575" width="55" height="22" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+  <text x="647" y="591" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#126A78">alt</text>
+  <text x="685" y="591" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">[mode == "local" (ComfyUI Headless)]</text>
+
+  <!-- Message 3 -->
+  <path d="M677 615 L710 615 L710 635 L677 635" fill="none" stroke="#405364" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <text x="720" y="628" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#17212B">3: demarrerTraitement()</text>
+
+  <!-- Message 3.1 -->
+  <path d="M677 650 L1533 650" fill="none" stroke="#166534" stroke-width="1.8" marker-end="url(#arrowGreen)"/>
+  <rect x="940" y="637" width="330" height="17" fill="#FFFFFF"/>
+  <text x="1105" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#14532D">3.1: soumettreGrapheWorkflow(workflowJson)</text>
+
+  <path d="M1533 685 L677 685" fill="none" stroke="#166534" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="1030" y="672" width="150" height="16" fill="#FFFFFF"/>
+  <text x="1105" y="684" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#166534">3.1.1: promptIdAcquitte</text>
+
+  <!-- Séparateur d'opérande alt -->
+  <line x1="620" y1="705" x2="1860" y2="705" stroke="#126A78" stroke-width="1.2" stroke-dasharray="6 4"/>
+  <rect x="635" y="711" width="55" height="18" fill="#FFFFFF"/>
+  <text x="640" y="725" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">[else]</text>
+
+  <!-- Message 3.2 -->
+  <path d="M677 735 L1803 735" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="1100" y="722" width="280" height="17" fill="#FFFFFF"/>
+  <text x="1240" y="735" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="500" fill="#17212B">3.2: soumettreInferenceWorker(spec)</text>
+
+  <path d="M1803 760 L677 760" fill="none" stroke="#405364" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="1155" y="747" width="170" height="16" fill="#FFFFFF"/>
+  <text x="1240" y="759" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">3.2.1: remoteJobIdAcquitte</text>
+
+  <!-- ========================================================================= -->
+  <!-- PHASE 3 : BOUCLE D'EXÉCUTION AVEC ANNULATION IMBRIQUÉE (B-010)            -->
+  <!-- ========================================================================= -->
+
+  <!-- Fragment LOOP : Phase d'exécution asynchrone -->
+  <rect x="55" y="790" width="1820" height="610" fill="none" stroke="#126A78" stroke-width="1.8" stroke-dasharray="6 4"/>
+  <rect x="55" y="790" width="65" height="22" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+  <text x="87" y="806" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#126A78">loop</text>
+  <rect x="125" y="794" width="235" height="18" fill="#FFFFFF"/>
+  <text x="130" y="807" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">[1..* tant que status == RUNNING]</text>
+
+  <!-- Message 4 : Progression continue -->
+  <path d="M1533 830 L677 830" fill="none" stroke="#166534" stroke-width="1.6" marker-end="url(#openArrow)"/>
+  <rect x="990" y="817" width="230" height="17" fill="#FFFFFF"/>
+  <text x="1105" y="830" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#14532D">4: mettreAJourProgression(pct)</text>
+
+  <!-- Message 4.1 (B-011 : notification en trait plein) -->
+  <path d="M663 860 L377 860" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="410" y="847" width="220" height="17" fill="#FFFFFF"/>
+  <text x="520" y="860" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#17212B">4.1: mettreAJourProgression(pct)</text>
+
+  <!-- B-010 : Fragment ALT IMBRIQUÉ à l'intérieur de la boucle (Annulation vs Complétion) -->
+  <rect x="70" y="885" width="1790" height="495" fill="none" stroke="#BA3C2A" stroke-width="1.6"/>
+  <rect x="70" y="885" width="55" height="22" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.2"/>
+  <text x="97" y="901" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#BA3C2A">alt</text>
+  <rect x="130" y="889" width="375" height="18" fill="#FFFFFF"/>
+  <text x="135" y="902" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#BA3C2A">[annulation demandée par le créateur en cours d'inférence]</text>
+
+  <!-- Message 5 : Annulation (NEW-06 & NEW-12 : interrompreFlux -> demanderAnnulation) -->
+  <path d="M85 935 L363 935" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <rect x="135" y="922" width="180" height="17" fill="#FFFFFF"/>
+  <text x="224" y="935" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#BA3C2A">5: interrompreFlux()</text>
+
+  <path d="M377 965 L663 965" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <rect x="420" y="952" width="200" height="17" fill="#FFFFFF"/>
+  <text x="520" y="965" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#BA3C2A">5.1: demanderAnnulation()</text>
+
+  <path d="M677 995 L1533 995" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <rect x="1005" y="982" width="200" height="17" fill="#FFFFFF"/>
+  <text x="1105" y="995" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#BA3C2A">5.2: interrompreTraitement()</text>
+
+  <!-- Confirmation de passage à CANCELLED (retour synchrone ReplyMessage hiérarchique) -->
+  <path d="M663 1045 L377 1045" fill="none" stroke="#BA3C2A" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrowRed)"/>
+  <rect x="410" y="1032" width="220" height="17" fill="#FFFFFF"/>
+  <text x="520" y="1045" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#BA3C2A">5.1.1: annulationConfirmee("CANCELLED")</text>
+
+  <path d="M363 1085 L85 1085" fill="none" stroke="#BA3C2A" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#openArrowRed)"/>
+  <rect x="130" y="1072" width="190" height="16" fill="#FFFFFF"/>
+  <text x="224" y="1084" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#BA3C2A">5.2: fluxInterrompu [break]</text>
+
+  <!-- Séparateur d'opérande alt : Poursuite normale et complétion -->
+  <line x1="70" y1="1130" x2="1860" y2="1130" stroke="#BA3C2A" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <rect x="90" y="1138" width="55" height="18" fill="#FFFFFF"/>
+  <text x="95" y="1151" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#166534">[else]</text>
+
+  <!-- Message 6 : Fin de calcul et enregistrement résultat -->
+  <path d="M1533 1180 L677 1180" fill="none" stroke="#166534" stroke-width="1.8" marker-end="url(#openArrow)"/>
+  <rect x="1005" y="1167" width="200" height="17" fill="#FFFFFF"/>
+  <text x="1105" y="1180" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#14532D">6: calculTermine(uri)</text>
+
+  <!-- Message 6.1 : enregistrerResultat(chemin) sur Generation -->
+  <path d="M677 1215 L715 1215 L715 1235 L677 1235" fill="none" stroke="#166534" stroke-width="1.6" marker-end="url(#arrowGreen)"/>
+  <text x="725" y="1228" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#14532D">6.1: enregistrerResultat(chemin)</text>
+
+  <!-- Message 6.2 (B-011 : notification en trait plein) -->
+  <path d="M663 1265 L377 1265" fill="none" stroke="#166534" stroke-width="1.8" marker-end="url(#arrowGreen)"/>
+  <rect x="420" y="1252" width="200" height="16" fill="#FFFFFF"/>
+  <text x="520" y="1264" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#14532D">6.2: notifierMediaPret(chemin)</text>
+
+  <!-- Message 6.3 (B-011 : présentation du résultat final en trait plein) -->
+  <path d="M363 1295 L85 1295" fill="none" stroke="#166534" stroke-width="1.8" marker-end="url(#arrowGreen)"/>
+  <rect x="115" y="1282" width="220" height="17" fill="#FFFFFF"/>
+  <text x="224" y="1295" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#14532D">6.3: presenterResultat(mediaGenere)</text>
+
+  <rect x="720" y="1320" width="460" height="42" rx="4" fill="#F0FDF4" stroke="#166534" stroke-width="1"/>
+  <text x="950" y="1337" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#14532D">Validation d'intégrité &amp; Persistance locale achevées</text>
+  <text x="950" y="1353" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#166534">Génération persistée avec succès · Média disponible dans outputs/ · Sortie de boucle nominale</text>
+
+  <!-- Cartouche de synthèse d'ingénierie des flux asynchrones -->
+  <rect x="48" y="1440" width="1864" height="48" rx="4" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.2"/>
+  <text x="64" y="1460" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">
+    <tspan x="64" dy="0" font-weight="700">Spécification UML 2.5.1 &amp; Contrats d'Exécution Asynchrone :</tspan>
+    <tspan x="64" dy="17">Appels d'orchestration synchrones en traits pleins · Notifications d'avancement sur ligne de vie active · Gardes [else] pures · Annulation coopérative avec transition CANCELLED.</tspan>
+  </text>
+</svg>

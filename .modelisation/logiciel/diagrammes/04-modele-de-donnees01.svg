@@ -1,0 +1,305 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2160" height="1480" viewBox="0 0 2160 1480">
+  <defs>
+    <!-- Marqueurs UML -->
+    <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#2C3E50" stroke-width="1.4"/>
+    </marker>
+    <marker id="filledDiamond" markerWidth="12" markerHeight="10" refX="1" refY="5" orient="auto">
+      <path d="M1 5 L6 1 L11 5 L6 9 Z" fill="#1E4E5F" stroke="#1E4E5F" stroke-width="1.2"/>
+    </marker>
+    <marker id="hollowDiamond" markerWidth="12" markerHeight="10" refX="1" refY="5" orient="auto">
+      <path d="M1 5 L6 1 L11 5 L6 9 Z" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.4"/>
+    </marker>
+  </defs>
+
+  <!-- Fond blanc pur -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- En-tête -->
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">04 · Modèle de données du domaine — Omniforge</text>
+  <text x="48" y="68" font-family="Arial, sans-serif" font-size="13.5" fill="#52616B">Diagramme de Classes UML 2.5.1 — 11 Classes Métier du Domaine, 3 Énumérations, Traçabilité Sémantique &amp; Multiplicités Intégrales</text>
+  <line x1="48" y1="82" x2="2112" y2="82" stroke="#D5DEE5" stroke-width="1.5"/>
+
+  <!-- Énumération 1 : MediaType -->
+  <rect x="48" y="105" width="195" height="190" rx="5" fill="#F8FAFC" stroke="#475569" stroke-width="1.5"/>
+  <rect x="48" y="105" width="195" height="34" rx="5" fill="#E2E8F0" stroke="#475569" stroke-width="1.2"/>
+  <text x="145" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#475569">«enumeration»</text>
+  <text x="145" y="133" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0F172A">MediaType</text>
+  <text x="62" y="156" font-family="Courier New, monospace" font-size="11.5" font-weight="600" fill="#1E293B">image</text>
+  <text x="62" y="176" font-family="Courier New, monospace" font-size="11.5" font-weight="600" fill="#1E293B">video</text>
+  <text x="62" y="196" font-family="Courier New, monospace" font-size="11.5" font-weight="700" fill="#166534">audio</text>
+  <text x="62" y="216" font-family="Courier New, monospace" font-size="11.5" font-weight="600" fill="#1E293B">lipsync</text>
+  <text x="62" y="236" font-family="Courier New, monospace" font-size="11.5" font-weight="600" fill="#1E293B">upscale</text>
+  <text x="62" y="256" font-family="Courier New, monospace" font-size="11.5" font-weight="700" fill="#166534">3d</text>
+  <!-- Énumération 2 : ExecutionMode (NEW-02) -->
+  <rect x="260" y="105" width="205" height="190" rx="5" fill="#F0FDF4" stroke="#166534" stroke-width="1.5"/>
+  <rect x="260" y="105" width="205" height="34" rx="5" fill="#DCFCE7" stroke="#166534" stroke-width="1.2"/>
+  <text x="362" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#166534">«enumeration»</text>
+  <text x="362" y="133" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#14532D">ExecutionMode</text>
+  <text x="280" y="166" font-family="Courier New, monospace" font-size="12" font-weight="700" fill="#1E4E5F">colab</text>
+  <text x="280" y="196" font-family="Courier New, monospace" font-size="12" font-weight="700" fill="#166534">local</text>
+  <text x="280" y="226" font-family="Courier New, monospace" font-size="12" font-weight="700" fill="#8C6418">api</text>
+  <text x="280" y="262" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#52616B">Routage tri-mode unifié</text>
+  <!-- Énumération 3 : TaskStatus (NEW-01) -->
+  <rect x="482" y="105" width="205" height="190" rx="5" fill="#F8FAFC" stroke="#475569" stroke-width="1.5"/>
+  <rect x="482" y="105" width="205" height="34" rx="5" fill="#E2E8F0" stroke="#475569" stroke-width="1.2"/>
+  <text x="584" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#475569">«enumeration»</text>
+  <text x="584" y="133" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0F172A">TaskStatus</text>
+  <text x="498" y="153" font-family="Courier New, monospace" font-size="10.5" font-weight="600" fill="#1E293B">queued</text>
+  <text x="498" y="171" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#1E4E5F">processing</text>
+  <text x="498" y="189" font-family="Courier New, monospace" font-size="10.5" font-weight="600" fill="#1E293B">downloading</text>
+  <text x="498" y="207" font-family="Courier New, monospace" font-size="10.5" font-weight="600" fill="#1E293B">saving</text>
+  <text x="498" y="225" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#166534">completed</text>
+  <text x="498" y="243" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#8C6418">cancelled</text>
+  <text x="498" y="261" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#B3261E">failed</text>
+  <rect x="720" y="105" width="430" height="220" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2"/>
+  <rect x="720" y="105" width="430" height="36" rx="6" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.3"/>
+  <text x="935" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">«entity»</text>
+  <text x="935" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Project</text>
+  <text x="734" y="159" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#166534">+ id : UUID {id}</text>
+  <text x="734" y="177" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ name : String</text>
+  <text x="734" y="195" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ slug : String</text>
+  <text x="734" y="213" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ storagePath : String [0..1]</text>
+  <text x="734" y="231" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ createdAt : DateTime</text>
+  <line x1="720" y1="253" x2="1150" y2="253" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="734" y="271" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ creerProjet() : Project</text>
+  <text x="734" y="289" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ resoudreCheminStockage() : String</text>
+  <text x="734" y="307" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ associerBrandKit(kit : BrandKit) : void</text>
+  <rect x="1200" y="105" width="430" height="270" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2"/>
+  <rect x="1200" y="105" width="430" height="36" rx="6" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.3"/>
+  <text x="1415" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">«entity»</text>
+  <text x="1415" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">BrandKit</text>
+  <text x="1214" y="159" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#166534">+ id : UUID {id}</text>
+  <text x="1214" y="177" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ brandName : String</text>
+  <text x="1214" y="195" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ sourceUrl : String [0..1]</text>
+  <text x="1214" y="213" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ primaryColorsHex : String [1..*]</text>
+  <text x="1214" y="231" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ typographyFamily : String</text>
+  <text x="1214" y="249" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ toneOverview : String</text>
+  <text x="1214" y="267" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ visualGuidelines : String</text>
+  <line x1="1200" y1="289" x2="1630" y2="289" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="1214" y="307" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ extractFromUrl(url : String) : BrandKit</text>
+  <text x="1214" y="325" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ compilePromptModifier(basePrompt : String) : String</text>
+  <text x="1214" y="343" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ validateColors(palette : String[*]) : Boolean</text>
+  <text x="1214" y="361" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ exportCssTokens() : String</text>
+  <rect x="1680" y="105" width="432" height="235" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2"/>
+  <rect x="1680" y="105" width="432" height="36" rx="6" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.3"/>
+  <text x="1896" y="120" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">«entity»</text>
+  <text x="1896" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">LoraConfig</text>
+  <text x="1694" y="159" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#166534">+ id : UUID {id}</text>
+  <text x="1694" y="177" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ displayName : String</text>
+  <text x="1694" y="195" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ fileName : String</text>
+  <text x="1694" y="213" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ triggerWords : String [1..*]</text>
+  <text x="1694" y="231" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ baseArchitecture : String</text>
+  <text x="1694" y="249" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ defaultWeight : Float</text>
+  <line x1="1680" y1="271" x2="2112" y2="271" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="1694" y="289" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ verifierCompatibiliteModele(spec : ModelSpec) : Boolean</text>
+  <text x="1694" y="307" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ extraireMotsDeclencheurs() : String</text>
+  <rect x="48" y="340" width="450" height="410" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2"/>
+  <rect x="48" y="340" width="450" height="36" rx="6" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.3"/>
+  <text x="273" y="355" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">«entity»</text>
+  <text x="273" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">SessionPrompt</text>
+  <text x="62" y="394" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#166534">+ sessionId : UUID {id}</text>
+  <text x="62" y="412" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#17212B">+ activeModalite : MediaType</text>
+  <text x="62" y="430" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ draftPrompt : String</text>
+  <text x="62" y="448" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ isReady : Boolean</text>
+  <text x="62" y="466" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ lastModifiedAt : DateTime</text>
+  <line x1="48" y1="488" x2="498" y2="488" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="62" y="506" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ createSession(title: String, mode: ExecutionMode) : SessionPrompt</text>
+  <text x="62" y="524" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ addMessage(role: String, text: String, refs: String[*]) : Message</text>
+  <text x="62" y="542" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ updateParameters(params : Map) : void</text>
+  <text x="62" y="560" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ selectModel(modelSpec : ModelSpec) : void</text>
+  <text x="62" y="578" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ attachLora(lora : LoraSelection) : void</text>
+  <text x="62" y="596" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ detachLora(loraId : String) : void</text>
+  <text x="62" y="614" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ applyBrandKit(kit : BrandKit) : void</text>
+  <text x="62" y="632" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ removeBrandKit() : void</text>
+  <text x="62" y="650" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ queueTask(req : GenerationRequest) : Generation</text>
+  <text x="62" y="668" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ linkSlot(slot : SlotMemoireModele) : void</text>
+  <text x="62" y="686" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ unlinkSlot() : void</text>
+  <text x="62" y="704" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ exportHistory(format : String) : File</text>
+  <rect x="530" y="340" width="570" height="440" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2"/>
+  <rect x="530" y="340" width="570" height="36" rx="6" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.3"/>
+  <text x="815" y="355" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">«entity»</text>
+  <text x="815" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Generation</text>
+  <text x="544" y="394" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#166534">+ id : UUID {id}</text>
+  <text x="544" y="412" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ prompt : String</text>
+  <text x="544" y="430" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ negativePrompt : String [0..1]</text>
+  <text x="544" y="448" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ compiledPrompt : String [0..1]</text>
+  <text x="544" y="466" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ mediaType : MediaType</text>
+  <text x="544" y="484" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ executionMode : ExecutionMode</text>
+  <text x="544" y="502" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ status : TaskStatus</text>
+  <text x="544" y="520" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ progressPercent : Integer</text>
+  <text x="544" y="538" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ outputAssetPath : String [0..1]</text>
+  <text x="544" y="556" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ errorMessage : String [0..1]</text>
+  <text x="544" y="574" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ createdAt : DateTime</text>
+  <line x1="530" y1="596" x2="1100" y2="596" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="544" y="614" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ initiate(prompt : String, mode : ExecutionMode) : void</text>
+  <text x="544" y="632" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ transitionTo(status : TaskStatus) : void</text>
+  <text x="544" y="650" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ updateProgress(pct : Integer, step : Integer, total : Integer) : void</text>
+  <text x="544" y="668" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ setStreamUrl(url : String) : void</text>
+  <text x="544" y="686" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ recordOutput(uri : String, metadata : Map) : void</text>
+  <text x="544" y="704" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ markFailed(errCode : String, errMsg : String) : void</text>
+  <text x="544" y="722" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ cancel() : void</text>
+  <text x="544" y="740" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ retry() : Generation</text>
+  <text x="544" y="758" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ cleanupTempArtifacts() : void</text>
+  <rect x="1140" y="410" width="470" height="200" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="2"/>
+  <rect x="1140" y="410" width="470" height="36" rx="6" fill="#DCFCE7" stroke="#166534" stroke-width="1.3"/>
+  <text x="1375" y="425" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#166534">«valueObject»</text>
+  <text x="1375" y="440" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#14532D">LoraSelection</text>
+  <text x="1154" y="464" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ selectionOrder : Integer</text>
+  <text x="1154" y="482" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ strengthModel : Float</text>
+  <text x="1154" y="500" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ strengthClip : Float</text>
+  <text x="1154" y="518" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ isActive : Boolean</text>
+  <line x1="1140" y1="540" x2="1610" y2="540" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="1154" y="558" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ ajusterPoids(poids : Float) : void</text>
+  <text x="1154" y="576" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ injecterMotsDeclencheurs(prompt : String) : String</text>
+  <rect x="1680" y="590" width="432" height="220" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2"/>
+  <rect x="1680" y="590" width="432" height="36" rx="6" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.3"/>
+  <text x="1896" y="605" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">«entity»</text>
+  <text x="1896" y="620" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">ModelSpec</text>
+  <text x="1694" y="644" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#166534">+ id : String {id}</text>
+  <text x="1694" y="662" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ name : String</text>
+  <text x="1694" y="680" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ family : String</text>
+  <text x="1694" y="698" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ vramRequiredGb : Float</text>
+  <text x="1694" y="716" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ supportedModes : ExecutionMode [1..*]</text>
+  <line x1="1680" y1="738" x2="2112" y2="738" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="1694" y="756" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ verifierEligibiliteMaterielle(vramLibre : Float) : Boolean</text>
+  <text x="1694" y="774" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ resoudreParametresDefaut() : GenerationParameter</text>
+  <rect x="1680" y="840" width="432" height="245" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="2"/>
+  <rect x="1680" y="840" width="432" height="36" rx="6" fill="#DCFCE7" stroke="#166534" stroke-width="1.3"/>
+  <text x="1896" y="855" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#166534">«valueObject»</text>
+  <text x="1896" y="870" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#14532D">ModelCapability</text>
+  <text x="1694" y="894" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ mediaType : MediaType</text>
+  <text x="1694" y="912" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ acceptedInputTypes : String [1..*]</text>
+  <text x="1694" y="930" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ maxImageRefs : Integer</text>
+  <text x="1694" y="948" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ supportsLora : Boolean</text>
+  <text x="1694" y="966" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ maxResolutionPx : Integer</text>
+  <text x="1694" y="984" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ supportsLoraHotSwap : Boolean</text>
+  <text x="1694" y="1002" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ supportsStreaming : Boolean</text>
+  <line x1="1680" y1="1024" x2="2112" y2="1024" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="1694" y="1042" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ verifierSupportModalite(type : MediaType) : Boolean</text>
+  <text x="1694" y="1060" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ verifierCompatibiliteEntree(mimeType : String) : Boolean</text>
+  <rect x="48" y="810" width="450" height="200" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="2"/>
+  <rect x="48" y="810" width="450" height="36" rx="6" fill="#DCFCE7" stroke="#166534" stroke-width="1.3"/>
+  <text x="273" y="825" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#166534">«valueObject»</text>
+  <text x="273" y="840" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#14532D">GenerationReference</text>
+  <text x="62" y="864" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ slotIndex : Integer</text>
+  <text x="62" y="882" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ priorityRank : Integer</text>
+  <text x="62" y="900" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ sourcePath : String</text>
+  <text x="62" y="918" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ mimeType : String</text>
+  <text x="62" y="936" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ weight : Float</text>
+  <line x1="48" y1="958" x2="498" y2="958" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="62" y="976" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ verifierIntegriteBinaire() : Boolean</text>
+  <text x="62" y="994" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ arbitrerPriorite(rang : Integer) : Integer</text>
+  <rect x="530" y="810" width="570" height="240" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="2"/>
+  <rect x="530" y="810" width="570" height="36" rx="6" fill="#DCFCE7" stroke="#166534" stroke-width="1.3"/>
+  <text x="815" y="825" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#166534">«valueObject»</text>
+  <text x="815" y="840" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#14532D">GenerationParameter</text>
+  <text x="544" y="864" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ width : Integer</text>
+  <text x="544" y="882" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ height : Integer</text>
+  <text x="544" y="900" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ steps : Integer</text>
+  <text x="544" y="918" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ cfgScale : Float</text>
+  <text x="544" y="936" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ seed : Long</text>
+  <text x="544" y="954" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ fps : Integer [0..1]</text>
+  <text x="544" y="972" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ durationSec : Float [0..1]</text>
+  <line x1="530" y1="994" x2="1100" y2="994" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="544" y="1012" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ verifierBornesDimensionnelles() : Boolean</text>
+  <text x="544" y="1030" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ normaliserGraine() : Long</text>
+  <rect x="1140" y="745" width="470" height="330" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2"/>
+  <rect x="1140" y="745" width="470" height="36" rx="6" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.3"/>
+  <text x="1375" y="760" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">«entity»</text>
+  <text x="1375" y="775" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">SlotMemoireModele</text>
+  <text x="1155" y="797" font-family="Courier New, monospace" font-size="10.5" font-weight="700" fill="#166534">+ slotId : UUID {id}</text>
+  <text x="1155" y="814" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ totalMemoryGb : Float</text>
+  <text x="1155" y="831" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ freeMemoryGb : Float</text>
+  <text x="1155" y="848" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ isAvailable : Boolean</text>
+  <text x="1155" y="865" font-family="Courier New, monospace" font-size="10.5" fill="#17212B">+ loadedLoraCount : Integer</text>
+  <line x1="1140" y1="877" x2="1610" y2="877" stroke="#D5DEE5" stroke-width="1.2"/>
+  <text x="1155" y="894" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ requeteRecue(spec : ModelSpec, sel : LoraSelection) : void</text>
+  <text x="1155" y="911" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ allouerModele(spec : ModelSpec) : Boolean</text>
+  <text x="1155" y="928" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ adapterPoidsLoraAChaud(selection : LoraSelection) : void</text>
+  <text x="1155" y="945" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ evincerModeleLRU() : Float</text>
+  <text x="1155" y="962" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ purgerMemoireSaturee() : void</text>
+  <text x="1155" y="979" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ executerCompletionStream(prompt : String) : String</text>
+  <text x="1155" y="996" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ emettreDeltaToken(chunk : String) : void</text>
+  <text x="1155" y="1013" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ cloturerFluxTokens(motif : String) : void</text>
+  <text x="1155" y="1030" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ libererSlot() : void</text>
+  <text x="1155" y="1047" font-family="Courier New, monospace" font-size="10.5" fill="#1E4E5F">+ arreterWorker() : void</text>
+
+  <!-- ===================================================================== -->
+  <!-- 12 ASSOCIATIONS DU DOMAINE (MULTIPLICITÉS INTÉGRALES SANS CROISEMENT) -->
+  <!-- ===================================================================== -->
+  <!-- 1. Project 1 ◆── 0..* Generation -->
+  <path d="M815 325 L815 340" fill="none" stroke="#1E4E5F" stroke-width="1.8" marker-start="url(#filledDiamond)"/>
+  <text x="827" y="333" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">1</text>
+  <text x="827" y="352" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..*</text>
+  <text x="760" y="338" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">regroupe</text>
+  <!-- 2. Project 0..* ── 0..1 BrandKit (+ defaultBrandKit) -->
+  <path d="M1150 215 L1200 215" fill="none" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="1156" y="207" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..*</text>
+  <text x="1182" y="207" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..1</text>
+  <text x="1175" y="238" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#1E4E5F">+defaultBrandKit</text>
+  <!-- 3. Generation 0..* ── 0..1 BrandKit (+ appliedBrandKit) -->
+  <path d="M1100 360 L1220 360 L1220 375" fill="none" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="1108" y="352" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..*</text>
+  <text x="1228" y="372" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..1</text>
+  <text x="1160" y="352" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#1E4E5F">+appliedBrandKit</text>
+  <!-- 4. SessionPrompt 1 ── 0..* Generation -->
+  <path d="M498 470 L530 470" fill="none" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="502" y="462" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">1</text>
+  <text x="515" y="462" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..*</text>
+  <text x="514" y="492" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#52616B">initie</text>
+  <!-- 5. Generation 1 ◆── 0..3 GenerationReference {ordered} -->
+  <path d="M570 780 L570 795 L273 795 L273 810" fill="none" stroke="#1E4E5F" stroke-width="1.8" marker-start="url(#filledDiamond)"/>
+  <text x="578" y="792" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">1</text>
+  <text x="283" y="805" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..3</text>
+  <text x="420" y="790" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#1E4E5F">references {ordered}</text>
+  <!-- 6. Generation 1 ◆── 1 GenerationParameter -->
+  <path d="M815 780 L815 810" fill="none" stroke="#1E4E5F" stroke-width="1.8" marker-start="url(#filledDiamond)"/>
+  <text x="827" y="792" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">1</text>
+  <text x="827" y="805" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">1</text>
+  <text x="760" y="798" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#1E4E5F">parametres</text>
+  <!-- 7. Generation 1 ◆── 0..5 LoraSelection {ordered} -->
+  <path d="M1100 510 L1140 510" fill="none" stroke="#166534" stroke-width="1.8" marker-start="url(#filledDiamond)"/>
+  <text x="1106" y="502" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">1</text>
+  <text x="1120" y="502" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">0..5</text>
+  <text x="1120" y="528" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#166534">{ordered}</text>
+  <!-- 8. LoraSelection 0..* ── 1 LoraConfig -->
+  <path d="M1610 490 L1645 490 L1645 220 L1680 220" fill="none" stroke="#166534" stroke-width="1.6"/>
+  <text x="1616" y="482" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">0..*</text>
+  <text x="1660" y="212" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">1</text>
+  <text x="1630" y="355" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#166534" transform="rotate(-90 1630 355)">configure</text>
+  <!-- 9. Generation 0..* ── 1 ModelSpec -->
+  <path d="M1100 660 L1680 660" fill="none" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="1108" y="652" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..*</text>
+  <text x="1660" y="652" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">1</text>
+  <text x="1375" y="652" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#1E4E5F">cibleModele</text>
+  <!-- 10. ModelSpec 1 ◆── 1..6 ModelCapability -->
+  <path d="M1896 810 L1896 840" fill="none" stroke="#166534" stroke-width="1.8" marker-start="url(#filledDiamond)"/>
+  <text x="1908" y="825" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">1</text>
+  <text x="1908" y="835" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">1..6</text>
+  <text x="1845" y="830" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#166534">capacites</text>
+  <!-- 11. SlotMemoireModele 0..* ── 0..1 ModelSpec -->
+  <path d="M1610 770 L1680 770" fill="none" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="1616" y="762" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..*</text>
+  <text x="1658" y="762" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..1</text>
+  <text x="1645" y="788" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#1E4E5F">alloue</text>
+  <!-- 12. SessionPrompt 0..* ── 0..1 SlotMemoireModele (+activeSlot, NEW-07) -->
+  <path d="M48 560 L28 560 L28 1090 L1250 1090 L1250 1075" fill="none" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="35" y="552" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..*</text>
+  <text x="1258" y="1085" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">0..1</text>
+  <text x="640" y="1084" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#1E4E5F">+activeSlot (association directe VRAM/Slot)</text>
+
+  <!-- ===================================================================== -->
+  <!-- SPÉCIFICATION D'INGÉNIERIE & ARCHITECTURE DU MODÈLE DU DOMAINE        -->
+  <!-- ===================================================================== -->
+  <rect x="48" y="1120" width="2064" height="310" rx="6" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.4"/>
+  <text x="68" y="1145" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">PRINCIPES D'INGÉNIERIE DU MODÈLE DU DOMAINE &amp; TRAÇABILITÉ SYSTÈME :</text>
+  <text x="68" y="1168" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">1. Traçabilité Sémantique sans Clés Étrangères : Aucune classe ne duplique un identifiant étranger accessible par association navigable. Les liens objets purs portent la navigabilité sémantique directe.</text>
+  <text x="68" y="1188" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">2. Découplage du Domaine Métier et de l'Infrastructure : Les détails de réseau (adresses TCP/ports d'écoute) sont strictement isolés dans les vues de composants (02) et déploiement (03).</text>
+  <text x="68" y="1208" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">3. Granularité Atomique &amp; Typage Métier : Typage strict en GenerationReference et GenerationParameter ; décomposition orthogonale en ModelSpec (catalogue) et ModelCapability (+acceptedInputTypes, +maxImageRefs, +supportsLora).</text>
+  <text x="68" y="1228" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">4. Multiplicités Systématiques aux Deux Extrémités : 100 % des associations du modèle possèdent leurs cardinalités explicites amont et aval (1, 0..1, 0..*, 0..3, 0..5, 1..6), incluant la liaison SessionPrompt 0..* ── 0..1 SlotMemoireModele (+activeSlot).</text>
+  <text x="68" y="1248" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">5. Responsabilités Métier et Contrats d'Exécution : Opérations concrètes sur SessionPrompt, Generation, BrandKit et SlotMemoireModele éliminant tout modèle anémique et synchronisant à 100 % les signatures avec les vues dynamiques.</text>
+  <text x="68" y="1268" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">6. Cohérence Comportementale : SessionPrompt (gestion d'état du dock et des flux) et SlotMemoireModele (gestion des allocations VRAM) sont modélisés comme entités métier de premier ordre.</text>
+  <text x="68" y="1288" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">7. Navigabilité Directe des Parcours Opérationnels : Requêtes d'historique par projet (Project 1 ◆── 0..* Generation), résolution de charte (Generation 0..* ── 0..1 BrandKit), et allocation VRAM (SlotMemoireModele 0..* ── 0..1 ModelSpec).</text>
+  <text x="68" y="1308" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">8. Cycle de Vie &amp; Composition Forte : Cycle de vie dépendant des Value Objects (GenerationParameter, GenerationReference, LoraSelection) détruits mécaniquement avec leur entité racine Generation {composition UML à losange plein}.</text>
+</svg>
