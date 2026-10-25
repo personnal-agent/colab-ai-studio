@@ -96,6 +96,8 @@ async def _fetch_safe_website(initial_url: str, max_redirects: int = 5) -> httpx
     async with httpx.AsyncClient(timeout=5.0, follow_redirects=False, headers=headers) as client:
         for _ in range(max_redirects + 1):
             await _validate_safe_url(current_url)
+            if not re.fullmatch(r"https?://[A-Za-z0-9.\-\[\]:]+(?:/[^\s<>\"']*)?", current_url):
+                raise ValueError(f"URL invalide ou non sécurisée : '{current_url}'")
             try:
                 resp = await client.get(current_url)
             except (httpx.RequestError, OSError) as e:
