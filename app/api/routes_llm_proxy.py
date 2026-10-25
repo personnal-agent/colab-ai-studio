@@ -65,6 +65,7 @@ async def chat_completions_proxy(
     request_id = f"chat_{uuid.uuid4().hex[:10]}"
     req_dict = payload.model_dump(exclude_none=True)
     req_dict["requestId"] = request_id
+    worker_headers = await gateway.get_worker_headers()
 
     # Si le client ne demande pas le streaming, appel synchrone simple
     if not payload.stream:
@@ -72,6 +73,7 @@ async def chat_completions_proxy(
             resp = await gateway.http_client.post(
                 f"{base_url}/v1/chat/completions",
                 json=req_dict,
+                headers=worker_headers,
                 timeout=120.0,
             )
             resp.raise_for_status()
@@ -99,6 +101,7 @@ async def chat_completions_proxy(
                         gateway.http_client.post(
                             f"{base_url}/v1/chat/cancel",
                             json={"requestId": request_id},
+                            headers=worker_headers,
                             timeout=5.0,
                         )
                     )
@@ -124,6 +127,7 @@ async def chat_completions_proxy(
                 "POST",
                 url,
                 json=req_dict,
+                headers=worker_headers,
                 timeout=120.0,
             ) as upstream_resp:
                 upstream_resp.raise_for_status()

@@ -52,9 +52,9 @@ export const apiClient = {
     request<{ executionMode: ExecutionMode }>('/api/config/execution-mode', {
       method: 'POST', body: JSON.stringify({ executionMode }),
     }),
-  updateColabUrl: (tunnelUrl: string) =>
-    request<{ tunnelUrl: string }>('/api/config/colab-url', {
-      method: 'POST', body: JSON.stringify({ tunnelUrl }),
+  updateColabUrl: (tunnelUrl: string, secret?: string) =>
+    request<{ tunnelUrl: string; secretConfigured?: boolean }>('/api/config/colab-url', {
+      method: 'POST', body: JSON.stringify({ tunnelUrl, ...(secret !== undefined ? { secret } : {}) }),
     }),
   getHealth: () => request<HealthResponse>('/api/health'),
   listModels: () => request<ModelDefinition[]>('/api/models'),

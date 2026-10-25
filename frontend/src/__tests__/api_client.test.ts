@@ -30,6 +30,20 @@ describe('apiClient', () => {
     expect(res.tunnelUrl).toBe(tunnelUrl);
   });
 
+  it('updates colab url and secret via POST', async () => {
+    const tunnelUrl = 'https://new-colab.ngrok-free.app';
+    const secret = 'my-secret-token';
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ tunnelUrl, secretConfigured: true }) });
+    const res = await apiClient.updateColabUrl(tunnelUrl, secret);
+    expect(global.fetch).toHaveBeenCalledWith('/api/config/colab-url', {
+      method: 'POST',
+      body: JSON.stringify({ tunnelUrl, secret }),
+      headers: { 'Content-Type': 'application/json' },
+    });
+    expect(res.tunnelUrl).toBe(tunnelUrl);
+    expect(res.secretConfigured).toBe(true);
+  });
+
   it('fetches health status', async () => {
     const mockHealth = { status: 'healthy', worker: { reachable: true } };
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => mockHealth });

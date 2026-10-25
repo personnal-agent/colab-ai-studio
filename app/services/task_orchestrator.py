@@ -292,7 +292,14 @@ class TaskOrchestrator:
                         break
 
                     # Rapatriement du binaire
-                    artifact_uri = status_resp.get("artifactUri") or f"{gen_id}.mp4"
+                    artifact_uri = status_resp.get("artifactUri")
+                    if not artifact_uri:
+                        output_url = status_resp.get("outputUrl", "")
+                        if output_url.startswith("/files/"):
+                            artifact_uri = output_url[len("/files/") :]
+                        else:
+                            ext = "png" if gen.mediaType == "image" else "mp4"
+                            artifact_uri = f"{gen_id}.{ext}"
                     media_bytes = await self._gateway.download_file(
                         artifact_uri, base_url=target_worker_url
                     )
@@ -364,7 +371,11 @@ class TaskOrchestrator:
                     )
                     break
                 elif remote_status == "failed":
-                    err_msg = status_resp.get("error", "Erreur distante inconnue")
+                    err_msg = (
+                        status_resp.get("error")
+                        or status_resp.get("errorMessage")
+                        or "Erreur distante inconnue"
+                    )
                     with contextlib.suppress(Exception):
                         await self._gateway.cancel_task(gen_id, base_url=target_worker_url)
                     up = await self._update_generation(

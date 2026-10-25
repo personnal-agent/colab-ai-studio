@@ -10,4 +10,4 @@ ignore = ["B008"]
 known-first-party = ["app"]
 
 [lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106", "ASYNC240"]
+"tests/**" = ["S101", "S105", "S106", "S603", "ASYNC240"]
