@@ -452,144 +452,139 @@ def create_worker_app(
 
         async def chat_stream_generator() -> AsyncGenerator[str, None]:
             async with gpu_lock:
-                chat_model = swapper.ensure_model(payload.model, load_fn=loaders.get(payload.model))
-                words = [
-                    "Bonjour", " ! ", "Voici", " une", " réponse", " synthétisée", " pour",
-                    f" « {summary} »", " par", " le", " worker", " distant", " Colab.",
-                ]
-                if callable(chat_model) and not sim_mode:
-                    if request_id in active_chat_cancels or await request.is_disconnected():
-                        return
-                    prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
-                    tok = getattr(chat_model, "tokenizer", None)
-                    if tok is not None:
-                        from threading import Thread
-
-                        from transformers import TextIteratorStreamer
-                        from transformers.generation import StoppingCriteria, StoppingCriteriaList
-
-                        class CancelCriteria(StoppingCriteria):
-                            def __call__(self, input_ids, scores, **kw):
-                                return request_id in active_chat_cancels
-
-                        streamer = TextIteratorStreamer(
-                            tok, skip_prompt=True, skip_special_tokens=True
-                        )
-                        crit = StoppingCriteriaList([CancelCriteria()])
-                        gen_kw = {
-                            "max_new_tokens": 150,
-                            "streamer": streamer,
-                            "stopping_criteria": crit,
-                        }
-                        loop = asyncio.get_running_loop()
-                        q: asyncio.Queue[tuple[str | None, Exception | None]] = asyncio.Queue()
-
-                        def _worker():
-                            try:
-                                chat_model(prompt_in, **gen_kw)
-                            except Exception as th_err:
-                                if "out of memory" in str(th_err).lower():
-                                    swapper.evict_vram()
-                                loop.call_soon_threadsafe(q.put_nowait, (None, th_err))
-                            finally:
-                                streamer.end()
-
-                        def _stream_reader():
-                            try:
-                                for token in streamer:
-                                    if request_id in active_chat_cancels:
-                                        break
-                                    loop.call_soon_threadsafe(q.put_nowait, (token, None))
-                            except Exception as s_err:
-                                loop.call_soon_threadsafe(q.put_nowait, (None, s_err))
-                            finally:
-                                loop.call_soon_threadsafe(q.put_nowait, (None, None))
-
-                        th_m = Thread(target=_worker, daemon=True)
-                        th_s = Thread(target=_stream_reader, daemon=True)
-                        th_m.start()
-                        th_s.start()
-                        try:
-                            while True:
-                                if (
-                                    request_id in active_chat_cancels
-                                    or await request.is_disconnected()
-                                ):
-                                    return
-                                try:
-                                    token, err = await asyncio.wait_for(q.get(), timeout=60.0)
-                                except asyncio.TimeoutError:
-                                    msg = "\n[Erreur: délai de génération dépassé]"
-                                    ec = {
-                                        "index": 0,
-                                        "delta": {"content": msg},
-                                        "finish_reason": "error",
-                                    }
-                                    echunk = {
-                                        "id": request_id,
-                                        "object": "chat.completion.chunk",
-                                        "created": int(time.time()),
-                                        "model": payload.model,
-                                        "choices": [ec],
-                                    }
-                                    yield f"data: {json.dumps(echunk)}\n\n"
-                                    yield "data: [DONE]\n\n"
-                                    return
-                                if err is not None:
-                                    raise err
-                                if token is None:
-                                    break
-                                d = {"content": token}
-                                choice = {"index": 0, "delta": d, "finish_reason": None}
-                                chunk = {
-                                    "id": request_id,
-                                    "object": "chat.completion.chunk",
-                                    "created": int(time.time()),
-                                    "model": payload.model,
-                                    "choices": [choice],
-                                }
-                                yield f"data: {json.dumps(chunk)}\n\n"
-                        finally:
-                            active_chat_cancels.add(request_id)
-                            streamer.end()
-                            th_m.join(timeout=30.0)
-                            th_s.join(timeout=2.0)
-                            active_chat_cancels.discard(request_id)
-                        yield "data: [DONE]\n\n"
-                        return
-
-                    try:
-                        if request_id in active_chat_cancels or await request.is_disconnected():
-                            return
-                        res = await asyncio.to_thread(chat_model, prompt_in, max_new_tokens=150)
-                        if request_id in active_chat_cancels or await request.is_disconnected():
-                            return
-                        if isinstance(res, list) and res and "generated_text" in res[0]:
-                            txt = res[0]["generated_text"].replace(prompt_in, "").strip()
-                            words = [w + " " for w in txt.split()]
-                    except Exception as exc:
-                        if "out of memory" in str(exc).lower():
-                            swapper.evict_vram()
-                        raise
-
                 try:
+                    chat_model = swapper.ensure_model(
+                        payload.model, load_fn=loaders.get(payload.model)
+                    )
+                    words = [
+                        "Bonjour", " ! ", "Voici", " une", " réponse", " synthétisée", " pour",
+                        f" « {summary} »", " par", " le", " worker", " distant", " Colab.",
+                    ]
+                    if callable(chat_model) and not sim_mode:
+                        if request_id in active_chat_cancels or await request.is_disconnected():
+                            return
+                        prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
+                        tok = getattr(chat_model, "tokenizer", None)
+                        if tok is not None:
+                            from threading import Thread
+
+                            from transformers import TextIteratorStreamer
+                            from transformers.generation import (
+                                StoppingCriteria,
+                                StoppingCriteriaList,
+                            )
+
+                            class CancelCriteria(StoppingCriteria):
+                                def __call__(self, input_ids, scores, **kw):
+                                    return request_id in active_chat_cancels
+
+                            streamer = TextIteratorStreamer(
+                                tok, skip_prompt=True, skip_special_tokens=True
+                            )
+                            crit = StoppingCriteriaList([CancelCriteria()])
+                            gen_kw = {
+                                "max_new_tokens": 150, "streamer": streamer,
+                                "stopping_criteria": crit,
+                            }
+                            loop = asyncio.get_running_loop()
+                            q: asyncio.Queue[tuple[str | None, Exception | None]] = asyncio.Queue()
+
+                            def _worker():
+                                try:
+                                    chat_model(prompt_in, **gen_kw)
+                                except Exception as th_err:
+                                    if "out of memory" in str(th_err).lower():
+                                        swapper.evict_vram()
+                                    loop.call_soon_threadsafe(q.put_nowait, (None, th_err))
+                                finally:
+                                    streamer.end()
+
+                            def _stream_reader():
+                                try:
+                                    for token in streamer:
+                                        if request_id in active_chat_cancels:
+                                            break
+                                        loop.call_soon_threadsafe(q.put_nowait, (token, None))
+                                except Exception as s_err:
+                                    loop.call_soon_threadsafe(q.put_nowait, (None, s_err))
+                                finally:
+                                    loop.call_soon_threadsafe(q.put_nowait, (None, None))
+
+                            th_m = Thread(target=_worker, daemon=True)
+                            th_s = Thread(target=_stream_reader, daemon=True)
+                            th_m.start()
+                            th_s.start()
+                            try:
+                                while True:
+                                    if (
+                                        request_id in active_chat_cancels
+                                        or await request.is_disconnected()
+                                    ):
+                                        return
+                                    try:
+                                        token, err = await asyncio.wait_for(q.get(), timeout=60.0)
+                                    except asyncio.TimeoutError:
+                                        msg = "\n[Erreur: délai de génération dépassé]"
+                                        ec = {
+                                            "index": 0, "delta": {"content": msg},
+                                            "finish_reason": "error",
+                                        }
+                                        echunk = {
+                                            "id": request_id, "object": "chat.completion.chunk",
+                                            "created": int(time.time()), "model": payload.model,
+                                            "choices": [ec],
+                                        }
+                                        yield f"data: {json.dumps(echunk)}\n\n"
+                                        yield "data: [DONE]\n\n"
+                                        return
+                                    if err is not None:
+                                        raise err
+                                    if token is None:
+                                        break
+                                    choice = {
+                                        "index": 0, "delta": {"content": token},
+                                        "finish_reason": None,
+                                    }
+                                    chunk = {
+                                        "id": request_id, "object": "chat.completion.chunk",
+                                        "created": int(time.time()), "model": payload.model,
+                                        "choices": [choice],
+                                    }
+                                    yield f"data: {json.dumps(chunk)}\n\n"
+                            finally:
+                                active_chat_cancels.add(request_id)
+                                streamer.end()
+                                await asyncio.to_thread(th_m.join, 30.0)
+                                await asyncio.to_thread(th_s.join, 2.0)
+                            yield "data: [DONE]\n\n"
+                            return
+
+                        try:
+                            if request_id in active_chat_cancels or await request.is_disconnected():
+                                return
+                            res = await asyncio.to_thread(chat_model, prompt_in, max_new_tokens=150)
+                            if request_id in active_chat_cancels or await request.is_disconnected():
+                                return
+                            if isinstance(res, list) and res and "generated_text" in res[0]:
+                                txt = res[0]["generated_text"].replace(prompt_in, "").strip()
+                                words = [w + " " for w in txt.split()]
+                        except Exception as exc:
+                            if "out of memory" in str(exc).lower():
+                                swapper.evict_vram()
+                            raise
+
                     for word in words:
                         if request_id in active_chat_cancels or await request.is_disconnected():
                             logger.info("Chat LLM annulé pour %s.", request_id)
                             return
 
+                        choice = {
+                            "index": 0, "delta": {"content": word}, "finish_reason": None,
+                        }
                         chunk = {
-                            "id": request_id,
-                            "object": "chat.completion.chunk",
-                            "created": int(time.time()),
-                            "model": payload.model,
-                            "choices": [
-                                {
-                                    "index": 0,
-                                    "delta": {"content": word},
-                                    "finish_reason": None,
-                                }
-                            ],
+                            "id": request_id, "object": "chat.completion.chunk",
+                            "created": int(time.time()), "model": payload.model,
+                            "choices": [choice],
                         }
                         yield f"data: {json.dumps(chunk)}\n\n"
                         await asyncio.sleep(0.04)

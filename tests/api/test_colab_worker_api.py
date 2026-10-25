@@ -99,7 +99,7 @@ async def test_cancel_task(client: httpx.AsyncClient) -> None:
 
 @pytest.mark.anyio
 async def test_chat_completions_streaming(client: httpx.AsyncClient) -> None:
-    """Vérifie le flux streaming SSE OpenAI-compatible."""
+    """Vérifie le flux streaming SSE OpenAI-compatible et l'annulation."""
     req_body = {
         "model": "llama-3-8b-instruct",
         "messages": [{"role": "user", "content": "Hello AI"}],
@@ -114,6 +114,17 @@ async def test_chat_completions_streaming(client: httpx.AsyncClient) -> None:
 
     assert any("data: " in line for line in lines)
     assert any("[DONE]" in line for line in lines)
+
+    # Annulation anticipée du flux de chat
+    req_c = {**req_body, "requestId": "req_cancel_test"}
+    await client.post("/v1/chat/cancel", json={"requestId": "req_cancel_test"})
+    c_lines = []
+    async with client.stream("POST", "/v1/chat/completions", json=req_c) as s_resp:
+        assert s_resp.status_code == 200
+        async for line in s_resp.aiter_lines():
+            if line:
+                c_lines.append(line)
+    assert not c_lines
 
 
 @pytest.mark.anyio
@@ -130,20 +141,13 @@ async def test_task_id_validation_prevents_path_traversal(client: httpx.AsyncCli
 @pytest.mark.anyio
 async def test_worker_secret_authentication(temp_storage: Path) -> None:
     sw = ModelSwapper(cuda_backend=MockCudaBackend())
-    secured_app = create_worker_app(
-        model_swapper=sw, storage_dir=temp_storage, worker_secret="secret-colab-42"
-    )
-
-    async with httpx.AsyncClient(
-        transport=ASGITransport(app=secured_app), base_url="http://secured-colab"
-    ) as sec_client:
-        assert (await sec_client.get("/models")).status_code == 401
-        h_bad = {"X-Colab-Secret": "bad"}
-        assert (await sec_client.get("/models", headers=h_bad)).status_code == 401
-        h_sec = {"X-Colab-Secret": "secret-colab-42"}
-        assert (await sec_client.get("/models", headers=h_sec)).status_code == 200
-        h_auth = {"Authorization": "Bearer secret-colab-42"}
-        assert (await sec_client.get("/models", headers=h_auth)).status_code == 200
+    app_sec = create_worker_app(model_swapper=sw, storage_dir=temp_storage, worker_secret="sec42")
+    async with httpx.AsyncClient(transport=ASGITransport(app=app_sec), base_url="http://sec") as sc:
+        assert (await sc.get("/models")).status_code == 401
+        assert (await sc.get("/models", headers={"X-Colab-Secret": "bad"})).status_code == 401
+        assert (await sc.get("/models", headers={"X-Colab-Secret": "sec42"})).status_code == 200
+        h_auth = {"Authorization": "Bearer sec42"}
+        assert (await sc.get("/models", headers=h_auth)).status_code == 200
 
 
 @pytest.mark.anyio
