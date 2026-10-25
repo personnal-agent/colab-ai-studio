@@ -111,6 +111,30 @@ def make_valid_mp4() -> bytes:
     return ftyp + moov + mdat
 
 
+def _resolve_safe_output_path(base_dir: Path, filename: str) -> Path:
+    """Résout et valide qu'un chemin cible reste strictement confiné dans base_dir."""
+    root = os.path.realpath(str(base_dir))
+    norm_path = os.path.realpath(os.path.join(root, filename))
+    if not norm_path.startswith(root + os.sep):
+        raise ValueError("Tentative d'écriture hors du répertoire de sortie sécurisé")
+    return Path(norm_path)
+
+
+def _write_output_bytes(target: Path, data: bytes) -> None:
+    """Écrit un flux d'octets dans un chemin de sortie préalablement validé."""
+    target.write_bytes(data)
+
+
+def _resolve_existing_output_file(base_dir: Path, filename: str) -> Path | None:
+    """Résout et vérifie l'existence d'un fichier confiné dans base_dir."""
+    root = os.path.realpath(str(base_dir))
+    norm_path = os.path.realpath(os.path.join(root, filename))
+    if not norm_path.startswith(root + os.sep):
+        raise HTTPException(status_code=400, detail="Chemin de fichier interdit")
+    target = Path(norm_path)
+    return target if target.is_file() else None
+
+
 class SwitchModelRequest(BaseModel):
     modelId: str
 
@@ -290,9 +314,7 @@ def create_worker_app(
                 )
                 ext = ".mp4" if is_video else ".png"
                 filename = f"{task_id}{ext}"
-                file_path = (output_dir / filename).resolve()
-                if not file_path.is_relative_to(output_dir.resolve()):
-                    raise ValueError("Tentative d'écriture hors du répertoire de sortie sécurisé")
+                file_path = _resolve_safe_output_path(output_dir, filename)
 
                 if not sim_mode:
                     if not callable(pipeline):
@@ -339,7 +361,7 @@ def create_worker_app(
                         tasks[task_id]["progress"] = int(round(step / total_steps * 100))
 
                     valid_bytes = make_valid_png() if ext == ".png" else make_valid_mp4()
-                    file_path.write_bytes(valid_bytes)
+                    _write_output_bytes(file_path, valid_bytes)
 
             if cancel_event.is_set():
                 tasks[task_id]["status"] = "cancelled"
@@ -402,8 +424,8 @@ def create_worker_app(
         if ".." in clean_name or "/" in clean_name or "\\" in clean_name:
             raise HTTPException(status_code=400, detail="Chemin de fichier interdit")
 
-        file_path = (output_dir / clean_name).resolve()
-        if not file_path.is_relative_to(output_dir.resolve()) or not file_path.is_file():
+        file_path = _resolve_existing_output_file(output_dir, clean_name)
+        if file_path is None:
             raise HTTPException(status_code=404, detail="Fichier introuvable sur le worker")
 
         media_type = "video/mp4" if clean_name.endswith(".mp4") else "image/png"
@@ -454,27 +476,41 @@ def create_worker_app(
                         f" « {summary} »", " par", " le", " worker", " distant", " Colab.",
                     ]
                     if callable(chat_model) and not sim_mode:
+                        from threading import Thread
+
                         if request_id in active_chat_cancels or await request.is_disconnected():
                             return
                         prompt_in = "\n".join(f"{m.role}: {m.content}" for m in payload.messages)
                         tok = getattr(chat_model, "tokenizer", None)
+                        streamer_cls = None
+                        criteria_base = object
+                        criteria_list_cls = list
                         if tok is not None:
-                            from threading import Thread
+                            try:
+                                from transformers import TextIteratorStreamer
+                                from transformers.generation import (
+                                    StoppingCriteria,
+                                    StoppingCriteriaList,
+                                )
 
-                            from transformers import TextIteratorStreamer
-                            from transformers.generation import (
-                                StoppingCriteria,
-                                StoppingCriteriaList,
-                            )
+                                streamer_cls = TextIteratorStreamer
+                                criteria_base = StoppingCriteria
+                                criteria_list_cls = StoppingCriteriaList
+                            except ImportError:
+                                streamer_cls = getattr(
+                                    tok, "TextIteratorStreamer", None
+                                ) or getattr(chat_model, "TextIteratorStreamer", None)
 
-                            class CancelCriteria(StoppingCriteria):
-                                def __call__(self, input_ids, scores, **kw):
+                        if tok is not None and streamer_cls is not None:
+
+                            class CancelCriteria(criteria_base):
+                                def __call__(self, input_ids=None, scores=None, **kw):
                                     return request_id in active_chat_cancels
 
-                            streamer = TextIteratorStreamer(
+                            streamer = streamer_cls(
                                 tok, skip_prompt=True, skip_special_tokens=True
                             )
-                            crit = StoppingCriteriaList([CancelCriteria()])
+                            crit = criteria_list_cls([CancelCriteria()])
                             gen_kw = {
                                 "max_new_tokens": 150, "streamer": streamer,
                                 "stopping_criteria": crit,
@@ -548,31 +584,70 @@ def create_worker_app(
                                 active_chat_cancels.add(request_id)
                                 streamer.end()
                                 was_c = False
-                                for th, to in ((th_m, 30.0), (th_s, 2.0)):
-                                    fut = loop.run_in_executor(None, th.join, to)
-                                    while not fut.done():
-                                        try:
-                                            await asyncio.shield(fut)
-                                        except asyncio.CancelledError:
-                                            was_c = True
+                                for th in (th_m, th_s):
+                                    while th.is_alive():
+                                        fut = loop.run_in_executor(None, th.join, 0.5)
+                                        while not fut.done():
+                                            try:
+                                                await asyncio.shield(fut)
+                                            except asyncio.CancelledError:
+                                                was_c = True
                                 if was_c:
                                     raise asyncio.CancelledError()
                             yield "data: [DONE]\n\n"
                             return
 
+                        class NoTokCancelCriteria:
+                            def __call__(self, input_ids=None, scores=None, **kw):
+                                return request_id in active_chat_cancels
+
+                        crit_no_tok = [NoTokCancelCriteria()]
+                        loop = asyncio.get_running_loop()
+                        res_holder: dict[str, Any] = {}
+                        err_holder: dict[str, Exception] = {}
+
+                        def _no_tok_worker():
+                            try:
+                                try:
+                                    res_holder["res"] = chat_model(
+                                        prompt_in, max_new_tokens=150, stopping_criteria=crit_no_tok
+                                    )
+                                except TypeError:
+                                    res_holder["res"] = chat_model(prompt_in, max_new_tokens=150)
+                            except Exception as th_exc:
+                                if "out of memory" in str(th_exc).lower():
+                                    swapper.evict_vram()
+                                err_holder["err"] = th_exc
+
+                        th_no_tok = Thread(target=_no_tok_worker, daemon=True)
+                        th_no_tok.start()
                         try:
-                            if request_id in active_chat_cancels or await request.is_disconnected():
-                                return
-                            res = await asyncio.to_thread(chat_model, prompt_in, max_new_tokens=150)
-                            if request_id in active_chat_cancels or await request.is_disconnected():
-                                return
+                            while th_no_tok.is_alive():
+                                if (
+                                    request_id in active_chat_cancels
+                                    or await request.is_disconnected()
+                                ):
+                                    active_chat_cancels.add(request_id)
+                                    return
+                                await asyncio.sleep(0.04)
+                            if "err" in err_holder:
+                                raise err_holder["err"]
+                            res = res_holder.get("res")
                             if isinstance(res, list) and res and "generated_text" in res[0]:
                                 txt = res[0]["generated_text"].replace(prompt_in, "").strip()
                                 words = [w + " " for w in txt.split()]
-                        except Exception as exc:
-                            if "out of memory" in str(exc).lower():
-                                swapper.evict_vram()
-                            raise
+                        finally:
+                            active_chat_cancels.add(request_id)
+                            was_c_no_tok = False
+                            while th_no_tok.is_alive():
+                                fut = loop.run_in_executor(None, th_no_tok.join, 0.5)
+                                while not fut.done():
+                                    try:
+                                        await asyncio.shield(fut)
+                                    except asyncio.CancelledError:
+                                        was_c_no_tok = True
+                            if was_c_no_tok:
+                                raise asyncio.CancelledError()
 
                     for word in words:
                         if request_id in active_chat_cancels or await request.is_disconnected():

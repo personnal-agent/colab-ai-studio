@@ -222,3 +222,161 @@ async def test_real_callable_pipeline_execution(temp_storage: Path) -> None:
         else:
             pytest.fail("Tâche OOM non échouée")
 
+
+@pytest.mark.anyio
+async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: Path) -> None:
+    """Vérifie que gpu_lock reste acquis tant que le calcul du thread n'est pas terminé."""
+    import contextlib
+    import threading
+
+    compute_started = threading.Event()
+    finish_compute = threading.Event()
+    compute_ended = threading.Event()
+
+    class FakeStreamer:
+        def __init__(self, tok, skip_prompt=True, skip_special_tokens=True):
+            self.tok = tok
+            self.ended = False
+
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            finish_compute.wait(timeout=5.0)
+            raise StopIteration
+
+        def end(self):
+            self.ended = True
+
+    class FakeTokenizer:
+        TextIteratorStreamer = FakeStreamer
+
+    class SlowChatModel:
+        def __init__(self):
+            self.tokenizer = FakeTokenizer()
+
+        def __call__(self, prompt, **kwargs):
+            compute_started.set()
+            finish_compute.wait(timeout=5.0)
+            compute_ended.set()
+            streamer = kwargs.get("streamer")
+            if streamer:
+                streamer.end()
+
+    sw = ModelSwapper(cuda_backend=MockCudaBackend())
+    app = create_worker_app(
+        model_swapper=sw,
+        storage_dir=temp_storage,
+        model_loaders={"qwen-2.5-7b": lambda _: SlowChatModel()},
+        simulation_mode=False,
+    )
+    transport = ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+        req = {
+            "model": "qwen-2.5-7b",
+            "messages": [{"role": "user", "content": "Hello slow model"}],
+            "stream": True,
+            "requestId": "req_slow_1",
+        }
+
+        async def _run_stream():
+            async with c.stream("POST", "/v1/chat/completions", json=req) as resp:
+                async for _ in resp.aiter_lines():
+                    pass
+
+        stream_task = asyncio.create_task(_run_stream())
+
+        for _ in range(50):
+            if compute_started.is_set():
+                break
+            await asyncio.sleep(0.04)
+        assert compute_started.is_set()
+
+        cancel_resp = await c.post("/v1/chat/cancel", json={"requestId": "req_slow_1"})
+        assert cancel_resp.status_code == 200
+
+        switch_task = asyncio.create_task(
+            c.post("/models/switch", json={"modelId": "flux-schnell"})
+        )
+        await asyncio.sleep(0.1)
+
+        assert not switch_task.done()
+        assert not compute_ended.is_set()
+
+        finish_compute.set()
+
+        switch_res = await asyncio.wait_for(switch_task, timeout=4.0)
+        assert switch_res.status_code == 200
+        assert compute_ended.is_set()
+
+        with contextlib.suppress(Exception):
+            await stream_task
+
+
+@pytest.mark.anyio
+async def test_chat_no_tokenizer_cancellation_and_lock(temp_storage: Path) -> None:
+    """Vérifie l'annulation et la rétention du verrou pour un modèle sans tokenizer."""
+    import contextlib
+    import threading
+
+    compute_started = threading.Event()
+    finish_compute = threading.Event()
+    compute_ended = threading.Event()
+
+    class SlowCallableNoTok:
+        def __call__(self, prompt, **kwargs):
+            compute_started.set()
+            finish_compute.wait(timeout=5.0)
+            compute_ended.set()
+            return [{"generated_text": prompt + " réponse finie"}]
+
+    sw = ModelSwapper(cuda_backend=MockCudaBackend())
+    app = create_worker_app(
+        model_swapper=sw,
+        storage_dir=temp_storage,
+        model_loaders={"qwen-2.5-7b": lambda _: SlowCallableNoTok()},
+        simulation_mode=False,
+    )
+    transport = ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+        req = {
+            "model": "qwen-2.5-7b",
+            "messages": [{"role": "user", "content": "Hello slow callable"}],
+            "stream": True,
+            "requestId": "req_no_tok_1",
+        }
+
+        async def _run_stream():
+            async with c.stream("POST", "/v1/chat/completions", json=req) as resp:
+                async for _ in resp.aiter_lines():
+                    pass
+
+        stream_task = asyncio.create_task(_run_stream())
+
+        for _ in range(50):
+            if compute_started.is_set():
+                break
+            await asyncio.sleep(0.04)
+        assert compute_started.is_set()
+
+        cancel_resp = await c.post("/v1/chat/cancel", json={"requestId": "req_no_tok_1"})
+        assert cancel_resp.status_code == 200
+
+        switch_task = asyncio.create_task(
+            c.post("/models/switch", json={"modelId": "flux-schnell"})
+        )
+        await asyncio.sleep(0.1)
+
+        assert not switch_task.done()
+        assert not compute_ended.is_set()
+
+        finish_compute.set()
+
+        switch_res = await asyncio.wait_for(switch_task, timeout=4.0)
+        assert switch_res.status_code == 200
+        assert compute_ended.is_set()
+
+        with contextlib.suppress(Exception):
+            await stream_task
+
+
