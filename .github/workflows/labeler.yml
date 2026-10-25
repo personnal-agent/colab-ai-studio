@@ -1,5 +1,7 @@
 name: Pull request labeler
 
+# Known limitation: fork PRs get a read-only token and are not labeled.
+# pull_request_target is deliberately avoided (prohibited by verify_workflows.py).
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -42,7 +44,7 @@ jobs:
             });
 
       - name: Label first-time contributor
-        if: github.event.action == 'opened' && (github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' || github.event.pull_request.author_association == 'FIRST_TIMER')
+        if: github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR' || github.event.pull_request.author_association == 'FIRST_TIMER'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
