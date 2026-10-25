@@ -481,15 +481,46 @@ def create_worker_app(
                             "streamer": streamer,
                             "stopping_criteria": crit,
                         }
-                        th = Thread(target=chat_model, args=(prompt_in,), kwargs=gen_kw)
-                        th.start()
+                        loop = asyncio.get_running_loop()
+                        q: asyncio.Queue[tuple[str | None, Exception | None]] = asyncio.Queue()
+
+                        def _worker():
+                            try:
+                                chat_model(prompt_in, **gen_kw)
+                            except Exception as th_err:
+                                if "out of memory" in str(th_err).lower():
+                                    swapper.evict_vram()
+                                loop.call_soon_threadsafe(q.put_nowait, (None, th_err))
+
+                        def _stream_reader():
+                            try:
+                                for token in streamer:
+                                    if request_id in active_chat_cancels:
+                                        break
+                                    loop.call_soon_threadsafe(q.put_nowait, (token, None))
+                            except Exception as s_err:
+                                loop.call_soon_threadsafe(q.put_nowait, (None, s_err))
+                            finally:
+                                loop.call_soon_threadsafe(q.put_nowait, (None, None))
+
+                        th_m, th_s = Thread(target=_worker), Thread(target=_stream_reader)
+                        th_m.start()
+                        th_s.start()
                         try:
-                            for token in streamer:
+                            while True:
                                 if (
                                     request_id in active_chat_cancels
                                     or await request.is_disconnected()
                                 ):
                                     return
+                                try:
+                                    token, err = await asyncio.wait_for(q.get(), timeout=15.0)
+                                except asyncio.TimeoutError:
+                                    return
+                                if err is not None:
+                                    raise err
+                                if token is None:
+                                    break
                                 d = {"content": token}
                                 choice = {"index": 0, "delta": d, "finish_reason": None}
                                 chunk = {
@@ -500,9 +531,9 @@ def create_worker_app(
                                     "choices": [choice],
                                 }
                                 yield f"data: {json.dumps(chunk)}\n\n"
-                                await asyncio.sleep(0.01)
                         finally:
-                            th.join(timeout=2.0)
+                            th_m.join(timeout=1.0)
+                            th_s.join(timeout=1.0)
                         yield "data: [DONE]\n\n"
                         return
 

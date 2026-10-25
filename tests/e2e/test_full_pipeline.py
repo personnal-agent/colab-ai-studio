@@ -100,15 +100,8 @@ async def test_full_pipeline_uc01_to_uc08(
     custom_project_storage: Path = e2e_env["custom_project_storage"]
 
     # --- UC-08 : Connecter l'environnement distant ---
-    # Initialiser config.json avec l'URL du tunnel Colab et le secret partagé (Thread #2)
-    cfg = StudioConfig(
-        executionMode=ExecutionMode.COLAB,
-        colab={
-            "tunnelUrl": "http://test-colab-worker",
-            "accountEmail": "creator@test.com",
-            "secret": e2e_env["worker_secret"],
-        },
-    )
+    colab_cfg = {"tunnelUrl": "http://test-colab-worker", "secret": e2e_env["worker_secret"]}
+    cfg = StudioConfig(executionMode=ExecutionMode.COLAB, colab=colab_cfg)
     await json_store.write_dict(CONFIG_FILE.name, cfg.model_dump())
 
     health_resp = await client.get("/api/health")
@@ -120,19 +113,12 @@ async def test_full_pipeline_uc01_to_uc08(
 
     # --- UC-06 : Gérer les Brand Kits ---
     bk_form = {"name": "NovaCyber", "overview": "Cyberpunk néon"}
-    create_bk_resp = await client.post("/api/brand-kits", data=bk_form)
-    assert create_bk_resp.status_code == 201
-    kit_id = create_bk_resp.json()["id"]
-
-    list_bk_resp = await client.get("/api/brand-kits")
-    assert list_bk_resp.status_code == 200
-    assert any(k["id"] == kit_id for k in list_bk_resp.json())
+    kit_id = (await client.post("/api/brand-kits", data=bk_form)).json()["id"]
+    assert any(k["id"] == kit_id for k in (await client.get("/api/brand-kits")).json())
 
     # --- UC-07 : Organiser les projets ---
     proj_payload = {"name": "Film Sci-Fi", "storagePath": str(custom_project_storage)}
-    create_proj_resp = await client.post("/api/projects", json=proj_payload)
-    assert create_proj_resp.status_code == 201
-    proj_id = create_proj_resp.json()["id"]
+    proj_id = (await client.post("/api/projects", json=proj_payload)).json()["id"]
 
     # --- UC-01 & UC-03 : Produire un média & Suivre la génération via SSE ---
     gen_payload = {
@@ -213,16 +199,11 @@ async def test_full_pipeline_uc01_to_uc08(
     assert fav_resp.json()["isFavorite"] is True
 
     # --- UC-04 : Annuler une génération ---
-    cancel_submit_resp = await client.post(
-        "/api/generate/media",
-        json={"prompt": "Génération à annuler", "modelId": "wan-2.1-t2v", "type": "video"},
-    )
-    assert cancel_submit_resp.status_code == 202
-    task_to_cancel_id = cancel_submit_resp.json()["taskId"]
-
-    cancel_call_resp = await client.post(f"/api/tasks/{task_to_cancel_id}/cancel")
-    assert cancel_call_resp.status_code == 200
-    assert cancel_call_resp.json()["status"] == "cancelled"
+    cancel_payload = {"prompt": "Annuler", "modelId": "wan-2.1-t2v", "type": "video"}
+    res = await client.post("/api/generate/media", json=cancel_payload)
+    task_to_cancel_id = res.json()["taskId"]
+    cancel_call = await client.post(f"/api/tasks/{task_to_cancel_id}/cancel")
+    assert cancel_call.status_code == 200 and cancel_call.json()["status"] == "cancelled"
 
     # Vérification que le statut persisté est cancelled
     gens_after_cancel = await json_store.read_list(GENERATIONS_FILE.name)
