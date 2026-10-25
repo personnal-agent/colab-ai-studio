@@ -491,6 +491,8 @@ def create_worker_app(
                                 if "out of memory" in str(th_err).lower():
                                     swapper.evict_vram()
                                 loop.call_soon_threadsafe(q.put_nowait, (None, th_err))
+                            finally:
+                                streamer.end()
 
                         def _stream_reader():
                             try:
@@ -503,7 +505,8 @@ def create_worker_app(
                             finally:
                                 loop.call_soon_threadsafe(q.put_nowait, (None, None))
 
-                        th_m, th_s = Thread(target=_worker), Thread(target=_stream_reader)
+                        th_m = Thread(target=_worker, daemon=True)
+                        th_s = Thread(target=_stream_reader, daemon=True)
                         th_m.start()
                         th_s.start()
                         try:
@@ -514,8 +517,23 @@ def create_worker_app(
                                 ):
                                     return
                                 try:
-                                    token, err = await asyncio.wait_for(q.get(), timeout=15.0)
+                                    token, err = await asyncio.wait_for(q.get(), timeout=60.0)
                                 except asyncio.TimeoutError:
+                                    msg = "\n[Erreur: délai de génération dépassé]"
+                                    ec = {
+                                        "index": 0,
+                                        "delta": {"content": msg},
+                                        "finish_reason": "error",
+                                    }
+                                    echunk = {
+                                        "id": request_id,
+                                        "object": "chat.completion.chunk",
+                                        "created": int(time.time()),
+                                        "model": payload.model,
+                                        "choices": [ec],
+                                    }
+                                    yield f"data: {json.dumps(echunk)}\n\n"
+                                    yield "data: [DONE]\n\n"
                                     return
                                 if err is not None:
                                     raise err
@@ -532,8 +550,9 @@ def create_worker_app(
                                 }
                                 yield f"data: {json.dumps(chunk)}\n\n"
                         finally:
-                            th_m.join(timeout=1.0)
-                            th_s.join(timeout=1.0)
+                            streamer.end()
+                            th_m.join(timeout=0.5)
+                            th_s.join(timeout=0.5)
                         yield "data: [DONE]\n\n"
                         return
 

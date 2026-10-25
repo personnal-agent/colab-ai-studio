@@ -118,24 +118,17 @@ async def test_chat_completions_streaming(client: httpx.AsyncClient) -> None:
 
 @pytest.mark.anyio
 async def test_file_download_security(client: httpx.AsyncClient) -> None:
-    """Vérifie le blocage de traversée de chemin sur /files/{filename}."""
-    resp = await client.get("/files/../secret.txt")
-    assert resp.status_code in {400, 403, 404}
+    assert (await client.get("/files/../secret.txt")).status_code in {400, 403, 404}
 
 
 @pytest.mark.anyio
 async def test_task_id_validation_prevents_path_traversal(client: httpx.AsyncClient) -> None:
-    """Vérifie le rejet strict des taskId malveillants contenant des traversées de chemin."""
-    bad_payload = {
-        "taskId": "../victim", "modelId": "flux-schnell", "prompt": "Test path traversal",
-    }
-    resp = await client.post("/infer", json=bad_payload)
-    assert resp.status_code == 422
+    bad = {"taskId": "../victim", "modelId": "flux-schnell", "prompt": "Test"}
+    assert (await client.post("/infer", json=bad)).status_code == 422
 
 
 @pytest.mark.anyio
 async def test_worker_secret_authentication(temp_storage: Path) -> None:
-    """Vérifie la protection par secret partagé du worker (Thread #2)."""
     sw = ModelSwapper(cuda_backend=MockCudaBackend())
     secured_app = create_worker_app(
         model_swapper=sw, storage_dir=temp_storage, worker_secret="secret-colab-42"
@@ -155,32 +148,18 @@ async def test_worker_secret_authentication(temp_storage: Path) -> None:
 
 @pytest.mark.anyio
 async def test_idle_timeout_lifespan_trigger(temp_storage: Path) -> None:
-    """Vérifie que l'inactivité déclenche l'éviction via la tâche périodique (Thread #6)."""
     sw = ModelSwapper(cuda_backend=MockCudaBackend(), idle_timeout_seconds=0.15)
     worker_app = create_worker_app(
-        model_swapper=sw,
-        storage_dir=temp_storage,
-        idle_check_interval=0.08,
+        model_swapper=sw, storage_dir=temp_storage, idle_check_interval=0.08,
     )
-
-    async with (
-        worker_app.router.lifespan_context(worker_app),
-        httpx.AsyncClient(
-            transport=ASGITransport(app=worker_app), base_url="http://idle-colab"
-        ) as c,
-    ):
-        # Bascule vers un modèle actif
-        switch_resp = await c.post("/models/switch", json={"modelId": "flux-schnell"})
-        assert switch_resp.status_code == 200
+    t = ASGITransport(app=worker_app)
+    ctx = worker_app.router.lifespan_context(worker_app)
+    async with ctx, httpx.AsyncClient(transport=t, base_url="http://idle") as c:
+        assert (await c.post("/models/switch", json={"modelId": "flux-schnell"})).status_code == 200
         assert sw.state.value == "ModeleActif"
-
-        # Attente que le délai d'inactivité (0.15s) et l'intervalle (0.08s) s'écoulent
         await asyncio.sleep(0.35)
-
-        # L'automate a bien été évincé en veille par la tâche de fond
-        health_resp = await c.get("/health")
-        assert health_resp.json()["state"] == "EnVeilleVRAMLibre"
-        assert sw.active_model is None
+        h = (await c.get("/health")).json()
+        assert h["state"] == "EnVeilleVRAMLibre" and sw.active_model is None
 
 
 @pytest.mark.anyio
