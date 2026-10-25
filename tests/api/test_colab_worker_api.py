@@ -14,15 +14,32 @@ from app.colab_worker.server import create_worker_app
 
 
 class MockCudaBackend:
-    def is_available(self) -> bool: return True
-    def empty_cache(self) -> None: pass
-    def ipc_collect(self) -> None: pass
-    def memory_allocated(self, device: int | None = None) -> int: return 2 * 1024 * 1024 * 1024
-    def get_device_name(self, device: int | None = None) -> str: return "Tesla T4 Test"
+    """Backend CUDA simulé pour les tests d'intégration du worker."""
+
+    def is_available(self) -> bool:
+        """Indique que le GPU CUDA est disponible."""
+        return True
+
+    def empty_cache(self) -> None:
+        """Simule le vidage de la mémoire cache GPU."""
+        pass
+
+    def ipc_collect(self) -> None:
+        """Simule la collecte mémoire inter-processus."""
+        pass
+
+    def memory_allocated(self, device: int | None = None) -> int:
+        """Simule l'allocation mémoire actuelle (2 Go)."""
+        return 2 * 1024 * 1024 * 1024
+
+    def get_device_name(self, device: int | None = None) -> str:
+        """Retourne le nom du GPU Tesla T4 simulé."""
+        return "Tesla T4 Test"
 
 
 @pytest.fixture
 def temp_storage(tmp_path: Path) -> Path:
+    """Fixture fournissant un répertoire temporaire de stockage isolé."""
     storage = tmp_path / "worker_files"
     storage.mkdir(parents=True, exist_ok=True)
     return storage
@@ -30,16 +47,19 @@ def temp_storage(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def swapper() -> ModelSwapper:
+    """Fixture fournissant une instance de ModelSwapper avec backend CUDA simulé."""
     return ModelSwapper(cuda_backend=MockCudaBackend(), idle_timeout_seconds=300.0)
 
 
 @pytest.fixture
 def worker_app(swapper: ModelSwapper, temp_storage: Path):
+    """Fixture créant l'application FastAPI du worker."""
     return create_worker_app(model_swapper=swapper, storage_dir=temp_storage)
 
 
 @pytest.fixture
 async def client(worker_app) -> httpx.AsyncClient:
+    """Fixture fournissant un client HTTP asynchrone connecté au worker."""
     async with httpx.AsyncClient(
         transport=ASGITransport(app=worker_app), base_url="http://test-colab"
     ) as c:
@@ -48,6 +68,7 @@ async def client(worker_app) -> httpx.AsyncClient:
 
 @pytest.mark.anyio
 async def test_health_check(client: httpx.AsyncClient) -> None:
+    """Vérifie la route /health du worker et la disponibilité du GPU."""
     data = (await client.get("/health")).json()
     assert data["status"] == "ok" and data["gpu"] == "Tesla T4 Test"
     assert "vramFreeMb" in data and data["state"] == "EnVeilleVRAMLibre"
@@ -55,6 +76,7 @@ async def test_health_check(client: httpx.AsyncClient) -> None:
 
 @pytest.mark.anyio
 async def test_list_models(client: httpx.AsyncClient) -> None:
+    """Vérifie la liste des modèles supportés retournée par /models."""
     models = (await client.get("/models")).json()
     assert isinstance(models, list) and len(models) >= 4
     ids = [m["id"] for m in models]
@@ -63,6 +85,7 @@ async def test_list_models(client: httpx.AsyncClient) -> None:
 
 @pytest.mark.anyio
 async def test_switch_model(client: httpx.AsyncClient) -> None:
+    """Vérifie la bascule de modèle actif via /models/switch."""
     resp = await client.post("/models/switch", json={"modelId": "flux-schnell"})
     assert resp.status_code == 200 and resp.json()["activeModel"] == "flux-schnell"
     h = (await client.get("/health")).json()
@@ -136,17 +159,20 @@ async def test_chat_completions_streaming(client: httpx.AsyncClient) -> None:
 
 @pytest.mark.anyio
 async def test_file_download_security(client: httpx.AsyncClient) -> None:
+    """Vérifie le blocage des tentatives de path traversal sur /files."""
     assert (await client.get("/files/../secret.txt")).status_code in {400, 403, 404}
 
 
 @pytest.mark.anyio
 async def test_task_id_validation_prevents_path_traversal(client: httpx.AsyncClient) -> None:
+    """Vérifie la validation stricte de taskId empêchant le path traversal."""
     bad = {"taskId": "../victim", "modelId": "flux-schnell", "prompt": "Test"}
     assert (await client.post("/infer", json=bad)).status_code == 422
 
 
 @pytest.mark.anyio
 async def test_worker_secret_authentication(temp_storage: Path) -> None:
+    """Vérifie l'authentification par secret worker (en-tête ou Bearer token)."""
     sw = ModelSwapper(cuda_backend=MockCudaBackend())
     app_sec = create_worker_app(model_swapper=sw, storage_dir=temp_storage, worker_secret="sec42")
     async with httpx.AsyncClient(transport=ASGITransport(app=app_sec), base_url="http://sec") as sc:
@@ -159,6 +185,7 @@ async def test_worker_secret_authentication(temp_storage: Path) -> None:
 
 @pytest.mark.anyio
 async def test_idle_timeout_lifespan_trigger(temp_storage: Path) -> None:
+    """Vérifie l'éviction automatique du modèle après inactivité dans le lifespan."""
     sw = ModelSwapper(cuda_backend=MockCudaBackend(), idle_timeout_seconds=0.15)
     worker_app = create_worker_app(
         model_swapper=sw, storage_dir=temp_storage, idle_check_interval=0.08,
@@ -179,6 +206,7 @@ async def test_real_callable_pipeline_execution(temp_storage: Path) -> None:
     received_kwargs = {}
 
     def mock_pipe(**kw):
+        """Simule un pipeline d'inférence réel avec support d'erreur OOM."""
         received_kwargs.update(kw)
         if kw.get("prompt") == "trigger_oom":
             raise RuntimeError("CUDA out of memory in computation")
@@ -239,13 +267,16 @@ async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: P
         """Streamer de test synchronisé avec les étapes d'annulation."""
 
         def __init__(self, tok, skip_prompt=True, skip_special_tokens=True):
+            """Initialise le streamer de test."""
             self.tok = tok
             self.ended = False
 
         def __iter__(self):
+            """Retourne l'itérateur du streamer."""
             return self
 
         def __next__(self):
+            """Fournit le prochain token après synchronisation."""
             while not poke_stream.wait(0.01):
                 if finish_compute.is_set():
                     raise StopIteration
@@ -253,6 +284,7 @@ async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: P
             return "x"
 
         def end(self):
+            """Signale la fin de la génération et marque l'entrée en cleanup."""
             self.ended = True
             cleanup_entered.set()
 
@@ -260,10 +292,14 @@ async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: P
         TextIteratorStreamer = FakeStreamer
 
     class SlowChatModel:
+        """Modèle LLM lent simulant un délai de calcul pour tester l'annulation."""
+
         def __init__(self):
+            """Initialise le modèle lent avec son tokenizer simulé."""
             self.tokenizer = FakeTokenizer()
 
         def __call__(self, prompt, **kwargs):
+            """Simule la boucle d'inférence jusqu'au signal de fin."""
             compute_started.set()
             finish_compute.wait(timeout=5.0)
             compute_ended.set()
@@ -288,6 +324,7 @@ async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: P
         }
 
         async def _run_stream():
+            """Consomme le flux SSE jusqu'à épuisement."""
             async with c.stream("POST", "/v1/chat/completions", json=req) as resp:
                 async for _ in resp.aiter_lines():
                     pass
@@ -340,7 +377,10 @@ async def test_chat_no_tokenizer_cancellation_and_lock(
     real_thread = threading.Thread
 
     class ObservedThread(real_thread):
+        """Sous-classe de Thread observant l'entrée dans le cleanup de _no_tok_worker."""
+
         def __init__(self, *args, **kwargs):
+            """Initialise le thread observé en vérifiant sa cible."""
             target = kwargs.get("target")
             self.observes_no_tok_cleanup = (
                 getattr(target, "__name__", "") == "_no_tok_worker"
@@ -348,6 +388,7 @@ async def test_chat_no_tokenizer_cancellation_and_lock(
             super().__init__(*args, **kwargs)
 
         def join(self, *args, **kwargs):
+            """Intercepte le join pour signaler l'entrée effective en nettoyage."""
             if self.observes_no_tok_cleanup:
                 cleanup_entered.set()
             return super().join(*args, **kwargs)
@@ -355,7 +396,10 @@ async def test_chat_no_tokenizer_cancellation_and_lock(
     monkeypatch.setattr(threading, "Thread", ObservedThread)
 
     class SlowCallableNoTok:
+        """Modèle callable lent sans tokenizer pour tester le verrou GPU."""
+
         def __call__(self, prompt, **kwargs):
+            """Exécute l'inférence avec attente d'événement."""
             compute_started.set()
             finish_compute.wait(timeout=5.0)
             compute_ended.set()
@@ -378,6 +422,7 @@ async def test_chat_no_tokenizer_cancellation_and_lock(
         }
 
         async def _run_stream():
+            """Consomme le flux de streaming pour observer le verrou."""
             async with c.stream("POST", "/v1/chat/completions", json=req) as resp:
                 async for _ in resp.aiter_lines():
                     pass
@@ -419,7 +464,10 @@ async def test_chat_no_tokenizer_successful_response(temp_storage: Path) -> None
     import json
 
     class SimpleNoTokModel:
+        """Modèle LLM simulé sans tokenizer retournant une réponse immédiate."""
+
         def __call__(self, prompt, **kwargs):
+            """Génère la complétion textuelle complète."""
             return [{"generated_text": prompt + " Réponse complète sans tokenizer."}]
 
     sw = ModelSwapper(cuda_backend=MockCudaBackend())
@@ -468,7 +516,10 @@ async def test_chat_no_tokenizer_asyncio_task_cancellation(
     stopping_criteria_seen = threading.Event()
 
     class StoppableNoTokModel:
+        """Modèle LLM sans tokenizer surveillant stopping_criteria pour s'interrompre."""
+
         def __call__(self, prompt, **kwargs):
+            """Simule une inférence itérative interrompue dès que le critère est vrai."""
             compute_started.set()
             crits = kwargs.get("stopping_criteria") or []
             # Simule une boucle de génération surveillant stopping_criteria
@@ -496,6 +547,7 @@ async def test_chat_no_tokenizer_asyncio_task_cancellation(
         }
 
         async def _run_stream():
+            """Consomme le flux de streaming pour tester l'annulation de tâche asyncio."""
             async with c.stream("POST", "/v1/chat/completions", json=req) as resp:
                 async for _ in resp.aiter_lines():
                     pass

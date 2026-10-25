@@ -225,6 +225,7 @@ async def test_generation_file_and_thumbnail_serving(test_env, tmp_path):
 
 
 async def test_brand_kits_crud_blank_and_files(test_env, monkeypatch):
+    """Vérifie le CRUD des Brand Kits : vierge, SVG/CSS et web avec query/fragment."""
     client, _, _, _ = test_env
     # 1. Blank
     res_b = await client.post("/api/brand-kits", data={"name": "Apple", "overview": "Minimal."})

@@ -25,6 +25,7 @@ from app.models.domain import BrandKit, Color, Font, Logo
 
 
 def _utc_now_iso() -> str:
+    """Retourne l'horodatage UTC actuel au format ISO 8601 strict."""
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 

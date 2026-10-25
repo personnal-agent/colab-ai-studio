@@ -204,9 +204,11 @@ def create_worker_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        """Gestionnaire de cycle de vie de l'application gérant la boucle d'inactivité."""
         stop_event = asyncio.Event()
 
         async def _idle_checker():
+            """Tâche de fond vérifiant périodiquement l'inactivité du GPU."""
             while not stop_event.is_set():
                 try:
                     await asyncio.sleep(idle_check_interval)
@@ -332,9 +334,11 @@ def create_worker_app(
                     tasks[task_id]["progress"] = 50
 
                     def _run_real_infer():
+                        """Exécute l'inférence du pipeline réel dans un thread séparé."""
                         kw = _prepare_pipeline_kwargs(payload)
                         if hasattr(pipeline, "callback_on_step_end"):
                             def _cb(p, s, t, cb_kw):
+                                """Rappel d'étape interrompant la génération en cas d'annulation."""
                                 if cancel_event.is_set():
                                     p._interrupt = True
                                 return cb_kw
