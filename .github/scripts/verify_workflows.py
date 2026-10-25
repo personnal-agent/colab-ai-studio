@@ -319,7 +319,7 @@ def check_workflow(path: Path) -> int:
 
     # 2. Permissions: mandatory top-level block, job-level least privilege enforcement.
     has_permissions = False
-    allowed_write_scopes = {"issues", "pull-requests", "contents"}
+    allowed_write_scopes = {"issues", "pull-requests", "contents", "security-events"}
     for number, key, value in top_level_entries(lines):
         if key == "permissions":
             has_permissions = True
