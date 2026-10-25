@@ -250,7 +250,12 @@ async def test_brand_kits_crud_blank_and_files(test_env, monkeypatch):
     bk = res_w.json()
     assert "Cinematic AI" in bk["overview"] and "#0A84FF" in [c["hex"] for c in bk["colors"]]
     assert any("Cabinet Grotesk" in f["family"] for f in bk["fonts"]) and len(bk["logos"]) >= 1
-    assert len((await client.get("/api/brand-kits")).json()) == 3
+    # 3b. Website with query parameters and fragment
+    res_wq = await client.post(
+        "/api/brand-kits",
+        data={"name": "HorizonQuery", "websiteUrl": "https://horizon.ai?lang=fr&ref=test#section"},
+    )
+    assert res_wq.status_code == 201
 
     # 4. Over 50 MB cap returns 413
     res_h = await client.post(

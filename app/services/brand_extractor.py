@@ -17,7 +17,7 @@ import uuid
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlsplit, urlunsplit
 
 import httpx
 
@@ -33,6 +33,7 @@ FONT_FAMILY_FINDER = re.compile(r"font-family\s*:\s*([^;\}]+)", re.IGNORECASE)
 
 
 def _rank_colors(hex_matches: list[str]) -> list[Color]:
+    """Trie et classe les couleurs hexadécimales détectées par fréquence d'apparition."""
     counts = Counter(m.upper() for m in hex_matches)
     colors = [
         Color(hex=code, label=f"Teinte {i + 1}", isDominant=(i == 0))
@@ -45,6 +46,7 @@ def _rank_colors(hex_matches: list[str]) -> list[Color]:
 
 
 async def _validate_safe_url(url: str) -> None:
+    """Valide qu'une URL utilise un protocole supporté et ne cible pas d'adresses privées."""
     parsed = urlparse(url)
     scheme = parsed.scheme.lower()
     if scheme not in ("http", "https"):
@@ -90,12 +92,36 @@ async def _validate_safe_url(url: str) -> None:
 
 
 async def _fetch_safe_website(initial_url: str, max_redirects: int = 5) -> httpx.Response:
+    """Récupère une page web de manière sécurisée en appliquant les contrôles anti-SSRF."""
     headers = {"User-Agent": "Mozilla/5.0 (compatible; ColabAIStudio/1.0)"}
     current_url = initial_url
 
     async with httpx.AsyncClient(timeout=5.0, follow_redirects=False, headers=headers) as client:
         for _ in range(max_redirects + 1):
+            parsed_u = urlsplit(current_url)
+            if parsed_u.hostname:
+                with contextlib.suppress(Exception):
+                    ascii_host = parsed_u.hostname.encode("idna").decode("ascii")
+                    if ascii_host != parsed_u.hostname:
+                        netloc = ascii_host
+                        if parsed_u.port:
+                            netloc = f"{netloc}:{parsed_u.port}"
+                        if parsed_u.username or parsed_u.password:
+                            userinfo = parsed_u.username or ""
+                            if parsed_u.password:
+                                userinfo += f":{parsed_u.password}"
+                            netloc = f"{userinfo}@{netloc}"
+                        current_url = urlunsplit((
+                            parsed_u.scheme, netloc, parsed_u.path,
+                            parsed_u.query, parsed_u.fragment,
+                        ))
+
             await _validate_safe_url(current_url)
+            if not re.fullmatch(
+                r"https?://[A-Za-z0-9.\-\[\]:]+(?:/[^\s<>\"']*)?(?:\?[^\s<>\"']*)?(?:#[^\s<>\"']*)?",
+                current_url,
+            ):
+                raise ValueError(f"URL invalide ou non sécurisée : '{current_url}'")
             try:
                 resp = await client.get(current_url)
             except (httpx.RequestError, OSError) as e:
@@ -129,11 +155,15 @@ async def _fetch_safe_website(initial_url: str, max_redirects: int = 5) -> httpx
 
 
 class BrandKitExtractor:
+    """Service d'extraction et d'instanciation de Brand Kits."""
+
     def __init__(self, assets_dir: Path | str) -> None:
+        """Initialise le répertoire cible pour le stockage des actifs extraits."""
         self.assets_dir = Path(assets_dir).resolve()
         self.assets_dir.mkdir(parents=True, exist_ok=True)
 
     def create_blank(self, name: str, overview: str = "") -> BrandKit:
+        """Crée un Brand Kit vierge avec les métadonnées de base."""
         now = _utc_now_iso()
         return BrandKit(
             id=f"bk_{uuid.uuid4().hex[:8]}",
@@ -149,7 +179,9 @@ class BrandKitExtractor:
         files: list[tuple[str, bytes]],
         overview: str = "",
     ) -> BrandKit:
+        """Extrait logos, polices et palettes de couleurs depuis des fichiers importés."""
         def _process_files() -> tuple[list[Logo], list[Color], list[Font]]:
+            """Analyse et classe les fichiers de marque sur le disque."""
             logos: list[Logo] = []
             extracted_fonts: list[Font] = []
             color_candidates: list[str] = []
@@ -207,6 +239,7 @@ class BrandKitExtractor:
         )
 
     async def extract_from_website(self, name: str, website_url: str) -> BrandKit:
+        """Récupère et extrait l'identité visuelle depuis l'URL d'un site web public."""
         clean_url = website_url.strip()
         if not clean_url.startswith(("http://", "https://")):
             clean_url = f"https://{clean_url}"
