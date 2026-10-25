@@ -550,14 +550,20 @@ def create_worker_app(
                                 }
                                 yield f"data: {json.dumps(chunk)}\n\n"
                         finally:
+                            active_chat_cancels.add(request_id)
                             streamer.end()
-                            th_m.join(timeout=0.5)
-                            th_s.join(timeout=0.5)
+                            th_m.join(timeout=30.0)
+                            th_s.join(timeout=2.0)
+                            active_chat_cancels.discard(request_id)
                         yield "data: [DONE]\n\n"
                         return
 
                     try:
+                        if request_id in active_chat_cancels or await request.is_disconnected():
+                            return
                         res = await asyncio.to_thread(chat_model, prompt_in, max_new_tokens=150)
+                        if request_id in active_chat_cancels or await request.is_disconnected():
+                            return
                         if isinstance(res, list) and res and "generated_text" in res[0]:
                             txt = res[0]["generated_text"].replace(prompt_in, "").strip()
                             words = [w + " " for w in txt.split()]
