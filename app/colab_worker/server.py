@@ -664,7 +664,7 @@ def create_worker_app(
                             if isinstance(res, list) and res and "generated_text" in res[0]:
                                 txt = res[0]["generated_text"].replace(prompt_in, "").strip()
                                 words = [w + " " for w in txt.split()]
-                        except Exception:
+                        except (Exception, asyncio.CancelledError):
                             cancelled = True
                             active_chat_cancels.add(request_id)
                             raise

@@ -454,3 +454,68 @@ async def test_chat_no_tokenizer_successful_response(temp_storage: Path) -> None
         assert "Réponse complète sans tokenizer." in full_text
 
 
+@pytest.mark.parametrize("anyio_backend", ["asyncio"])
+@pytest.mark.anyio
+async def test_chat_no_tokenizer_asyncio_task_cancellation(
+    temp_storage: Path, anyio_backend: str
+) -> None:
+    """Vérifie que l'annulation asyncio de la tâche de flux signale bien l'arrêt au modèle."""
+    import contextlib
+    import threading
+    import time
+
+    compute_started = threading.Event()
+    stopping_criteria_seen = threading.Event()
+
+    class StoppableNoTokModel:
+        def __call__(self, prompt, **kwargs):
+            compute_started.set()
+            crits = kwargs.get("stopping_criteria") or []
+            # Simule une boucle de génération surveillant stopping_criteria
+            for _ in range(100):
+                if any(c(None, None) for c in crits):
+                    stopping_criteria_seen.set()
+                    return [{"generated_text": prompt + " [Interrompu]"}]
+                time.sleep(0.02)
+            return [{"generated_text": prompt + " [Fini]"}]
+
+    sw = ModelSwapper(cuda_backend=MockCudaBackend())
+    app = create_worker_app(
+        model_swapper=sw,
+        storage_dir=temp_storage,
+        model_loaders={"qwen-2.5-7b": lambda _: StoppableNoTokModel()},
+        simulation_mode=False,
+    )
+    transport = ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+        req = {
+            "model": "qwen-2.5-7b",
+            "messages": [{"role": "user", "content": "Question"}],
+            "stream": True,
+            "requestId": "req_notok_asyncio_cancel",
+        }
+
+        async def _run_stream():
+            async with c.stream("POST", "/v1/chat/completions", json=req) as resp:
+                async for _ in resp.aiter_lines():
+                    pass
+
+        stream_task = asyncio.create_task(_run_stream())
+
+        # Attendre que le modèle démarre son calcul
+        for _ in range(50):
+            if compute_started.is_set():
+                break
+            await asyncio.sleep(0.02)
+        assert compute_started.is_set()
+
+        # Annuler la tâche asynchrone de streaming (lève asyncio.CancelledError dans le generator)
+        stream_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await stream_task
+
+        # Vérifier que le critère d'arrêt a bien été prévenu grâce à active_chat_cancels
+        assert stopping_criteria_seen.wait(timeout=2.0)
+
+
+
