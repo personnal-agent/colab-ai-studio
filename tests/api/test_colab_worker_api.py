@@ -232,8 +232,12 @@ async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: P
     compute_started = threading.Event()
     finish_compute = threading.Event()
     compute_ended = threading.Event()
+    poke_stream = threading.Event()
+    cleanup_entered = threading.Event()
 
     class FakeStreamer:
+        """Streamer de test synchronisé avec les étapes d'annulation."""
+
         def __init__(self, tok, skip_prompt=True, skip_special_tokens=True):
             self.tok = tok
             self.ended = False
@@ -242,11 +246,15 @@ async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: P
             return self
 
         def __next__(self):
-            finish_compute.wait(timeout=5.0)
-            raise StopIteration
+            while not poke_stream.wait(0.01):
+                if finish_compute.is_set():
+                    raise StopIteration
+            poke_stream.clear()
+            return "x"
 
         def end(self):
             self.ended = True
+            cleanup_entered.set()
 
     class FakeTokenizer:
         TextIteratorStreamer = FakeStreamer
@@ -295,6 +303,9 @@ async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: P
         cancel_resp = await c.post("/v1/chat/cancel", json={"requestId": "req_slow_1"})
         assert cancel_resp.status_code == 200
 
+        poke_stream.set()
+        assert await asyncio.to_thread(cleanup_entered.wait, 4.0)
+
         switch_task = asyncio.create_task(
             c.post("/models/switch", json={"modelId": "flux-schnell"})
         )
@@ -304,6 +315,7 @@ async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: P
         assert not compute_ended.is_set()
 
         finish_compute.set()
+        poke_stream.set()
 
         switch_res = await asyncio.wait_for(switch_task, timeout=4.0)
         assert switch_res.status_code == 200
@@ -314,7 +326,9 @@ async def test_chat_concurrency_and_gpu_lock_retention_on_cancel(temp_storage: P
 
 
 @pytest.mark.anyio
-async def test_chat_no_tokenizer_cancellation_and_lock(temp_storage: Path) -> None:
+async def test_chat_no_tokenizer_cancellation_and_lock(
+    temp_storage: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Vérifie l'annulation et la rétention du verrou pour un modèle sans tokenizer."""
     import contextlib
     import threading
@@ -322,6 +336,23 @@ async def test_chat_no_tokenizer_cancellation_and_lock(temp_storage: Path) -> No
     compute_started = threading.Event()
     finish_compute = threading.Event()
     compute_ended = threading.Event()
+    cleanup_entered = threading.Event()
+    real_thread = threading.Thread
+
+    class ObservedThread(real_thread):
+        def __init__(self, *args, **kwargs):
+            target = kwargs.get("target")
+            self.observes_no_tok_cleanup = (
+                getattr(target, "__name__", "") == "_no_tok_worker"
+            )
+            super().__init__(*args, **kwargs)
+
+        def join(self, *args, **kwargs):
+            if self.observes_no_tok_cleanup:
+                cleanup_entered.set()
+            return super().join(*args, **kwargs)
+
+    monkeypatch.setattr(threading, "Thread", ObservedThread)
 
     class SlowCallableNoTok:
         def __call__(self, prompt, **kwargs):
@@ -362,6 +393,8 @@ async def test_chat_no_tokenizer_cancellation_and_lock(temp_storage: Path) -> No
         cancel_resp = await c.post("/v1/chat/cancel", json={"requestId": "req_no_tok_1"})
         assert cancel_resp.status_code == 200
 
+        assert await asyncio.to_thread(cleanup_entered.wait, 4.0)
+
         switch_task = asyncio.create_task(
             c.post("/models/switch", json={"modelId": "flux-schnell"})
         )
@@ -378,5 +411,46 @@ async def test_chat_no_tokenizer_cancellation_and_lock(temp_storage: Path) -> No
 
         with contextlib.suppress(Exception):
             await stream_task
+
+
+@pytest.mark.anyio
+async def test_chat_no_tokenizer_successful_response(temp_storage: Path) -> None:
+    """Vérifie qu'un modèle sans tokenizer génère et diffuse correctement sa réponse."""
+    import json
+
+    class SimpleNoTokModel:
+        def __call__(self, prompt, **kwargs):
+            return [{"generated_text": prompt + " Réponse complète sans tokenizer."}]
+
+    sw = ModelSwapper(cuda_backend=MockCudaBackend())
+    app = create_worker_app(
+        model_swapper=sw,
+        storage_dir=temp_storage,
+        model_loaders={"qwen-2.5-7b": lambda _: SimpleNoTokModel()},
+        simulation_mode=False,
+    )
+    transport = ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as c:
+        req = {
+            "model": "qwen-2.5-7b",
+            "messages": [{"role": "user", "content": "Question"}],
+            "stream": True,
+            "requestId": "req_notok_success",
+        }
+        collected: list[str] = []
+        saw_done = False
+        async with c.stream("POST", "/v1/chat/completions", json=req) as resp:
+            assert resp.status_code == 200
+            async for line in resp.aiter_lines():
+                if line == "data: [DONE]":
+                    saw_done = True
+                elif line.startswith("data: "):
+                    payload = json.loads(line[6:])
+                    delta = payload["choices"][0]["delta"].get("content", "")
+                    collected.append(delta)
+
+        assert saw_done is True
+        full_text = "".join(collected)
+        assert "Réponse complète sans tokenizer." in full_text
 
 
