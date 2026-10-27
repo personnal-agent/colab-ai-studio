@@ -1,0 +1,177 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1740" height="1020" viewBox="0 0 1740 1020">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#334155"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#DC2626"/>
+    </marker>
+    <filter id="cardShadow" x="-3%" y="-3%" width="106%" height="108%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+  </defs>
+
+  <!-- Fond de toile -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#F8FAFC"/>
+
+  <!-- En-tête documentaire -->
+  <text x="48" y="44" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#0F172A">11 · Machine à États-Transitions — Cycle de vie du SlotMemoireModele (CUDA &amp; XLA)</text>
+  <text x="48" y="72" font-family="Arial, sans-serif" font-size="13.5" fill="#475569">Omniforge (Version 01) · Classe SlotMemoireModele, détection VRAM/HBM réelle, éviction LRU et adaptation LoRA à chaud</text>
+  <line x1="48" y1="90" x2="1692" y2="90" stroke="#CBD5E1" stroke-width="1.5"/>
+
+  <!-- Cadre global de la Machine à États (B-024 & B-025 : Cartouche formel UML 2.5) -->
+  <rect x="48" y="105" width="1644" height="780" rx="8" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.8" filter="url(#cardShadow)"/>
+  <path d="M48 105 L375 105 L390 133 L48 133 Z" fill="#E2E8F0" stroke="#94A3B8" stroke-width="1.5"/>
+  <text x="60" y="124" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#1E293B">stm [State Machine] SlotMemoireModele</text>
+
+  <!-- ==================== PSEUDO-ÉTAT INITIAL ==================== -->
+  <circle cx="95" cy="380" r="10" fill="#0F172A"/>
+  <path d="M105 380 L170 380" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="137" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">/ initialiser()</text>
+
+  <!-- ==================== ÉTAT 1 : EnVeilleVRAMLibre ==================== -->
+  <g id="state-EnVeilleVRAMLibre">
+    <rect x="170" y="295" width="310" height="170" rx="16" fill="#F0FDF4" stroke="#16A34A" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="325" y="323" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#14532D">EnVeilleVRAMLibre</text>
+    <line x1="170" y1="335" x2="480" y2="335" stroke="#86EFAC" stroke-width="1.5"/>
+    <text x="185" y="357" font-family="Courier New, monospace" font-size="12" fill="#166534">entry / allocatedModel = None</text>
+    <text x="185" y="379" font-family="Courier New, monospace" font-size="12" fill="#166534">entry / loadedLoraCount = 0</text>
+    <text x="185" y="401" font-family="Courier New, monospace" font-size="12" fill="#166534">entry / freeMemoryGb = totalMemoryGb</text>
+    <text x="185" y="423" font-family="Courier New, monospace" font-size="12" fill="#166534">entry / isAvailable = True</text>
+    <text x="185" y="445" font-family="Courier New, monospace" font-size="12" fill="#166534">do / attendreRequeteInference()</text>
+  </g>
+
+  <!-- Transition EnVeilleVRAMLibre -> ChargementEnCours -->
+  <path d="M480 380 L640 380" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="485" y="356" width="150" height="20" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="560" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#0F172A">allouerModele(spec)</text>
+
+  <!-- ==================== ÉTAT 2 : ChargementEnCours ==================== -->
+  <g id="state-ChargementEnCours">
+    <rect x="640" y="295" width="350" height="170" rx="16" fill="#F8FAFC" stroke="#0284C7" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="815" y="323" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#0369A1">ChargementEnCours</text>
+    <line x1="640" y1="335" x2="990" y2="335" stroke="#BAE6FD" stroke-width="1.5"/>
+    <text x="655" y="357" font-family="Courier New, monospace" font-size="12" fill="#075985">entry / publierProgression(0%)</text>
+    <text x="655" y="379" font-family="Courier New, monospace" font-size="12" fill="#075985">do / transfererPoidsBaseVRAM(m)</text>
+    <text x="655" y="401" font-family="Courier New, monospace" font-size="12" fill="#166534">do / monterAdaptateursLora(loras)</text>
+    <text x="655" y="423" font-family="Courier New, monospace" font-size="12" fill="#075985">do / initialiserPipeline(m)</text>
+    <text x="655" y="445" font-family="Courier New, monospace" font-size="11" fill="#075985">exit / allouerModele(m) ; loadedLoraCount = len(loras)</text>
+  </g>
+
+  <!-- Transition ChargementEnCours -> ModeleActif -->
+  <path d="M990 380 L1155 380" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1005" y="356" width="134" height="20" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="1072" y="370" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#0F172A">chargementAcheve / pret()</text>
+
+  <!-- ==================== ÉTAT 3 : ModeleActif ==================== -->
+  <g id="state-ModeleActif">
+    <rect x="1155" y="285" width="490" height="225" rx="16" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="1400" y="314" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#1D4ED8">ModeleActif (Image / Vidéo / Audio / 3D / LLM)</text>
+    <line x1="1155" y1="326" x2="1645" y2="326" stroke="#BFDBFE" stroke-width="1.5"/>
+    <text x="1170" y="348" font-family="Courier New, monospace" font-size="11.5" fill="#1E40AF">entry / isAvailable = False ; armerTimer()</text>
+    <text x="1170" y="368" font-family="Courier New, monospace" font-size="11.5" fill="#1E40AF">do / executerInference() ; executerCompletionStream()</text>
+    <text x="1170" y="388" font-family="Courier New, monospace" font-size="11" font-weight="700" fill="#1E3A8A">inferenceAchevee / gpu_idle = True ; rearmerTimer()</text>
+    <text x="1170" y="408" font-family="Courier New, monospace" font-size="11" font-weight="700" fill="#1E3A8A">requeteRecue(spec, sel) [spec == allocatedModel &amp;&amp; sel == loadedLoras] /</text>
+    <text x="1185" y="424" font-family="Courier New, monospace" font-size="11" font-weight="700" fill="#1E3A8A">  reutiliserPipelineDirecte() ; rearmerTimer()</text>
+    <text x="1170" y="444" font-family="Courier New, monospace" font-size="11" font-weight="700" fill="#166534">requeteRecue(spec, sel) [spec == allocatedModel &amp;&amp; sel != loadedLoras] /</text>
+    <text x="1185" y="460" font-family="Courier New, monospace" font-size="11" font-weight="700" fill="#166534">  adapterPoidsLoraAChaud(sel) ; rearmerTimer()</text>
+    <text x="1170" y="482" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#1E40AF">→ Permet d'ajuster le poids LoRA (0.1..1.5) sans recharger le modèle</text>
+  </g>
+
+  <!-- ==================== ÉTAT 4 : EnRecuperationSaturation ==================== -->
+  <g id="state-EnRecuperationSaturation">
+    <rect x="750" y="140" width="420" height="115" rx="16" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="960" y="167" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#991B1B">EnRecuperationSaturation</text>
+    <line x1="750" y1="177" x2="1170" y2="177" stroke="#FECACA" stroke-width="1.5"/>
+    <text x="765" y="197" font-family="Courier New, monospace" font-size="12" fill="#B91C1C">entry / log_error("CUDA Out of Memory")</text>
+    <text x="765" y="217" font-family="Courier New, monospace" font-size="12" fill="#B91C1C">do / purgerMemoireSaturee(); gc.collect(); POST /free</text>
+    <text x="765" y="237" font-family="Courier New, monospace" font-size="12" fill="#B91C1C">exit / notifierEchecSaturation()</text>
+  </g>
+
+  <!-- Transitions OOM (Flèche décalée pour zéro collision avec le coin de la boîte) -->
+  <path d="M815 295 L815 255" fill="none" stroke="#DC2626" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <rect x="700" y="264" width="110" height="22" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
+  <text x="755" y="274" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="700" fill="#DC2626">erreurChargement</text>
+  <text x="755" y="283" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#B91C1C">[exception OOM]</text>
+
+  <path d="M1360 285 L1360 200 L1170 200" fill="none" stroke="#DC2626" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <rect x="1190" y="187" width="155" height="26" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
+  <text x="1267" y="199" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="700" fill="#DC2626">erreurInference [CUDA OOM]</text>
+  <text x="1267" y="209" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#B91C1C">/ interrompreTache()</text>
+
+  <path d="M750 195 L325 195 L325 295" fill="none" stroke="#DC2626" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="440" y="183" width="200" height="24" rx="3" fill="#FFFFFF" stroke="#FECACA" stroke-width="1"/>
+  <text x="540" y="195" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#991B1B">recuperationAchevee</text>
+  <text x="540" y="204" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#B91C1C">/ reinitialiserContexte()</text>
+
+  <!-- ==================== TRANSITIONS ModeleActif -> EvictionVRAMEnCours ==================== -->
+  <path d="M1420 510 L1420 605 L1075 605" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1120" y="588" width="260" height="30" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="1250" y="601" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#0F172A">
+    <tspan x="1250" dy="0">requeteRecue(spec) [vramLibre &lt; vramReq] /</tspan>
+    <tspan x="1250" dy="12">evincerModeleLRU()</tspan>
+  </text>
+
+  <path d="M1510 510 L1510 660 L1075 660" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1135" y="644" width="285" height="30" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="1277" y="657" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#475569">
+    <tspan x="1277" dy="0">after(delaiInactivite) [gpu_idle == true] /</tspan>
+    <tspan x="1277" dy="12">demarrerEviction()</tspan>
+  </text>
+
+  <!-- ==================== ÉTAT 5 : EvictionVRAMEnCours ==================== -->
+  <g id="state-EvictionVRAMEnCours">
+    <rect x="710" y="560" width="365" height="160" rx="16" fill="#FFFBEB" stroke="#D97706" stroke-width="2" filter="url(#cardShadow)"/>
+    <text x="892" y="588" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#B45309">EvictionVRAMEnCours</text>
+    <line x1="710" y1="600" x2="1075" y2="600" stroke="#FDE68A" stroke-width="1.5"/>
+    <text x="725" y="622" font-family="Courier New, monospace" font-size="12" fill="#92400E">entry / unload_lora_weights()</text>
+    <text x="725" y="642" font-family="Courier New, monospace" font-size="12" fill="#92400E">entry / libererSlot() ; allocatedModel = None</text>
+    <text x="725" y="662" font-family="Courier New, monospace" font-size="12" fill="#92400E">do / gc.collect(); torch.cuda.empty_cache()</text>
+    <text x="725" y="682" font-family="Courier New, monospace" font-size="12" fill="#92400E">do / torch.cuda.ipc_collect()</text>
+    <text x="725" y="702" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#92400E">En mode Local ComfyUI : déchargement sous-graphe /free</text>
+  </g>
+
+  <!-- Transition EvictionVRAMEnCours vers Pseudo-état de Choix -->
+  <path d="M710 640 L575 640" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="595" y="622" width="95" height="18" rx="3" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  <text x="642" y="635" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#0F172A">evictionTerminee</text>
+
+  <!-- Pseudo-état de choix -->
+  <polygon points="555,640 535,620 515,640 535,660" fill="#FFFFFF" stroke="#0F172A" stroke-width="2.2"/>
+
+  <path d="M535 620 L535 435 L640 435" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="420" y="518" width="225" height="28" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="532" y="531" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0369A1">[nouvelle_requete_disponible]</text>
+  <text x="532" y="542" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#075985">/ allouerModele(req.spec)</text>
+
+  <path d="M515 640 L255 640 L255 465" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="315" y="625" width="120" height="28" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="375" y="638" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#166534">[else]</text>
+  <text x="375" y="649" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#14532D">/ libererSlot()</text>
+
+  <!-- Pseudo-état final (arrêt du démon worker) -->
+  <path d="M215 465 L215 545 L155 545" fill="none" stroke="#334155" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="160" y="495" width="110" height="24" rx="3" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1"/>
+  <text x="215" y="507" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#0F172A">arreterWorker()</text>
+  <text x="215" y="516" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#475569">/ libererSlot()</text>
+  <circle cx="135" cy="545" r="13" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+  <circle cx="135" cy="545" r="8" fill="#0F172A"/>
+
+  <!-- Cadre de synthèse d'ingénierie GPU -->
+  <rect x="65" y="745" width="1610" height="120" rx="6" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.2"/>
+  <text x="80" y="768" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0F172A">Principes d'ingénierie et gestion dynamique de la mémoire GPU CUDA &amp; TPU XLA (Omniforge V01 — Colab &amp; ComfyUI Local) :</text>
+  <text x="80" y="790" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
+    <tspan font-weight="700" fill="#0369A1">1. Détection réelle GPU VRAM &amp; TPU HBM + Cache LRU :</tspan> Lecture dynamique CUDA (T4/L4/A100) et XLA HBM (TPU v5e/v6e/v2-8). Éviction LRU uniquement si free_mem &lt; m.mem_req.
+  </text>
+  <text x="80" y="812" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
+    <tspan font-weight="700" fill="#166534">2. Adaptation LoRA à chaud (transition interne) :</tspan> Si le modèle de base est déjà chargé (spec == allocatedModel) mais que la sélection ou le poids des LoRAs change, les adaptateurs sont mis à jour à chaud sans évincer le modèle de base.
+  </text>
+  <text x="80" y="834" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
+    <tspan font-weight="700" fill="#D97706">3. Complémentarité ComfyUI Headless Local :</tspan> Sur PC local (:8188), ComfyUI applique son Smart Memory Manager par sous-graphe (offloading séquentiel T5 → UNET+LoRAs → VAE/MeshDecoder en RAM système).
+  </text>
+  <text x="80" y="854" font-family="Arial, sans-serif" font-size="11.5" fill="#1E293B">
+    <tspan font-weight="700" fill="#DC2626">4. Résilience CUDA OOM :</tspan> En cas de saturation mémoire, EnRecuperationSaturation force la purge immédiate des caches CUDA et réinitialise le worker en veille propre.
+  </text>
+
+  <text x="48" y="998" font-family="Arial, sans-serif" font-size="11" fill="#64748B">Omniforge (Version 01) · Gestion de l'allocation VRAM, adaptateurs LoRA à chaud et permutation dynamique des pipelines</text>
+</svg>

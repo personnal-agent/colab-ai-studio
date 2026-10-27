@@ -1,0 +1,297 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1580" viewBox="0 0 2200 1580">
+  <defs>
+    <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#2C3E50" stroke-width="1.5"/>
+    </marker>
+    <marker id="openArrowGreen" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#166534" stroke-width="1.5"/>
+    </marker>
+    <marker id="openArrowPurple" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#6B21A8" stroke-width="1.5"/>
+    </marker>
+    <marker id="syncArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7 Z" fill="#1E4E5F"/>
+    </marker>
+  </defs>
+
+  <!-- Fond blanc pur -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- En-tête -->
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">02 · Architecture logique des composants unifiés (v3) — Omniforge &amp; Mini Design</text>
+  <text x="48" y="68" font-family="Arial, sans-serif" font-size="13.5" fill="#52616B">Diagramme de Composants UML 2.5.1 · Conteneur Desktop Electron, Double Backend (FastAPI + NestJS), Commutateur [ Studio | Agents ], Connecteurs d'Assemblage &amp; Granularité Sous-Systèmes</text>
+  <line x1="48" y1="82" x2="2152" y2="82" stroke="#D5DEE5" stroke-width="1.5"/>
+
+  <!-- ===================================================================== -->
+  <!-- SOUS-SYSTÈME 0 : CONTENEUR RUNTIME ELECTRON (Desktop Shell)           -->
+  <!-- ===================================================================== -->
+  <rect x="48" y="100" width="2104" height="235" rx="8" fill="#F8FAFC" stroke="#334155" stroke-width="2.2"/>
+  <rect x="48" y="100" width="2104" height="38" rx="8" fill="#E2E8F0" stroke="#334155" stroke-width="1.5"/>
+  <text x="1100" y="125" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#0F172A">«subsystem» Conteneur Desktop Unifié (Electron 28+ / Node.js Main Process)</text>
+
+  <!-- Composant 0.1 : ProcessOrchestrator -->
+  <rect x="75" y="152" width="480" height="165" rx="6" fill="#FFFFFF" stroke="#334155" stroke-width="1.6"/>
+  <text x="90" y="174" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">«component»</text>
+  <text x="90" y="193" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#0F172A">ElectronProcessOrchestrator (main.ts)</text>
+  <text x="90" y="213" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Superviseur de cycle de vie : spawn(FastAPI :8000) &amp; spawn(Gateway :51491)</text>
+  <text x="90" y="231" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Healthchecks HTTP /api/health (FastAPI, Gateway, Auth)</text>
+  <text x="90" y="249" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Arrêt propre sécurisé (SIGTERM / Process Kill sans orphelins)</text>
+  <text x="90" y="267" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Gestion de crash &amp; restart automatique des backends locaux</text>
+  <text x="90" y="285" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#166534">• Empreinte mémoire contrôlée : ~60 Mo RAM</text>
+
+  <!-- Composant 0.2 : MultiViewWindowManager -->
+  <rect x="600" y="152" width="480" height="165" rx="6" fill="#FFFFFF" stroke="#334155" stroke-width="1.6"/>
+  <text x="615" y="174" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">«component»</text>
+  <text x="615" y="193" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#0F172A">MultiViewWindowManager (BrowserView Host)</text>
+  <text x="615" y="213" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Commutateur d'affichage réactif : mode [ Studio ] vs mode [ Agents ]</text>
+  <text x="615" y="231" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Gestion de la vue active (Attach/Detach sans rechargement de page)</text>
+  <text x="615" y="249" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Maintien en cache VRAM des 2 contextes de rendu (0ms latence)</text>
+  <text x="615" y="267" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Isolation stricte du contexte (ContextIsolation: true, sandbox)</text>
+  <text x="615" y="285" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#166534">• Routage direct des événements système entre fenêtres</text>
+
+  <!-- Composant 0.3 : NativeIPCBridge -->
+  <rect x="1125" y="152" width="480" height="165" rx="6" fill="#FFFFFF" stroke="#334155" stroke-width="1.6"/>
+  <text x="1140" y="174" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">«component»</text>
+  <text x="1140" y="193" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#0F172A">NativeIPCBridge (Preload Router)</text>
+  <text x="1140" y="213" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Pont bidirectionnel contextBridge : window.electronAPI unifié</text>
+  <text x="1140" y="231" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Routage d'événements : 'switch-mode', 'media-created', 'task-status'</text>
+  <text x="1140" y="249" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Synchronisation des dialogues système (fichiers, dossiers, export)</text>
+  <text x="1140" y="267" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Émulation transparente des protocoles Mini Design pour le Workbench</text>
+  <text x="1140" y="285" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#166534">• Sécurisation IPC par canal typé et validation des payloads</text>
+
+  <!-- ===================================================================== -->
+  <!-- SOUS-SYSTÈME 1 : FRONTEND HYBRIDE MULTI-VUES - STUDIO OMNIFORGE        -->
+  <!-- ===================================================================== -->
+  <rect x="48" y="360" width="1030" height="580" rx="8" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="2.2"/>
+  <rect x="48" y="360" width="1030" height="38" rx="8" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="563" y="384" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#123C4A">«subsystem» Vue 1 : Omniforge Studio UI (React 18 / Vite 5 / Tailwind v3 · Port :5173)</text>
+
+  <!-- 1.1 TopNavBar & AppModeSwitch -->
+  <rect x="70" y="410" width="460" height="120" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="85" y="430" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component» TopNavBar &amp; AppModeSwitch</text>
+  <text x="85" y="450" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">AppModeSwitch [ Studio | Agents ]</text>
+  <text x="85" y="470" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Commutateur segmenté natif : permutation 0ms vers BrowserView 2</text>
+  <text x="85" y="488" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Moniteur de statut moteur (Colab GPU/TPU · Local ComfyUI · API)</text>
+  <text x="85" y="506" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Sélecteur de projet workspace &amp; Brand Kit Manager</text>
+
+  <!-- 1.2 FloatingPromptDock avec sous-composants -->
+  <rect x="550" y="410" width="510" height="270" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="1.8"/>
+  <text x="565" y="430" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">«component» FloatingPromptDock (Générateur Multimodal)</text>
+  <text x="565" y="450" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">FloatingPromptDock &amp; Pôles Médias</text>
+  
+  <!-- Sous-composants internes du Dock -->
+  <rect x="565" y="462" width="480" height="42" rx="4" fill="#F0FDF4" stroke="#166534" stroke-width="1.2"/>
+  <text x="575" y="479" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#166534">«subcomponent» TabSelector</text>
+  <text x="575" y="495" font-family="Arial, sans-serif" font-size="10" fill="#17212B">6 Pôles : [ Image ] [ Video ] [ Audio ] [ Lip sync ] [ Upscaling ] [ 3D Gen ]</text>
+
+  <rect x="565" y="512" width="480" height="42" rx="4" fill="#F0FDF4" stroke="#166534" stroke-width="1.2"/>
+  <text x="575" y="529" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#166534">«subcomponent» IngredientSlots</text>
+  <text x="575" y="545" font-family="Arial, sans-serif" font-size="10" fill="#17212B">Filtrage des entrées selon capabilities.acceptedInputTypes (Image, Audio, Mask)</text>
+
+  <rect x="565" y="562" width="480" height="48" rx="4" fill="#F0FDF4" stroke="#166534" stroke-width="1.2"/>
+  <text x="575" y="579" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#166534">«subcomponent» LoraPillControl &amp; ParameterPills</text>
+  <text x="575" y="595" font-family="Arial, sans-serif" font-size="10" fill="#17212B">• LoraPillControl : toggle 1-clic actif/inactif, poids par défaut 0.8, slider replié</text>
+  <text x="575" y="607" font-family="Arial, sans-serif" font-size="10" fill="#17212B">• ParameterPills : steps, cfg_scale, aspect_ratio, seed, formats .mp4, .png, .glb</text>
+
+  <rect x="565" y="618" width="480" height="48" rx="4" fill="#F8FAFC" stroke="#334155" stroke-width="1.2"/>
+  <text x="575" y="635" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#334155">«subcomponent» CanvasExportTrigger</text>
+  <text x="575" y="652" font-family="Arial, sans-serif" font-size="10" fill="#166534">Action 1-clic : "Injecter dans le Canevas Mini Design" via IPC NativeBridge</text>
+
+  <!-- 1.3 MediaGallery & AssetSynchronizer avec sous-composants -->
+  <rect x="70" y="545" width="460" height="260" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="85" y="567" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component» MediaGallery &amp; AssetSynchronizer</text>
+  <text x="85" y="587" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">MediaGallery &amp; Visualiseurs Intégrés</text>
+
+  <rect x="85" y="600" width="430" height="40" rx="4" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="1.2"/>
+  <text x="95" y="617" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#1E4E5F">«subcomponent» CardGrid</text>
+  <text x="95" y="632" font-family="Arial, sans-serif" font-size="10" fill="#52616B">Affichage 7 types de cartes (Vidéo, Image, Audio, 3D, Brouillons)</text>
+
+  <rect x="85" y="648" width="430" height="42" rx="4" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="1.2"/>
+  <text x="95" y="665" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#1E4E5F">«subcomponent» AudioWaveformPlayer</text>
+  <text x="95" y="681" font-family="Arial, sans-serif" font-size="10" fill="#52616B">Visualisation interactive de spectre &amp; lecture audio waveform (WAV/MP3)</text>
+
+  <rect x="85" y="698" width="430" height="42" rx="4" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="1.2"/>
+  <text x="95" y="715" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#1E4E5F">«subcomponent» ThreeJsViewer</text>
+  <text x="95" y="731" font-family="Arial, sans-serif" font-size="10" fill="#52616B">Visionneuse 3D orbitale WebGL (.glb / .obj) avec inspection maillages</text>
+
+  <rect x="85" y="748" width="430" height="45" rx="4" fill="#F0FDF4" stroke="#166534" stroke-width="1.2"/>
+  <text x="95" y="765" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#166534">«subcomponent» FolderWatcher</text>
+  <text x="95" y="781" font-family="Arial, sans-serif" font-size="10" fill="#166534">Synchronisation atomique outputs/ &amp; .hilo/resources/ sans duplication</text>
+
+  <!-- ===================================================================== -->
+  <!-- SOUS-SYSTÈME 2 : WORKBENCH & CANEVAS MINI DESIGN                       -->
+  <!-- ===================================================================== -->
+  <rect x="1120" y="360" width="1030" height="580" rx="8" fill="#FBFBFE" stroke="#5B21B6" stroke-width="2.2"/>
+  <rect x="1120" y="360" width="1030" height="38" rx="8" fill="#EDE9FE" stroke="#5B21B6" stroke-width="1.5"/>
+  <text x="1635" y="384" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#4C1D95">«subsystem» Vue 2 : Mini Design Workbench UI (WebGPU / Canvas2D / Agents Hilo · Port :8001)</text>
+
+  <!-- 2.1 CanvasAreaV3 avec sous-composants -->
+  <rect x="1140" y="410" width="490" height="260" rx="6" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.8"/>
+  <text x="1155" y="430" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#6D28D9">«component» CanvasAreaV3 (Moteur de Rendu Graphique V3)</text>
+  <text x="1155" y="450" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">CanvasAreaV3 &amp; Pipeline Graphique</text>
+
+  <rect x="1155" y="462" width="460" height="42" rx="4" fill="#FAF5FF" stroke="#7C3AED" stroke-width="1.2"/>
+  <text x="1165" y="479" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#6D28D9">«subcomponent» WebGPURenderer</text>
+  <text x="1165" y="495" font-family="Arial, sans-serif" font-size="10" fill="#17212B">Pipeline WebGPU 60 fps pour canevas infini &amp; textures haute définition</text>
+
+  <rect x="1155" y="512" width="460" height="42" rx="4" fill="#FAF5FF" stroke="#7C3AED" stroke-width="1.2"/>
+  <text x="1165" y="529" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#6D28D9">«subcomponent» Canvas2DFallback</text>
+  <text x="1165" y="545" font-family="Arial, sans-serif" font-size="10" fill="#17212B">Fallback transparent 2D optimisé pour processeur Intel i7 / GPU intégré HD 520</text>
+
+  <rect x="1155" y="562" width="460" height="42" rx="4" fill="#FAF5FF" stroke="#7C3AED" stroke-width="1.2"/>
+  <text x="1165" y="579" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#6D28D9">«subcomponent» LayerHierarchy</text>
+  <text x="1165" y="595" font-family="Arial, sans-serif" font-size="10" fill="#17212B">Arbre hiérarchique de calques, groupes, masques, blend modes et z-ordering</text>
+
+  <rect x="1155" y="612" width="460" height="48" rx="4" fill="#FAF5FF" stroke="#7C3AED" stroke-width="1.2"/>
+  <text x="1165" y="629" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#6D28D9">«subcomponent» TransformControls</text>
+  <text x="1165" y="645" font-family="Arial, sans-serif" font-size="10" fill="#17212B">Gizmos d'échelle, rotation, alignement magnétique, snapping et contraintes</text>
+
+  <!-- 2.2 TimelineVideoEditor -->
+  <rect x="1650" y="410" width="480" height="120" rx="6" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.6"/>
+  <text x="1665" y="430" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#6D28D9">«component» TimelineVideoEditor</text>
+  <text x="1665" y="450" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Timeline &amp; Séquenceur d'Animation</text>
+  <text x="1665" y="470" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Montage multipistes (vidéos, audio, éléments vectoriels, textes)</text>
+  <text x="1665" y="488" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Gestion des keyframes, interpolations bézier et transitions d'opacité</text>
+  <text x="1665" y="506" font-family="Arial, sans-serif" font-size="11" fill="#166534">• Rendu direct des assets .mp4 générés par les modèles vidéo Omniforge</text>
+
+  <!-- 2.3 HiloChatPanel -->
+  <rect x="1650" y="545" width="480" height="260" rx="6" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.6"/>
+  <text x="1665" y="567" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#6D28D9">«component» HiloChatPanel (Volet Conversationnel)</text>
+  <text x="1665" y="587" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">HiloAgentWorkbench &amp; Dialogue Multi-Agents</text>
+  <text x="1665" y="607" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Dialogue interactif avec l'équipe d'agents (Leader, Planner, Coder)</text>
+  <text x="1665" y="625" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Saisie de prompts en langage naturel pour mutations de canevas</text>
+  <text x="1665" y="643" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Streaming temps réel SSE branché sur /v1/chat/completions</text>
+  <text x="1665" y="661" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Déclenchement d'outils MCP pour modifications directes des calques</text>
+  <text x="1665" y="679" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Affichage des barres de progression de génération de médias</text>
+
+  <!-- ===================================================================== -->
+  <!-- SOUS-SYSTÈME 3 : BACKEND LOCAL FASTAPI (Moteur d'Inférence)            -->
+  <!-- ===================================================================== -->
+  <rect x="48" y="1030" width="1030" height="490" rx="8" fill="#F4F8FA" stroke="#1E4E5F" stroke-width="2.2"/>
+  <rect x="48" y="1030" width="1030" height="38" rx="8" fill="#E0EFF3" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="563" y="1054" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#123C4A">«subsystem» Backend Local FastAPI (:8000 · Python 3.10+ · Inférence Multimodale)</text>
+
+  <!-- 3.1 WorkerGateway & ColabOrchestrator -->
+  <rect x="70" y="1085" width="460" height="135" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="85" y="1105" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component» WorkerGateway &amp; ColabOrchestrator</text>
+  <text x="85" y="1125" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">TaskOrchestrator &amp; Session Cloud</text>
+  <text x="85" y="1145" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• WorkerGateway : routage tri-mode (Colab GPU/TPU · ComfyUI :8188 · API)</text>
+  <text x="85" y="1163" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• ColabOrchestrator : tunnel TLS public automatique &amp; allocation ressources</text>
+  <text x="85" y="1181" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Cycle asynchrone des tâches (pending, running, completed, failed, cancelled)</text>
+  <text x="85" y="1199" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Diffusion Server-Sent Events /api/tasks/{task_id}/status</text>
+
+  <!-- 3.2 ComfyWorkflowCompiler & ModelSwapperLRU -->
+  <rect x="550" y="1085" width="510" height="135" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="565" y="1105" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component» ComfyWorkflowCompiler &amp; ModelSwapperLRU</text>
+  <text x="565" y="1125" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Compilateur de Graphes &amp; Cache VRAM</text>
+  <text x="565" y="1145" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• ComfyWorkflowCompiler : compilation .api.json &amp; injection LoRA Loaders</text>
+  <text x="565" y="1163" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• ModelSwapperLRU : gestion de mémoire VRAM/HBM sur GPU NVIDIA &amp; TPU XLA</text>
+  <text x="565" y="1181" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Évite les OOM en déchargeant dynamiquement les modèles inactifs</text>
+  <text x="565" y="1199" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Support Wan2.1, Hunyuan, TripoSR, Kokoro, SadTalker</text>
+
+  <!-- 3.3 OpenAIProxy, JSONStoreLock & MediaFileStore64k -->
+  <rect x="70" y="1235" width="460" height="135" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="85" y="1255" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component» OpenAIProxy (/v1/chat/completions)</text>
+  <text x="85" y="1275" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Proxy OpenAI Standardisé &amp; Streaming</text>
+  <text x="85" y="1295" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Point d'accès compatible OpenAI consommé par les agents Hilo</text>
+  <text x="85" y="1313" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Streaming SSE des chunks avec gestion de l'annulation (AbortSignal)</text>
+  <text x="85" y="1331" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Zéro dépendance vers des services tiers payants (MiniMax cloud bypass)</text>
+  <text x="85" y="1349" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Routage local ou déporté transparent pour l'appelant</text>
+
+  <rect x="550" y="1235" width="510" height="135" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="565" y="1255" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component» JSONStoreLock &amp; MediaFileStore64k</text>
+  <text x="565" y="1275" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Stockage Fichiers &amp; Écritures Atomiques</text>
+  <text x="565" y="1295" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• JSONStoreLock : écritures atomiques avec asyncio.Lock sur data/*.json</text>
+  <text x="565" y="1313" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• MediaFileStore64k : streaming binaire par fragments de 64 Ko vers outputs/</text>
+  <text x="565" y="1331" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Prévention des saturations RAM hôte (&lt; 80 Mo RAM)</text>
+  <text x="565" y="1349" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Zéro corruption de fichier lors des arrêts intempestifs</text>
+
+  <!-- ===================================================================== -->
+  <!-- SOUS-SYSTÈME 4 : GATEWAY NESTJS MINI DESIGN (Persistence & MCP)       -->
+  <!-- ===================================================================== -->
+  <rect x="1120" y="1030" width="1030" height="490" rx="8" fill="#F8FAFC" stroke="#475569" stroke-width="2.2"/>
+  <rect x="1120" y="1030" width="1030" height="38" rx="8" fill="#E2E8F0" stroke="#475569" stroke-width="1.5"/>
+  <text x="1635" y="1054" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#1E293B">«subsystem» Gateway NestJS (:51491 · Node.js · Persistance SQLite &amp; MCP)</text>
+
+  <!-- 4.1 WorkspaceGuard, TokenValidator & InferenceDelegatorAdapter -->
+  <rect x="1140" y="1085" width="490" height="135" rx="6" fill="#FFFFFF" stroke="#475569" stroke-width="1.6"/>
+  <text x="1155" y="1105" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">«component» WorkspaceGuard &amp; InferenceDelegatorAdapter</text>
+  <text x="1155" y="1125" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Sécurité, Validation &amp; Délégation</text>
+  <text x="1155" y="1145" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• WorkspaceGuard : middleware de contrôle d'accès aux documents</text>
+  <text x="1155" y="1163" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• TokenValidator : vérification du jeton local mini-design-local-token</text>
+  <text x="1155" y="1181" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• InferenceDelegatorAdapter : traduit requêtes canevas en POST :8000</text>
+  <text x="1155" y="1199" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Rapatriement asynchrone sans bloquer la boucle d'événements</text>
+
+  <!-- 4.2 SQLiteRepository & ContractEngine -->
+  <rect x="1650" y="1085" width="480" height="135" rx="6" fill="#FFFFFF" stroke="#475569" stroke-width="1.6"/>
+  <text x="1665" y="1105" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">«component» SQLiteRepository &amp; ContractEngine</text>
+  <text x="1665" y="1125" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Persistance Relationnelle (46 Tables)</text>
+  <text x="1665" y="1145" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• SQLiteRepository : base .hilo/index.sqlite, migrations 0001 à 0019</text>
+  <text x="1665" y="1163" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• ContractEngine : vérification canvas-discipline et anti-loop guard</text>
+  <text x="1665" y="1181" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Insertion atomique dans la table resource_v3 lors de la création d'asset</text>
+  <text x="1665" y="1199" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Maintien de l'intégrité référentielle des calques et projets</text>
+
+  <!-- 4.3 MCPToolsRegistry & OpenCodePluginHost (avec Plugins/MCP) -->
+  <rect x="1140" y="1235" width="990" height="145" rx="6" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+  <text x="1155" y="1255" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">«component» MCPToolsRegistry &amp; OpenCodePluginHost (Écosystème Plugins &amp; MCP)</text>
+  <text x="1155" y="1275" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Registre d'Outils MCP &amp; Conteneur de Plugins Extensibles</text>
+  
+  <!-- Boîtes des modules MCP et Plugins -->
+  <rect x="1155" y="1288" width="310" height="80" rx="4" fill="#F8FAFC" stroke="#64748B" stroke-width="1.2"/>
+  <text x="1165" y="1308" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#0F172A">«subcomponent» mcp-tools-v3</text>
+  <text x="1165" y="1326" font-family="Arial, sans-serif" font-size="10" fill="#334155">• Manipulation programmatique de calques</text>
+  <text x="1165" y="1342" font-family="Arial, sans-serif" font-size="10" fill="#334155">• Export vectoriel &amp; génération de variations</text>
+  <text x="1165" y="1358" font-family="Arial, sans-serif" font-size="10" fill="#166534">• Invocable par les agents Hilo</text>
+
+  <rect x="1480" y="1288" width="310" height="80" rx="4" fill="#F8FAFC" stroke="#64748B" stroke-width="1.2"/>
+  <text x="1490" y="1308" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#0F172A">«subcomponent» bundled-plugins</text>
+  <text x="1490" y="1326" font-family="Arial, sans-serif" font-size="10" fill="#334155">• Extensions natives de productivité</text>
+  <text x="1490" y="1342" font-family="Arial, sans-serif" font-size="10" fill="#334155">• Gestionnaire de palettes &amp; typographies</text>
+  <text x="1490" y="1358" font-family="Arial, sans-serif" font-size="10" fill="#166534">• Intégration OpenCode Plugin Host</text>
+
+  <rect x="1805" y="1288" width="310" height="80" rx="4" fill="#F8FAFC" stroke="#64748B" stroke-width="1.2"/>
+  <text x="1815" y="1308" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#0F172A">«subcomponent» clip-studio-export</text>
+  <text x="1815" y="1326" font-family="Arial, sans-serif" font-size="10" fill="#334155">• Passerelle d'exportation Clip Studio Paint</text>
+  <text x="1815" y="1342" font-family="Arial, sans-serif" font-size="10" fill="#334155">• Conversion de calques raster et vecteurs</text>
+  <text x="1815" y="1358" font-family="Arial, sans-serif" font-size="10" fill="#166534">• Préservation des masques et métadonnées</text>
+
+  <!-- ===================================================================== -->
+  <!-- CONNECTEURS D'ASSEMBLAGE ET INTERFACES FORMELLES (Lollipop / Socket)  -->
+  <!-- ===================================================================== -->
+
+  <!-- CONNECTEUR 1 : IInferenceService (:8000) entre FastAPI et NestJS -->
+  <!-- FastAPI (gauche) FOURNIT IInferenceService (Lollipop boule pleine à x=1055, y=1152) -->
+  <line x1="1060" y1="1152" x2="1055" y2="1152" stroke="#1E4E5F" stroke-width="2"/>
+  <circle cx="1055" cy="1152" r="7" fill="#1E4E5F" stroke="#1E4E5F" stroke-width="2"/>
+  <line x1="530" y1="1152" x2="1055" y2="1152" stroke="#1E4E5F" stroke-width="2"/>
+  
+  <!-- NestJS Gateway (droite) REQUIERT IInferenceService (Socket concave ouvert vers la gauche) -->
+  <!-- Demi-cercle concave ouvert vers la gauche centré sur 1055, englobant la boule -->
+  <path d="M 1067 1140 A 14 14 0 0 0 1067 1164" fill="none" stroke="#475569" stroke-width="2.4"/>
+  <line x1="1067" y1="1152" x2="1140" y2="1152" stroke="#475569" stroke-width="2"/>
+  <text x="1060" y="1134" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#1E4E5F">IInferenceService (REST/SSE :8000)</text>
+
+  <!-- CONNECTEUR 2 : IStudioAPI (REST/SSE :8000) entre Studio UI et FastAPI -->
+  <!-- FastAPI (:8000) FOURNIT IStudioAPI (Lollipop vers le haut) -->
+  <line x1="300" y1="1030" x2="300" y2="985" stroke="#1E4E5F" stroke-width="2"/>
+  <circle cx="300" cy="985" r="7" fill="#1E4E5F" stroke="#1E4E5F" stroke-width="2"/>
+  <!-- Studio UI REQUIERT IStudioAPI (Socket concave vers le bas) -->
+  <path d="M 288 975 A 14 14 0 0 0 312 975" fill="none" stroke="#1E4E5F" stroke-width="2.4"/>
+  <line x1="300" y1="975" x2="300" y2="940" stroke="#1E4E5F" stroke-width="2"/>
+  <text x="315" y="990" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#1E4E5F">IStudioAPI (REST/SSE :8000)</text>
+
+  <!-- CONNECTEUR 3 : IWorkspaceProtocol (HTTP/JSON-RPC :51491) entre Workbench et NestJS Gateway -->
+  <!-- NestJS Gateway (:51491) FOURNIT IWorkspaceProtocol (Lollipop vers le haut) -->
+  <line x1="1380" y1="1030" x2="1380" y2="985" stroke="#475569" stroke-width="2"/>
+  <circle cx="1380" cy="985" r="7" fill="#475569" stroke="#475569" stroke-width="2"/>
+  <!-- Workbench UI REQUIERT IWorkspaceProtocol (Socket concave vers le bas) -->
+  <path d="M 1368 975 A 14 14 0 0 0 1392 975" fill="none" stroke="#5B21B6" stroke-width="2.4"/>
+  <line x1="1380" y1="975" x2="1380" y2="940" stroke="#5B21B6" stroke-width="2"/>
+  <text x="1405" y="990" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#4C1D95">IWorkspaceProtocol (HTTP/JSON-RPC :51491)</text>
+
+  <!-- CONNECTEUR 4 : Commutation Electron Multi-View (Contrôle d'Attachement) -->
+  <line x1="840" y1="317" x2="840" y2="360" stroke="#334155" stroke-width="2" marker-end="url(#openArrow)"/>
+  <line x1="1635" y1="317" x2="1635" y2="360" stroke="#334155" stroke-width="2" marker-end="url(#openArrowPurple)"/>
+  <text x="840" y="342" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#334155">Attach View [Studio]</text>
+  <text x="1635" y="342" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="700" fill="#5B21B6">Attach View [Agents]</text>
+</svg>

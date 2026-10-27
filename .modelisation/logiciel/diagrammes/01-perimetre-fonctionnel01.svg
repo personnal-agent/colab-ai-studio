@@ -1,0 +1,250 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1940" height="1340" viewBox="0 0 1940 1340">
+  <defs>
+    <!-- Flèches ouvertes UML pour relation de dépendance / inclusion / extension -->
+    <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#1E4E5F" stroke-width="1.4"/>
+    </marker>
+    <marker id="openArrowExtend" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#7A4B16" stroke-width="1.4"/>
+    </marker>
+    <!-- Triangle vide UML pour généralisation de cas d'utilisation -->
+    <marker id="hollowTriangle" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto">
+      <path d="M1 1 L11 5 L1 9 Z" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+    </marker>
+  </defs>
+
+  <!-- Fond blanc pur -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- En-tête -->
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">01 · Périmètre fonctionnel — Omniforge</text>
+  <text x="48" y="68" font-family="Arial, sans-serif" font-size="13.5" fill="#52616B">Diagramme de Cas d'Utilisation UML 2.5.1 · Associations Acteurs sans flèche, Généralisations pleines, Points d'extension formels</text>
+  <line x1="48" y1="82" x2="1892" y2="82" stroke="#D5DEE5" stroke-width="1.5"/>
+
+  <!-- ===================================================================== -->
+  <!-- FRONTIÈRE DU SYSTÈME (Subject Boundary)                               -->
+  <!-- ===================================================================== -->
+  <rect x="290" y="100" width="1240" height="1105" rx="8" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="2.2"/>
+  <rect x="290" y="100" width="1240" height="36" rx="8" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="910" y="124" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#123C4A">«system» Omniforge (Application Locale)</text>
+
+  <!-- ===================================================================== -->
+  <!-- ACTEURS PRIMAIRES (GAUCHE)                                            -->
+  <!-- ===================================================================== -->
+  <g id="actor-createur">
+    <circle cx="115" cy="410" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2.2"/>
+    <line x1="115" y1="424" x2="115" y2="462" stroke="#17212B" stroke-width="2.2"/>
+    <line x1="90" y1="438" x2="140" y2="438" stroke="#17212B" stroke-width="2.2"/>
+    <line x1="115" y1="462" x2="94" y2="494" stroke="#17212B" stroke-width="2.2"/>
+    <line x1="115" y1="462" x2="136" y2="494" stroke="#17212B" stroke-width="2.2"/>
+    <text x="115" y="516" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Créateur de contenu</text>
+    <text x="115" y="533" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#52616B">(Utilisateur Studio / Agents)</text>
+  </g>
+  <g id="actor-client-api">
+    <rect x="35" y="990" width="165" height="64" rx="5" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.8"/>
+    <text x="117" y="1012" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#52616B">«actor»</text>
+    <text x="117" y="1031" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">Client API OpenAI</text>
+    <text x="117" y="1045" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(IDE, CLI, Scripts)</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- ACTEURS SECONDAIRES (DROITE : MOTEURS D'INFÉRENCE & SERVICES TIERS)    -->
+  <!-- ===================================================================== -->
+  <g id="actor-colab">
+    <rect x="1585" y="210" width="280" height="74" rx="5" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+    <text x="1725" y="232" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«actor» «système externe»</text>
+    <text x="1725" y="253" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Google Colab (Worker GPU/TPU)</text>
+    <text x="1725" y="271" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#52616B">Tunnel HTTPS · ModelSwapper LRU</text>
+  </g>
+  <g id="actor-comfy-local">
+    <rect x="1585" y="420" width="280" height="80" rx="5" fill="#FFFFFF" stroke="#166534" stroke-width="1.8"/>
+    <text x="1725" y="442" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">«actor» «démon local»</text>
+    <text x="1725" y="463" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">ComfyUI Headless Local</text>
+    <text x="1725" y="480" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#52616B">127.0.0.1:8188 · REST /prompt &amp; /ws</text>
+    <text x="1725" y="493" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#166534">Exécution nodale headless sans UI</text>
+  </g>
+  <g id="actor-api-provider">
+    <rect x="1585" y="660" width="280" height="74" rx="5" fill="#FFFFFF" stroke="#7A4B16" stroke-width="1.8"/>
+    <text x="1725" y="682" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#7A4B16">«actor» «système externe»</text>
+    <text x="1725" y="703" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Fournisseurs API Cloud</text>
+    <text x="1725" y="721" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#52616B">Clés API (Média distant &amp; Synthèse LLM)</text>
+  </g>
+  <g id="actor-site-web">
+    <rect x="1585" y="885" width="280" height="72" rx="5" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.8"/>
+    <text x="1725" y="907" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#52616B">«actor» «système externe»</text>
+    <text x="1725" y="928" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Site Web Cible (HTML/CSS)</text>
+    <text x="1725" y="946" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#52616B">Cible d'extraction automatique d'ADN</text>
+  </g>
+
+  <!-- ===================================================================== -->
+  <!-- PAQUETAGE 1 : Pôle Génération Multimédia (6 Catégories + LoRA)        -->
+  <!-- ===================================================================== -->
+  <rect x="310" y="150" width="1200" height="450" rx="6" fill="#F4F8FA" stroke="#B8CDD6" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="325" y="172" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#1E4E5F">Pôle 1 — Génération Multimédia Studio (6 Spécialisations, LoRA &amp; Routage)</text>
+  <!-- UC1 : Générer un média IA avec compartiment extension points -->
+  <ellipse cx="730" cy="235" rx="155" ry="48" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2.2"/>
+  <text x="730" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Générer un média IA</text>
+  <text x="730" y="229" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(Exécution asynchrone unifiée)</text>
+  <line x1="605" y1="236" x2="855" y2="236" stroke="#1E4E5F" stroke-width="1"/>
+  <text x="730" y="249" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-style="italic" fill="#7A4B16">extension points</text>
+  <text x="730" y="261" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#1E4E5F">adaptation LoRA, annulation active, contexte marque</text>
+  <!-- 6 Cas d'utilisation spécialisés (Généralisation) -->
+  <ellipse cx="430" cy="340" rx="90" ry="25" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="430" y="337" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Générer une image</text>
+  <text x="430" y="352" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#52616B">(T2I, I2I, Inpaint)</text>
+  <ellipse cx="635" cy="340" rx="95" ry="25" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="635" y="337" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Générer une vidéo</text>
+  <text x="635" y="352" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#52616B">(T2V, I2V, FLF2V)</text>
+  <ellipse cx="840" cy="340" rx="95" ry="25" fill="#FFFFFF" stroke="#166534" stroke-width="1.8"/>
+  <text x="840" y="337" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#14532D">Générer un audio</text>
+  <text x="840" y="352" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#166534">(Voix, Musique, SFX)</text>
+  <ellipse cx="430" cy="425" rx="90" ry="25" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="430" y="422" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Générer un Lip-Sync</text>
+  <text x="430" y="437" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#52616B">(Visage + audio vocal)</text>
+  <ellipse cx="635" cy="425" rx="98" ry="25" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="635" y="422" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#17212B">Suréchantillonner un média</text>
+  <text x="635" y="437" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#52616B">(Upscaling x2 / x4)</text>
+  <ellipse cx="840" cy="425" rx="95" ry="25" fill="#FFFFFF" stroke="#166534" stroke-width="1.8"/>
+  <text x="840" y="422" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#14532D">Générer un objet 3D</text>
+  <text x="840" y="437" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#166534">(Mesh PBR, Rig, Anim)</text>
+  <!-- Liens de généralisation en trait plein vers UC1 (S-002 & S-003 : triangles séparés) -->
+  <path d="M475 318 L620 268" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#hollowTriangle)"/>
+  <path d="M650 315 L685 280" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#hollowTriangle)"/>
+  <path d="M820 315 L775 280" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#hollowTriangle)"/>
+  <path d="M430 400 L430 380 L528 380 L528 300 L640 270" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#hollowTriangle)"/>
+  <path d="M635 400 L635 380 L705 380 L705 283" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#hollowTriangle)"/>
+  <path d="M840 400 L840 380 L755 380 L755 283" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#hollowTriangle)"/>
+  <!-- UC_Include 1 : Valider les entrées & router avec compartiment extension points -->
+  <ellipse cx="1280" cy="235" rx="175" ry="46" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="1280" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Valider les entrées &amp; router</text>
+  <text x="1280" y="229" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(acceptedInputTypes · Colab / Local / API)</text>
+  <line x1="1135" y1="236" x2="1425" y2="236" stroke="#1E4E5F" stroke-width="1"/>
+  <text x="1280" y="249" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-style="italic" fill="#7A4B16">extension points</text>
+  <text x="1280" y="261" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#166534">compilation workflow local</text>
+  <path d="M885 235 L1105 235" fill="none" stroke="#1E4E5F" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#openArrow)"/>
+  <rect x="965" y="220" width="70" height="16" fill="#F4F8FA"/>
+  <text x="1000" y="232" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«include»</text>
+  <!-- UC_Extend vers Valider les entrées : Compiler le graphe API ComfyUI -->
+  <ellipse cx="1280" cy="345" rx="165" ry="28" fill="#FFFFFF" stroke="#166534" stroke-width="1.6"/>
+  <text x="1280" y="341" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#14532D">Compiler le graphe API ComfyUI</text>
+  <text x="1280" y="356" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#166534">(Topologie .api.json + chaînage LoRA)</text>
+  <path d="M1280 317 L1280 282" fill="none" stroke="#7A4B16" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#openArrowExtend)"/>
+  <rect x="1205" y="292" width="150" height="16" fill="#F4F8FA"/>
+  <text x="1280" y="304" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7A4B16">«extend» [mode == local]</text>
+  <!-- UC_Extend vers UC1 : Activer LoRA (contournement sans chevauchement) -->
+  <ellipse cx="470" cy="535" rx="140" ry="28" fill="#FFFFFF" stroke="#7A4B16" stroke-width="1.6"/>
+  <text x="470" y="531" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Activer des adaptateurs LoRA</text>
+  <text x="470" y="547" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#7A4B16">(1-clic p=0.8, multi-LoRA, triggerWord)</text>
+  <path d="M350 520 L320 520 L320 250 L575 250" fill="none" stroke="#7A4B16" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#openArrowExtend)"/>
+  <rect x="330" y="235" width="145" height="16" fill="#F4F8FA"/>
+  <text x="402" y="247" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7A4B16">«extend» [supportsLora]</text>
+  <!-- UC_Extend vers UC1 : Annuler génération -->
+  <ellipse cx="820" cy="535" rx="140" ry="28" fill="#FFFFFF" stroke="#7A4B16" stroke-width="1.6"/>
+  <text x="820" y="531" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Annuler une génération active</text>
+  <text x="820" y="547" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#7A4B16">(Interruption /cancel idempotente)</text>
+  <path d="M940 515 L975 515 L975 270 L870 270" fill="none" stroke="#7A4B16" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#openArrowExtend)"/>
+  <rect x="945" y="335" width="130" height="16" fill="#F4F8FA"/>
+  <text x="1010" y="347" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7A4B16">«extend» [sur demande]</text>
+  <!-- UC_Include vers UC1 : Rapatrier et persister -->
+  <ellipse cx="1280" cy="535" rx="165" ry="28" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="1280" y="531" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#17212B">Rapatrier et persister l'artefact</text>
+  <text x="1280" y="547" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(MediaFileStore &amp; data/generations.json)</text>
+  <path d="M875 260 L1080 260 L1080 430 L1170 515" fill="none" stroke="#1E4E5F" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#openArrow)"/>
+  <rect x="1045" y="440" width="70" height="16" fill="#F4F8FA"/>
+  <text x="1080" y="452" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«include»</text>
+
+  <!-- ===================================================================== -->
+  <!-- PAQUETAGE 2 : Pôle Espace de Travail & Catalogue Modèles Locaux       -->
+  <!-- ===================================================================== -->
+  <rect x="310" y="620" width="580" height="260" rx="6" fill="#F4F8FA" stroke="#B8CDD6" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="325" y="642" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#1E4E5F">Pôle 2 — Espace de Travail, Projets &amp; Modèles Locaux</text>
+  <!-- S-008 : Vrai cas d'utilisation métier (Dialoguer avec l'assistant IA) -->
+  <ellipse cx="585" cy="680" rx="220" ry="26" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="585" y="676" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Dialoguer avec l'assistant IA créatif</text>
+  <text x="585" y="692" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(Assistance au prompt, inspiration &amp; agents conversationnels)</text>
+  <ellipse cx="585" cy="748" rx="220" ry="26" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="585" y="744" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Consulter la galerie (7 cartes) &amp; gérer projets</text>
+  <text x="585" y="760" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(Vidéo, Image, Audio, 3D, Brouillon, Comparaison)</text>
+  <!-- N-002 : Cas d'utilisation autonome de gestion catalogue -->
+  <ellipse cx="585" cy="818" rx="230" ry="28" fill="#FFFFFF" stroke="#166534" stroke-width="1.6"/>
+  <text x="585" y="814" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#14532D">Scanner et mapper les modèles locaux</text>
+  <text x="585" y="830" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#166534">(Auto-détection ComfyUI /object_info + mapping custom)</text>
+
+  <!-- ===================================================================== -->
+  <!-- PAQUETAGE 3 : Pôle Identité de Marque (Brand Kit)                     -->
+  <!-- ===================================================================== -->
+  <rect x="930" y="620" width="580" height="260" rx="6" fill="#F4F8FA" stroke="#B8CDD6" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="945" y="642" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#1E4E5F">Pôle 3 — Identité Visuelle (Brand Kit &amp; Ingestion ADN)</text>
+  <ellipse cx="1215" cy="680" rx="210" ry="26" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="1215" y="676" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Gérer les Brand Kits (couleurs, typos, logos)</text>
+  <text x="1215" y="692" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(Persistance atomique data/brand_kits.json)</text>
+  <ellipse cx="1215" cy="748" rx="210" ry="26" fill="#FFFFFF" stroke="#7A4B16" stroke-width="1.6"/>
+  <text x="1215" y="744" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Compiler et injecter le contexte de marque</text>
+  <text x="1215" y="760" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#7A4B16">(Synthèse LLM ou repli déterministe + arbitrage P1&gt;P2&gt;P3)</text>
+  <path d="M1425 748 L1485 748 L1485 175 L730 175 L730 187" fill="none" stroke="#7A4B16" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#openArrowExtend)"/>
+  <rect x="1050" y="165" width="160" height="18" rx="3" fill="#FFFFFF" stroke="#7A4B16" stroke-width="1"/>
+  <text x="1130" y="178" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7A4B16">«extend» [Brand Kit actif]</text>
+  <ellipse cx="1215" cy="820" rx="210" ry="26" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="1215" y="816" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Extraire l'ADN de marque depuis une URL</text>
+  <text x="1215" y="832" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(BrandExtractor : palette HEX, typographies, styles CSS)</text>
+
+  <!-- ===================================================================== -->
+  <!-- PAQUETAGE 4 : Pôle Administration & Inférence LLM                     -->
+  <!-- ===================================================================== -->
+  <rect x="310" y="900" width="1200" height="280" rx="6" fill="#F4F8FA" stroke="#B8CDD6" stroke-width="1.4" stroke-dasharray="6 4"/>
+  <text x="325" y="922" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#1E4E5F">Pôle 4 — Administration Tri-Mode (Colab / Local / API) &amp; Proxy LLM</text>
+  <ellipse cx="585" cy="970" rx="225" ry="28" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="585" y="966" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Configurer le mode d'exécution actif</text>
+  <text x="585" y="982" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(URL tunnel Colab, démon ComfyUI :8188 ou clés API)</text>
+  <ellipse cx="1215" cy="970" rx="220" ry="28" fill="#FFFFFF" stroke="#166534" stroke-width="1.6"/>
+  <text x="1215" y="966" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#14532D">Piloter le processus ComfyUI Headless</text>
+  <text x="1215" y="982" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#166534">(Attachement auto :8188 ou Start / Stop sous-processus)</text>
+  <ellipse cx="585" cy="1055" rx="225" ry="28" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="585" y="1051" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Exécuter une complétion LLM en streaming</text>
+  <text x="585" y="1067" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(Proxy compatible OpenAI POST /v1/chat/completions)</text>
+  <ellipse cx="1215" cy="1055" rx="220" ry="28" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="1215" y="1051" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Superviser la santé VRAM et les workers</text>
+  <text x="1215" y="1067" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">(GET /api/health · télémétrie GPU/TPU &amp; /system_stats)</text>
+
+  <!-- ===================================================================== -->
+  <!-- ASSOCIATIONS ACTEURS <-> CAS D'UTILISATION (TRAITS PLEINS SANS FLÈCHE)-->
+  <!-- ===================================================================== -->
+  <path d="M140 390 L260 390 L260 215 L575 215" fill="none" stroke="#17212B" stroke-width="1.6"/>
+  <line x1="140" y1="438" x2="335" y2="530" stroke="#17212B" stroke-width="1.4"/>
+  <path d="M140 445 L260 445 L260 675 L365 675" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <line x1="140" y1="455" x2="370" y2="745" stroke="#17212B" stroke-width="1.4"/>
+  <line x1="140" y1="465" x2="360" y2="815" stroke="#17212B" stroke-width="1.4"/>
+  <path d="M140 475 L230 475 L230 612 L1010 612 L1010 670" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <path d="M140 485 L210 485 L210 888 L1010 888 L1010 830" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <line x1="140" y1="495" x2="365" y2="965" stroke="#17212B" stroke-width="1.4"/>
+  <path d="M140 500 L190 500 L190 894 L1020 894 L1020 960" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <path d="M140 505 L170 505 L170 1188 L1215 1188 L1215 1083" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <line x1="200" y1="1022" x2="360" y2="1055" stroke="#17212B" stroke-width="1.6"/>
+  <line x1="1455" y1="235" x2="1585" y2="245" stroke="#17212B" stroke-width="1.6"/>
+  <line x1="1445" y1="345" x2="1585" y2="440" stroke="#17212B" stroke-width="1.6"/>
+  <path d="M815 818 L900 818 L900 608 L1545 608 L1545 470 L1585 470" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <path d="M1435 970 L1535 970 L1535 485 L1585 485" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <path d="M1440 255 L1555 255 L1555 680 L1585 680" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <line x1="1425" y1="748" x2="1585" y2="705" stroke="#17212B" stroke-width="1.4"/>
+  <line x1="1425" y1="820" x2="1585" y2="920" stroke="#17212B" stroke-width="1.6"/>
+  <path d="M810 1055 L1550 1055 L1550 720 L1585 720" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <path d="M1435 1055 L1565 1055 L1565 265 L1585 265" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <!-- NEW-08 : Raccordement du dialogue créatif aux moteurs LLM distants -->
+  <path d="M805 680 L915 680 L915 612 L1540 612 L1540 690 L1585 690" fill="none" stroke="#17212B" stroke-width="1.4"/>
+  <path d="M1540 612 L1540 275 L1585 275" fill="none" stroke="#17212B" stroke-width="1.4"/>
+
+  <!-- ===================================================================== -->
+  <!-- SPÉCIFICATION D'INGÉNIERIE & RÈGLES DE MODÉLISATION DU SYSTÈME        -->
+  <!-- ===================================================================== -->
+  <rect x="48" y="1225" width="1815" height="85" rx="5" fill="#F4F8FA" stroke="#B8CDD6" stroke-width="1.2"/>
+  <text x="65" y="1248" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">
+    <tspan font-weight="700" fill="#1E4E5F">Spécification UML 2.5.1 &amp; Traçabilité Système :</tspan> 
+    Associations Acteur ↔ Cas bidirectionnelles sans flèche · Généralisations normées à triangle creux.
+  </text>
+  <text x="65" y="1270" font-family="Arial, sans-serif" font-size="11" fill="#52616B">
+    Compartiments formels d'extension points · Encadrement strict des cas d'utilisation métier sans gestes d'IHM · Couverture exhaustive sans cas orphelin.
+  </text>
+  <text x="65" y="1290" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">
+    Garanties architecturales : zéro chevauchement d'ellipse, zéro ambiguïté de frontière système, intégration des moteurs locaux et cloud.
+  </text>
+</svg>

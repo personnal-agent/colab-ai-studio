@@ -1,0 +1,216 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1980" height="1000" viewBox="0 0 1980 1000">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#405364"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#B3261E"/>
+    </marker>
+    <marker id="arrowAmber" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#8C6418"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- Cartouche de machine à états -->
+  <rect x="40" y="24" width="300" height="32" rx="0" fill="#E8F1F3" stroke="#126A78" stroke-width="1.5"/>
+  <text x="50" y="46" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#126A78">stm [State Machine] Generation</text>
+  <text x="360" y="47" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#17212B">10 · Cycle de vie asynchrone d'une tâche de génération (Tri-Mode)</text>
+  <text x="50" y="78" font-family="Arial, sans-serif" font-size="14" fill="#596875">Cycle de vie unifié de la classe métier Generation (Image, Vidéo, Audio, Lip-Sync, Upscale, 3D) · Exécution Colab / ComfyUI Local (:8188) / API, rapatriement et états stables persistés</text>
+  <line x1="40" y1="96" x2="1940" y2="96" stroke="#D8E0E5" stroke-width="1.5"/>
+
+  <!-- 1. Pseudo-état initial -->
+  <circle cx="30" cy="280" r="10" fill="#17212B"/>
+  <path d="M40 280 L130 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="85" y="258" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" font-weight="600" fill="#17212B">
+    <tspan x="85" dy="0">soumettreRequete()</tspan>
+    <tspan x="85" dy="11">/ validerParametres()</tspan>
+  </text>
+
+  <!-- ÉTAT 1 : EnAttentePriseEnCharge (TaskStatus.pending) -->
+  <rect x="130" y="190" width="245" height="190" rx="14" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+  <text x="252" y="214" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#17212B">EnAttentePriseEnCharge</text>
+  <text x="252" y="227" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#126A78">«TaskStatus.pending»</text>
+  <line x1="130" y1="232" x2="375" y2="232" stroke="#405364" stroke-width="1.2"/>
+  <text x="140" y="252" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / genererUUID() &amp; horodater()</text>
+  <text x="140" y="270" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">entry / compilerPromptMarqueEtLoras()</text>
+  <text x="140" y="288" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / soumettreAuMoteur(executionMode)</text>
+  <text x="140" y="306" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">exit / enregistrerDebutTraitement()</text>
+  <line x1="140" y1="318" x2="365" y2="318" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="140" y="335" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Mode local : compilation .api.json + POST /prompt</text>
+  <text x="140" y="350" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Mode colab/api : POST /infer ou endpoint REST</text>
+
+  <!-- Transition EnAttente -> EnTraitementGPU -->
+  <path d="M375 280 L485 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="375" y="244" width="112" height="30" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="0.8"/>
+  <text x="431" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#17212B">
+    <tspan x="431" dy="0">demarrerTraitement() /</tspan>
+    <tspan x="431" dy="13">ouvrirSuivi()</tspan>
+  </text>
+
+  <!-- ÉTAT 2 : EnTraitementGPU (TaskStatus.running) -->
+  <rect x="485" y="190" width="275" height="190" rx="14" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+  <text x="622" y="214" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#17212B">EnTraitementGPU</text>
+  <text x="622" y="227" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#126A78">«TaskStatus.running»</text>
+  <line x1="485" y1="232" x2="760" y2="232" stroke="#405364" stroke-width="1.2"/>
+  <text x="495" y="252" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / ecouterProgressionMoteur()</text>
+  <text x="495" y="270" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / convertirPontWSouSSE()</text>
+  <text x="495" y="288" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">step_event(v, max) / diffuserSSE(pct)</text>
+  <text x="495" y="306" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">heartbeat / reinitialiserTimeout()</text>
+  <text x="495" y="324" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / fermerCanalProgression()</text>
+  <line x1="495" y1="336" x2="750" y2="336" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="495" y="352" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#166534">Local : WebSocket ComfyUI /ws?clientId=...</text>
+  <text x="495" y="366" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Colab / API : Flux SSE ou polling asynchrone</text>
+
+  <!-- Transition EnTraitementGPU -> RapatriementEnCours -->
+  <path d="M760 280 L880 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="765" y="244" width="110" height="30" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="0.8"/>
+  <text x="820" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#17212B">
+    <tspan x="820" dy="0">calculTermine(uri) /</tspan>
+    <tspan x="820" dy="13">initierDownload()</tspan>
+  </text>
+
+  <!-- ÉTAT 3 : RapatriementEnCours (Phase interne de running) -->
+  <rect x="880" y="190" width="280" height="190" rx="14" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+  <text x="1020" y="214" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#17212B">RapatriementEnCours</text>
+  <text x="1020" y="227" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#126A78">«Phase interne de running»</text>
+  <line x1="880" y1="232" x2="1160" y2="232" stroke="#405364" stroke-width="1.2"/>
+  <text x="890" y="252" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / ouvrirFluxBinaire(64 Ko)</text>
+  <text x="890" y="270" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / rapatrierDepuisMoteur()</text>
+  <text x="890" y="288" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">chunk_recu(n) / majProgressionIO()</text>
+  <text x="890" y="306" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / validerTailleEtIntegrite()</text>
+  <line x1="890" y1="320" x2="1150" y2="320" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="890" y="336" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#166534">Local : GET 127.0.0.1:8188/view?filename=...</text>
+  <text x="890" y="350" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Colab / API : Stream HTTPS (.png/.mp4/.wav/.glb)</text>
+  <text x="890" y="364" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Empreinte RAM constante (chunks 64 Ko)</text>
+
+  <!-- Transition RapatriementEnCours -> SauvegardeEnCours -->
+  <path d="M1160 280 L1280 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1165" y="244" width="110" height="30" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="0.8"/>
+  <text x="1220" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#17212B">
+    <tspan x="1220" dy="0">fluxComplet /</tspan>
+    <tspan x="1220" dy="13">ecrireDisque()</tspan>
+  </text>
+
+  <!-- ÉTAT 4 : SauvegardeEnCours (Phase interne de running) -->
+  <rect x="1280" y="190" width="270" height="190" rx="14" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+  <text x="1415" y="214" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#17212B">SauvegardeEnCours</text>
+  <text x="1415" y="227" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#126A78">«Phase interne de running»</text>
+  <line x1="1280" y1="232" x2="1550" y2="232" stroke="#405364" stroke-width="1.2"/>
+  <text x="1290" y="252" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / resoudreDestinationMediaFileStore()</text>
+  <text x="1290" y="272" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">do / finaliserFichierEtPersisterJSON()</text>
+  <text x="1290" y="292" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / libererVerrouAtomique()</text>
+  <line x1="1290" y1="312" x2="1540" y2="312" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="1290" y="330" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Destination : project.storagePath ou</text>
+  <text x="1290" y="345" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">outputs/projects/&lt;id&gt;/ ou outputs/YYYY-MM-DD/</text>
+  <text x="1290" y="360" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Écriture atomique data/generations.json</text>
+
+  <!-- Transition SauvegardeEnCours -> Terminee -->
+  <path d="M1550 280 L1670 280" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1535" y="244" width="150" height="30" fill="#FFFFFF" stroke="#D8E0E5" stroke-width="0.8"/>
+  <text x="1610" y="257" text-anchor="middle" font-family="Arial, sans-serif" font-size="8.5" font-weight="600" fill="#17212B">
+    <tspan x="1610" dy="0">enregistrerResultat() /</tspan>
+    <tspan x="1610" dy="12">notifierSucces()</tspan>
+  </text>
+
+  <!-- ÉTAT 5 : Terminee (État terminal stable avec persistance locale) -->
+  <rect x="1670" y="190" width="235" height="190" rx="14" fill="#EDF7ED" stroke="#2E7D32" stroke-width="2.5"/>
+  <text x="1787" y="214" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#1E4620">Terminee</text>
+  <text x="1787" y="227" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#2E7D32">«TaskStatus.completed»</text>
+  <line x1="1670" y1="232" x2="1905" y2="232" stroke="#2E7D32" stroke-width="1.2"/>
+  <text x="1680" y="252" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#2E7D32">entry / publierEventCompletedSSE()</text>
+  <text x="1680" y="270" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / rendreDisponibleDansGalerie()</text>
+  <line x1="1680" y1="286" x2="1895" y2="286" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="1680" y="304" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Artefact Image, Vidéo, Audio ou 3D</text>
+  <text x="1680" y="318" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">prêt pour lecture et réutilisation</text>
+  <rect x="1682" y="336" width="210" height="32" rx="4" fill="#E8F5E9" stroke="#2E7D32" stroke-width="0.8"/>
+  <text x="1787" y="350" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="600" fill="#2E7D32">État terminal stable persisté</text>
+  <text x="1787" y="362" text-anchor="middle" font-family="Arial, sans-serif" font-size="9" fill="#2E7D32">(conservé dans generations.json)</text>
+
+  <!-- ======================================================== -->
+  <!-- ÉTATS TERMINAUX STABLES : ANNULÉE & ÉCHOUÉE (PERSISTANCE LOCALE) -->
+  <!-- ======================================================== -->
+
+  <!-- ÉTAT TERMINAL : Annulee -->
+  <rect x="455" y="545" width="320" height="190" rx="14" fill="#FBF8F0" stroke="#8C6418" stroke-width="2.2"/>
+  <text x="615" y="566" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#8C6418">Annulee</text>
+  <text x="615" y="579" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#8C6418">«TaskStatus.cancelled»</text>
+  <line x1="455" y1="584" x2="775" y2="584" stroke="#8C6418" stroke-width="1.2"/>
+  <text x="467" y="604" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">entry / interrompreMoteur(/interrupt ou /cancel)</text>
+  <text x="467" y="622" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / supprimerFichiersTemporaires()</text>
+  <text x="467" y="640" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">demanderAnnulation() [deja_annule] / retour200()</text>
+  <text x="467" y="658" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / cloreContexteTache()</text>
+  <line x1="467" y1="670" x2="765" y2="670" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="467" y="688" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#596875">Idempotence garantie par transition interne</text>
+  <text x="467" y="704" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#596875">État terminal stable persisté dans le store local</text>
+
+  <!-- ÉTAT TERMINAL : Echouee -->
+  <rect x="945" y="545" width="350" height="190" rx="14" fill="#FDF2F2" stroke="#B3261E" stroke-width="2.2"/>
+  <text x="1120" y="566" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#B3261E">Echouee</text>
+  <text x="1120" y="579" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#B3261E">«TaskStatus.failed»</text>
+  <line x1="945" y1="584" x2="1295" y2="584" stroke="#B3261E" stroke-width="1.2"/>
+  <text x="957" y="604" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#B3261E">entry / marquerEchec(motif) &amp; consignerErreur()</text>
+  <text x="957" y="622" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / nettoyerBuffersTemporaires()</text>
+  <text x="957" y="640" font-family="Arial, sans-serif" font-size="11" fill="#596875">entry / diffuserEventErreurSSE()</text>
+  <text x="957" y="658" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / cloreContexteTache()</text>
+  <line x1="957" y1="670" x2="1285" y2="670" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="957" y="688" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#596875">Capture : OOM CUDA, erreur nœud ComfyUI, timeout,</text>
+  <text x="957" y="704" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#596875">coupure tunnel, erreur clé API ou disque plein</text>
+
+  <!-- Transitions d'annulation -->
+  <path d="M250 380 L250 635 L455 635" fill="none" stroke="#8C6418" stroke-width="1.8" marker-end="url(#arrowAmber)"/>
+  <rect x="250" y="480" width="160" height="28" fill="#FFFFFF" stroke="#8C6418" stroke-width="0.8"/>
+  <text x="330" y="492" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#8C6418">
+    <tspan x="330" dy="0">demanderAnnulation() /</tspan>
+    <tspan x="330" dy="13">retirerDeLaFile()</tspan>
+  </text>
+
+  <path d="M570 380 L570 545" fill="none" stroke="#8C6418" stroke-width="1.8" marker-end="url(#arrowAmber)"/>
+  <rect x="485" y="405" width="170" height="28" fill="#FFFFFF" stroke="#8C6418" stroke-width="0.8"/>
+  <text x="570" y="417" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#8C6418">
+    <tspan x="570" dy="0">demanderAnnulation() /</tspan>
+    <tspan x="570" dy="13">interrompreMoteur()</tspan>
+  </text>
+
+  <!-- Transitions d'erreur -->
+  <path d="M295 380 C 295 515, 880 515, 960 545" fill="none" stroke="#B3261E" stroke-width="1.6" marker-end="url(#arrowRed)"/>
+  <rect x="290" y="455" width="225" height="28" fill="#FFFFFF" stroke="#B3261E" stroke-width="0.8"/>
+  <text x="402" y="468" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="600" fill="#B3261E">
+    <tspan x="402" dy="0">after(120 s) [moteur injoignable] /</tspan>
+    <tspan x="402" dy="12">declarerTimeoutAttente()</tspan>
+  </text>
+
+  <path d="M700 380 C 700 475, 960 475, 1030 545" fill="none" stroke="#B3261E" stroke-width="1.6" marker-end="url(#arrowRed)"/>
+  <rect x="730" y="445" width="175" height="28" fill="#FFFFFF" stroke="#B3261E" stroke-width="0.8"/>
+  <text x="817" y="458" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="600" fill="#B3261E">
+    <tspan x="817" dy="0">erreurCalcul(OOM | ComfyNode) /</tspan>
+    <tspan x="817" dy="12">interrompreSessionSSE()</tspan>
+  </text>
+
+  <path d="M1060 380 L1060 545" fill="none" stroke="#B3261E" stroke-width="1.8" marker-end="url(#arrowRed)"/>
+  <rect x="965" y="445" width="175" height="28" fill="#FFFFFF" stroke="#B3261E" stroke-width="0.8"/>
+  <text x="1052" y="458" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="600" fill="#B3261E">
+    <tspan x="1052" dy="0">echecTransfert(flux_rompu) /</tspan>
+    <tspan x="1052" dy="12">purgerChunkPartiel()</tspan>
+  </text>
+
+  <path d="M1360 380 C 1360 485, 1260 485, 1220 545" fill="none" stroke="#B3261E" stroke-width="1.6" marker-end="url(#arrowRed)"/>
+  <rect x="1260" y="455" width="165" height="28" fill="#FFFFFF" stroke="#B3261E" stroke-width="0.8"/>
+  <text x="1342" y="468" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="600" fill="#B3261E">
+    <tspan x="1342" dy="0">erreurIO(disque_ou_json) /</tspan>
+    <tspan x="1342" dy="12">consignerEchecDisque()</tspan>
+  </text>
+
+  <!-- Panneau d'ingénierie -->
+  <rect x="40" y="810" width="1900" height="135" rx="8" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5"/>
+  <text x="60" y="835" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#1E293B">RÈGLES D'INGÉNIERIE DU CYCLE DE VIE DES TÂCHES ASYNCHRONES (OMNIFORGE V01) :</text>
+  <text x="60" y="860" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">
+    <tspan font-weight="700" fill="#126A78">1. Invariance du cycle de vie sur les 3 moteurs :</tspan> Qu'une tâche s'exécute sur Google Colab, sur ComfyUI Headless Local (127.0.0.1:8188) ou via une clé API externe, elle traverse exactement les mêmes états canoniques TaskStatus.
+  </text>
+  <text x="60" y="882" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">
+    <tspan font-weight="700" fill="#166534">2. Pont de progression et d'interruption ComfyUI :</tspan> En mode Local, EnTraitementGPU traduit les trames WebSocket (/ws) en événements SSE normalisés, et l'action annuler() invoque POST /interrupt sur le démon local.
+  </text>
+  <text x="60" y="904" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">
+    <tspan font-weight="700" fill="#126A78">3. Persistance des états terminaux stables :</tspan> Terminee («completed»), Annulee («cancelled») et Echouee («failed») demeurent persistés dans data/generations.json pour consultation ultérieure dans la galerie.
+  </text>
+</svg>

@@ -52,3 +52,10 @@
   - Verification: Vérifier les routes distantes (`/infer`, `/tasks/{id}/cancel`, `/v1/chat/completions`) et la validité JSON/cellules du notebook Colab.
 - [ ] **Scenario**: Parcours E2E (`UC-01` à `UC-08`) et mesure RSS portable dans un sous-processus backend isolé (< 80 Mo) (`tests/e2e/test_full_pipeline.py`, `tests/e2e/test_memory_footprint.py`)
   - Verification: Valider le parcours complet avec worker simulé, mesurer de façon portable (`psutil.Process(proc.pid).memory_info().rss` compatible Linux/macOS/Windows) le RSS exclusif du processus backend FastAPI séparé (sans worker ni lanceur de tests chargé dedans), et exécuter `.githooks/pre-push`.
+
+
+## PR #29 — Nouvelle revue après publication
+- [x] Premier lot publié au commit `e985ef5f5db3375b71761c67f1be4c966d3fb612` ; sixième passe locale sans finding, CI distante verte.
+- [x] Accord instructions agents et autorisation de livraison sur la PR acquis.
+- [x] Nouveau lot documentaire validé et relu : 3 remarques corrigées puis 9 mineures (1 corrigée, 8 non reproduites).
+- [ ] Publier le nouveau lot et vérifier les fils ; ne pas confondre garanties cibles et runtime existant.

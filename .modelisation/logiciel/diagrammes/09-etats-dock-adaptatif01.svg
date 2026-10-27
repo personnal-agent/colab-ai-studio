@@ -1,0 +1,250 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1980" height="1220" viewBox="0 0 1980 1220">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#405364"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#166534"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#BA3C2A"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- B-019 : Cartouche formel ancré sur la classe métier SessionPrompt du Domaine 04 -->
+  <rect x="40" y="22" width="340" height="32" rx="0" fill="#E8F1F3" stroke="#126A78" stroke-width="1.5"/>
+  <text x="52" y="43" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#126A78">stm [State Machine] SessionPrompt</text>
+  <text x="400" y="45" font-family="Arial, sans-serif" font-size="22" font-weight="700" fill="#17212B">09 · Cycle de vie dynamique de SessionPrompt (6 Modalités &amp; LoRA)</text>
+  <text x="40" y="75" font-family="Arial, sans-serif" font-size="13.5" fill="#596875">Machine à États-Transitions UML 2.5 · Classe SessionPrompt, 6 modalités média (Image, Video, Audio, Lip sync, Upscaling, 3D Gen), pilules LoRA &amp; historique réactif</text>
+  <line x1="40" y1="92" x2="1940" y2="92" stroke="#D8E0E5" stroke-width="1.5"/>
+
+  <!-- État initial global -->
+  <circle cx="55" cy="400" r="10" fill="#17212B"/>
+  <path d="M65 400 L130 400" fill="none" stroke="#405364" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="96" y="388" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#17212B">initialiser()</text>
+
+  <!-- ===================================================================== -->
+  <!-- ÉTAT COMPOSITE MAJEUR : ConfigurationActive                           -->
+  <!-- ===================================================================== -->
+  <rect x="130" y="115" width="1660" height="730" rx="16" fill="#FCFDFD" stroke="#126A78" stroke-width="2.5"/>
+  <rect x="130" y="115" width="1660" height="40" rx="16" fill="#EDF5F6" stroke="#126A78" stroke-width="1.2"/>
+  <text x="155" y="141" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#126A78">ConfigurationActive (Session de Saisie &amp; Paramétrage Multimodal)</text>
+  <text x="155" y="174" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">
+    entry / restaurerBrouillonEtCapabilites() ; do / filtrerFichiersEntrants(capabilities.acceptedInputTypes) &amp; filtrerLorasCompatibles(baseModel) ; exit / sauvegarderBrouillonLocal()
+  </text>
+  <line x1="130" y1="186" x2="1790" y2="186" stroke="#126A78" stroke-width="1.2" stroke-dasharray="4 4"/>
+
+  <!-- Ligne de défaut de l'historique [H] (en trait plein standard UML) -->
+  <path d="M1730 229 L1730 202 L360 202 L360 300" fill="none" stroke="#8C6418" stroke-width="1.4" marker-end="url(#arrow)"/>
+  <rect x="955" y="193" width="180" height="18" fill="#FFFDEB" stroke="#8C6418" stroke-width="0.8"/>
+  <text x="1045" y="206" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#8C6418">défaut [si aucun historique]</text>
+
+  <!-- Pseudo-état initial interne & Choice -->
+  <circle cx="175" cy="245" r="8" fill="#17212B"/>
+  <path d="M183 245 L235 245" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <polygon points="255,227 275,245 255,263 235,245" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="215" y="222" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#596875">«choice» modalite active</text>
+
+  <!-- Pseudo-état d'Historique superficiel [H] -->
+  <circle cx="1730" cy="245" r="16" fill="#FFFDEB" stroke="#8C6418" stroke-width="2"/>
+  <text x="1730" y="251" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#8C6418">H</text>
+
+  <!-- ===================================================================== -->
+  <!-- LES 6 SOUS-ÉTATS DE MODALITÉ MÉDIA (ALIGNÉS DE GAUCHE À DROITE)       -->
+  <!-- ===================================================================== -->
+
+  <!-- 1. ModeImageSelectionne (x=155, w=250) -->
+  <rect x="155" y="300" width="250" height="255" rx="12" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+  <text x="280" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">1. ModeImageSelectionne</text>
+  <line x1="155" y1="334" x2="405" y2="334" stroke="#405364" stroke-width="1.2"/>
+  <text x="165" y="354" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / monterControlesImage()</text>
+  <text x="165" y="372" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / accepter(["image"])</text>
+  <text x="165" y="390" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">toggle_lora(id) / activer1Clic(0.8)</text>
+  <text x="165" y="408" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">saisirConfiguration / majBrouillon()</text>
+  <text x="165" y="426" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / demonterPilulesImage()</text>
+  <line x1="165" y1="438" x2="395" y2="438" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="165" y="456" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Pilules : Modèle, [LoRA], Ratio,</text>
+  <text x="165" y="472" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Résolution, Steps/CFG, Image Refs</text>
+  <text x="165" y="488" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#166534">Topologies : t2i, i2i, inpaint</text>
+
+  <!-- 2. ModeVideoSelectionne (x=425, w=255) -->
+  <rect x="425" y="300" width="255" height="255" rx="12" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+  <text x="552" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">2. ModeVideoSelectionne</text>
+  <line x1="425" y1="334" x2="680" y2="334" stroke="#405364" stroke-width="1.2"/>
+  <text x="435" y="354" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / monterControlesVideo()</text>
+  <text x="435" y="372" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / accepter(["image","video"])</text>
+  <text x="435" y="390" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">toggle_lora(id) / activer1Clic(0.8)</text>
+  <text x="435" y="408" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">saisirConfiguration / lierFrames()</text>
+  <text x="435" y="426" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / demonterPilulesVideo()</text>
+  <line x1="435" y1="438" x2="670" y2="438" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="435" y="456" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Pilules : Modèle, [LoRA], Ratio,</text>
+  <text x="435" y="472" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Durée (range/disc), FPS, Start/End</text>
+  <text x="435" y="488" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#166534">Topologies : t2v, i2v, flf2v, ref2v</text>
+
+  <!-- 3. ModeAudioSelectionne (x=700, w=270) -->
+  <rect x="700" y="300" width="270" height="255" rx="12" fill="#F0FDF4" stroke="#166534" stroke-width="2.2"/>
+  <text x="835" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#14532D">3. ModeAudioSelectionne</text>
+  <line x1="700" y1="334" x2="970" y2="334" stroke="#166534" stroke-width="1.2"/>
+  <text x="710" y="354" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">entry / monterPilulesAudioDynamiques()</text>
+  <text x="710" y="372" font-family="Arial, sans-serif" font-size="11" fill="#17212B">do / filtrer(audio | video pour V2A)</text>
+  <text x="710" y="390" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">saisirConfiguration / prompt, paroles, tags</text>
+  <text x="710" y="408" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">set_voice_ref / clonerVoixZeroShot()</text>
+  <text x="710" y="426" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / demonterPilulesAudio()</text>
+  <line x1="710" y1="438" x2="960" y2="438" stroke="#BBF7D0" stroke-width="1"/>
+  <text x="710" y="456" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#14532D">Pilules : SubMode (Voice|Music|SFX),</text>
+  <text x="710" y="472" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#14532D">Voice/Lang, Vocal|Inst, Speed, Durée,</text>
+  <text x="710" y="488" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#14532D">Format (.wav/.mp3/.flac)</text>
+  <text x="710" y="504" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#B3261E">Zéro champ Lyrics séparé (Prompt unifié)</text>
+
+  <!-- 4. ModeLipSyncSelectionne (x=990, w=245) -->
+  <rect x="990" y="300" width="245" height="255" rx="12" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+  <text x="1112" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">4. ModeLipSyncSelectionne</text>
+  <line x1="990" y1="334" x2="1235" y2="334" stroke="#405364" stroke-width="1.2"/>
+  <text x="1000" y="354" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / monterSlotsVisageEtVoix()</text>
+  <text x="1000" y="372" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / accepter(["image","video","audio"])</text>
+  <text x="1000" y="390" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">saisirConfiguration / lierVisage()</text>
+  <text x="1000" y="408" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">saisirConfiguration / lierPisteVocale()</text>
+  <text x="1000" y="426" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / demonterControlesLipSync()</text>
+  <line x1="1000" y1="438" x2="1225" y2="438" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="1000" y="456" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Slots requis : Visage (Image/Vidéo)</text>
+  <text x="1000" y="472" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">+ Audio Ref (.wav/.mp3)</text>
+  <text x="1000" y="488" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Paramètres : pads, expression_scale</text>
+
+  <!-- 5. ModeUpscalingSelectionne (x=1255, w=240) -->
+  <rect x="1255" y="300" width="240" height="255" rx="12" fill="#EDF5F6" stroke="#405364" stroke-width="2"/>
+  <text x="1375" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">5. ModeUpscalingSelectionne</text>
+  <line x1="1255" y1="334" x2="1495" y2="334" stroke="#405364" stroke-width="1.2"/>
+  <text x="1265" y="354" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">entry / monterControlesUpscale()</text>
+  <text x="1265" y="372" font-family="Arial, sans-serif" font-size="11" fill="#596875">do / accepter(["image","video"])</text>
+  <text x="1265" y="390" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">saisirConfiguration / facteur(x2|x4)</text>
+  <text x="1265" y="408" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">saisirConfiguration / lierMediaEntrant()</text>
+  <text x="1265" y="426" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / demonterControlesUpscale()</text>
+  <line x1="1265" y1="438" x2="1485" y2="438" stroke="#D8E0E5" stroke-width="1"/>
+  <text x="1265" y="456" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Pilules : Facteur (x2, x4),</text>
+  <text x="1265" y="472" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#596875">Denoise, Tile Size, Face Enhance</text>
+
+  <!-- 6. Mode3DGenSelectionne (x=1515, w=255) -->
+  <rect x="1515" y="300" width="255" height="255" rx="12" fill="#F0FDF4" stroke="#166534" stroke-width="2.2"/>
+  <text x="1642" y="324" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#14532D">6. Mode3DGenSelectionne</text>
+  <line x1="1515" y1="334" x2="1770" y2="334" stroke="#166534" stroke-width="1.2"/>
+  <text x="1525" y="354" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">entry / monterPilules3DDynamiques()</text>
+  <text x="1525" y="372" font-family="Arial, sans-serif" font-size="11" fill="#17212B">do / accepter(["image","mesh"])</text>
+  <text x="1525" y="390" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">toggle_lora(id) / activerLora3D(0.8)</text>
+  <text x="1525" y="408" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">saisirConfiguration / lierMultiVue()</text>
+  <text x="1525" y="426" font-family="Arial, sans-serif" font-size="11" fill="#596875">exit / demonterPilules3D()</text>
+  <line x1="1525" y1="438" x2="1760" y2="438" stroke="#BBF7D0" stroke-width="1"/>
+  <text x="1525" y="456" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#14532D">Pilules : Octree (256/384/512),</text>
+  <text x="1525" y="472" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#14532D">Faces (10k..Raw), PBR, Topology (Tri|Quad),</text>
+  <text x="1525" y="488" font-family="Arial, sans-serif" font-size="10" font-style="italic" fill="#14532D">Rig/Anim, .glb/.fbx</text>
+
+  <!-- ========================================================================= -->
+  <!-- B-021 : FLÈCHES DEPUIS «CHOICE» AVEC GARDES FORMELLES MUTUELLEMENT EXCLUSIVES -->
+  <!-- ========================================================================= -->
+
+  <!-- Branche 1 : [modalite == image] -->
+  <path d="M255 263 L255 300" fill="none" stroke="#405364" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="185" y="272" width="135" height="16" fill="#FFFFFF"/>
+  <text x="252" y="284" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#126A78">[modalite == image]</text>
+
+  <!-- Branche 2 : [modalite == video] -->
+  <path d="M275 245 L552 245 L552 300" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="475" y="260" width="135" height="16" fill="#FFFFFF"/>
+  <text x="542" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#126A78">[modalite == video]</text>
+
+  <!-- Branche 3 : [modalite == audio] -->
+  <path d="M552 245 L835 245 L835 300" fill="none" stroke="#166534" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  <rect x="760" y="260" width="135" height="16" fill="#FFFFFF"/>
+  <text x="827" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">[modalite == audio]</text>
+
+  <!-- Branche 4 : [modalite == lipsync] -->
+  <path d="M835 245 L1112 245 L1112 300" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="1035" y="260" width="145" height="16" fill="#FFFFFF"/>
+  <text x="1107" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#126A78">[modalite == lipsync]</text>
+
+  <!-- Branche 5 : [modalite == upscale] -->
+  <path d="M1112 245 L1375 245 L1375 300" fill="none" stroke="#405364" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="1300" y="260" width="145" height="16" fill="#FFFFFF"/>
+  <text x="1372" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#126A78">[modalite == upscale]</text>
+
+  <!-- Branche 6 : [else] (couvre 3DGen & replis) -->
+  <path d="M1375 245 L1642 245 L1642 300" fill="none" stroke="#166534" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  <rect x="1605" y="260" width="75" height="16" fill="#FFFFFF"/>
+  <text x="1642" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">[else]</text>
+
+  <!-- ========================================================================= -->
+  <!-- B-022 : TRANSITION FORMELLE changerModalite(type) CIBLANT «CHOICE»       -->
+  <!-- ========================================================================= -->
+  <!-- Le tracé part exactement du bas de l'état 6 (y=555) et contourne proprement l'état 1 à gauche en trait plein -->
+  <path d="M1642 555 L1642 575 L142 575 L142 245 L235 245" fill="none" stroke="#126A78" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="660" y="563" width="600" height="24" rx="4" fill="#FFFFFF" stroke="#126A78" stroke-width="1.2"/>
+  <text x="960" y="579" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#126A78">
+    changerModalite(type in {image, video, audio, lipsync, upscale, 3dgen}) / recalculerCapabilitesEtFiltrerLoras()
+  </text>
+
+  <!-- Cartouche interne : Règles LoRA 1-clic & Filtrage strict -->
+  <rect x="155" y="625" width="1615" height="195" rx="6" fill="#FFF8E8" stroke="#8C6418" stroke-width="1.5" stroke-dasharray="5 4"/>
+  <text x="175" y="650" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#8C6418">RÈGLES MÉTIER DU DOCK ADAPTATIF, DES PILULES DYNAMIQUES ET DES LORAS (OMNIFORGE V01) :</text>
+  <text x="175" y="673" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">1. Pilule [LoRA] (si capabilities.supportsLora == true) : Affiche uniquement les LoRAs compatibles avec le modèle actif (baseModel). Un clic active/désactive le LoRA avec son poids par défaut (0.8).</text>
+  <text x="175" y="693" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">   Plusieurs LoRAs peuvent être actifs simultanément ; le curseur de poids (0.1 à 1.5) reste replié par défaut et ne s'ouvre que si l'utilisateur clique sur le badge de poids pour affiner.</text>
+  <text x="175" y="713" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">2. Zéro doublon de champs &amp; Blocage de fichiers incompatibles : Le Prompt principal reçoit aussi les paroles ([verse], [chorus]) et tags vocaux. Les slots existants (Image/Video/Audio/Mesh Refs)</text>
+  <text x="175" y="733" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">   sont réutilisés et bloquent immédiatement tout fichier non listé dans capabilities.acceptedInputTypes (ex: impossible de charger une image sur un modèle Audio pur).</text>
+  <text x="175" y="753" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">3. Transitions internes non destructives : Les actions toggle_lora, ajusterPoids, saisirConfiguration et set_ref s'exécutent dans l'état actif sans démonter le DOM React.</text>
+  <text x="175" y="773" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">4. Spécialisation du Dock : Le Dock est 100 % dédié aux 6 modalités de création média. Le dialogue LLM direct est déporté dans un module conversationnel dédié.</text>
+
+  <!-- ========================================================================= -->
+  <!-- B-020 : ÉTATS HORS COMPOSITE DE LA CLASSE METIER SessionPrompt            -->
+  <!-- ========================================================================= -->
+
+  <!-- ÉTAT HORS COMPOSITE 1 : SessionEnPause (Session mise en veille / navigation) -->
+  <rect x="250" y="920" width="480" height="165" rx="16" fill="#F0FDF4" stroke="#166534" stroke-width="2.2"/>
+  <text x="490" y="948" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#14532D">SessionEnPause (Session en Sommeil)</text>
+  <line x1="250" y1="958" x2="730" y2="958" stroke="#166534" stroke-width="1.2"/>
+  <text x="268" y="980" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#166534">entry / sauvegarderBrouillonLocal()</text>
+  <text x="268" y="1000" font-family="Arial, sans-serif" font-size="12" fill="#17212B">do / libererRessourcesGraphiques()</text>
+  <text x="268" y="1020" font-family="Arial, sans-serif" font-size="12" fill="#596875">exit / restaurerContexteSession()</text>
+  <text x="268" y="1048" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#166534">Atteint lors de la mise en arrière-plan ou de la navigation hors du studio</text>
+  <text x="268" y="1066" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">Le brouillon complet reste préservé et restauré via le pseudo-état d'historique [H]</text>
+
+  <!-- ÉTAT HORS COMPOSITE 2 : GenerationEnCours (Verrouillage et suivi d'inférence) -->
+  <rect x="980" y="920" width="490" height="165" rx="16" fill="#FDF5F5" stroke="#BA3C2A" stroke-width="2.2"/>
+  <text x="1225" y="948" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="700" fill="#BA3C2A">GenerationEnCours (Verrouillage &amp; Suivi Inférence)</text>
+  <line x1="980" y1="958" x2="1470" y2="958" stroke="#BA3C2A" stroke-width="1.2"/>
+  <text x="998" y="980" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">entry / verrouillerControlesPrompt()</text>
+  <text x="998" y="1000" font-family="Arial, sans-serif" font-size="12" fill="#596875">do / afficherJaugeProgressionSSE()</text>
+  <text x="998" y="1020" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#BA3C2A">interrompreFlux() / demanderAnnulation()</text>
+  <text x="998" y="1040" font-family="Arial, sans-serif" font-size="12" fill="#596875">exit / deverrouillerControlesPrompt()</text>
+  <text x="998" y="1064" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">Empêche les modifications concurrentes pendant le traitement distant</text>
+
+  <!-- Transitions vers SessionEnPause et retour vers [H] -->
+  <path d="M360 845 L360 920" fill="none" stroke="#166534" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <rect x="220" y="868" width="280" height="22" rx="3" fill="#FFFFFF" stroke="#166534" stroke-width="1"/>
+  <text x="360" y="883" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#14532D">suspendreSession() / sauvegarderBrouillonLocal()</text>
+
+  <!-- Retour de SessionEnPause vers l'historique [H] (en trait plein standard UML) -->
+  <path d="M620 920 L620 880 L1850 880 L1850 245 L1746 245" fill="none" stroke="#166534" stroke-width="1.8" marker-end="url(#arrowGreen)"/>
+  <rect x="640" y="868" width="230" height="22" rx="3" fill="#FFFFFF" stroke="#166534" stroke-width="1"/>
+  <text x="755" y="883" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#14532D">reprendreSession() → [H]</text>
+
+  <!-- Transitions vers GenerationEnCours et retour vers [H] -->
+  <path d="M1140 845 L1140 920" fill="none" stroke="#BA3C2A" stroke-width="2" marker-end="url(#arrowRed)"/>
+  <rect x="990" y="868" width="300" height="22" rx="3" fill="#FFFFFF" stroke="#BA3C2A" stroke-width="1"/>
+  <text x="1140" y="883" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">soumettreGeneration() [parametresValides == true]</text>
+
+  <path d="M1350 920 L1350 855 L1820 855 L1820 245 L1746 245" fill="none" stroke="#126A78" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="1460" y="836" width="340" height="22" rx="3" fill="#FFFFFF" stroke="#126A78" stroke-width="1"/>
+  <text x="1630" y="851" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#126A78">generationTerminee [succes || annulation || echec] → [H]</text>
+
+  <!-- État final de réinitialisation / clôture de session (Positionné proprement au bas droit) -->
+  <circle cx="1660" cy="990" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+  <circle cx="1660" cy="990" r="8" fill="#17212B"/>
+  <path d="M1660 845 L1660 976" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="1530" y="895" width="260" height="22" rx="3" fill="#FFFFFF" stroke="#405364" stroke-width="1"/>
+  <text x="1660" y="910" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">reinitialiserSession() / effacerBrouillon()</text>
+
+  <!-- Spécification d'ingénierie de la machine à états -->
+  <rect x="40" y="1120" width="1900" height="65" rx="6" fill="#F4F8F9" stroke="#A9C7CD" stroke-width="1"/>
+  <text x="58" y="1142" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">Spécification UML 2.5.1 &amp; Sémantique d'Exécution de la Machine à États :</text>
+  <text x="58" y="1160" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">• Cycle de vie ancré sur l'entité SessionPrompt : Gestion des états nominaux et hors composite (SessionEnPause, GenerationEnCours) avec reprise contextuelle via pseudo-état d'historique [H].</text>
+  <text x="58" y="1176" font-family="Arial, sans-serif" font-size="11.5" fill="#596875">• Déterminisme du routage modal : Pseudo-état de choix dynamique «choice» à gardes mutuellement exclusives ([modalite == image], [modalite == video], [modalite == audio], [else]).</text>
+</svg>

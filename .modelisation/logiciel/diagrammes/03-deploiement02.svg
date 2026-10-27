@@ -1,0 +1,173 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2220" height="1620" viewBox="0 0 2220 1620">
+  <defs>
+    <!-- Styles et marqueurs -->
+  </defs>
+
+  <!-- Fond blanc pur -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- En-tête -->
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">03 · Topologie de déploiement multi-processus unifiée (v3) — Omniforge &amp; Mini Design</text>
+  <text x="48" y="68" font-family="Arial, sans-serif" font-size="13.5" fill="#52616B">Diagramme de Déploiement UML 2.5.1 · Nœuds 3D Axonométriques «device», Ligne Continue «communicationPath», PIDs illustratifs &amp; Nomenclature Formelle des Ports</text>
+  <line x1="48" y1="82" x2="2172" y2="82" stroke="#D5DEE5" stroke-width="1.5"/>
+
+  <!-- ===================================================================== -->
+  <!-- NŒUD 1 : POSTE HÔTE LOCAL WINDOWS 11 (CUBE 3D PERSPECTIVE AXONOMÉTRIQUE) -->
+  <!-- ===================================================================== -->
+  <!-- Face supérieure 3D (Top Polygon) -->
+  <polygon points="48,140 78,110 1458,110 1428,140" fill="#E2E8F0" stroke="#1E4E5F" stroke-width="2.4"/>
+  <!-- Face latérale droite 3D (Side Polygon) -->
+  <polygon points="1428,140 1458,110 1458,1530 1428,1560" fill="#CBD5E1" stroke="#1E4E5F" stroke-width="2.4"/>
+  <!-- Face principale avant (Front Face) -->
+  <rect x="48" y="140" width="1380" height="1420" rx="4" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="2.4"/>
+  <rect x="48" y="140" width="1380" height="42" rx="4" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="738" y="166" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#123C4A">«device» Poste de Travail Utilisateur (Windows 11 Pro · Intel i7-6600U · 16 Go RAM · 127.0.0.1) [1]</text>
+
+  <!-- Environnement 1.1 : Processus Principal Electron -->
+  <rect x="75" y="200" width="1325" height="205" rx="6" fill="#FFFFFF" stroke="#334155" stroke-width="1.8"/>
+  <rect x="75" y="200" width="1325" height="32" rx="6" fill="#F1F5F9" stroke="#334155" stroke-width="1.2"/>
+  <text x="737" y="221" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0F172A">«executionEnvironment» Processus Electron Main (Node.js 20.11.0 Runtime · PID: 14208)</text>
+
+  <!-- Artefact 1.1.1 : Main -->
+  <rect x="95" y="245" width="405" height="145" rx="5" fill="#FAFBFD" stroke="#334155" stroke-width="1.4"/>
+  <text x="110" y="267" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">«artifact» electron/main.js</text>
+  <text x="110" y="287" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Superviseur de cycle de vie des backends locaux</text>
+  <text x="110" y="305" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Gestionnaire de fenêtres &amp; BrowserView 1/2</text>
+  <text x="110" y="323" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Enregistrement IPC typés &amp; ContextBridge</text>
+  <text x="110" y="341" font-family="Arial, sans-serif" font-size="11" fill="#334155">• PID: 14208 · Threads: 4</text>
+  <text x="110" y="359" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Empreinte mémoire estimée : ~60 Mo RAM</text>
+
+  <!-- Artefact 1.1.2 : BrowserView Studio -->
+  <rect x="535" y="245" width="415" height="145" rx="5" fill="#FAFBFD" stroke="#334155" stroke-width="1.4"/>
+  <text x="550" y="267" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">«artifact» Vue Studio (BrowserView 1 · Port :5173)</text>
+  <text x="550" y="287" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Chargé depuis http://127.0.0.1:5173 (ou build dist/)</text>
+  <text x="550" y="305" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Frontend React 18 / Vite 5 / Tailwind CSS</text>
+  <text x="550" y="323" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Dock 6 pôles, LoRA pill &amp; MediaGallery</text>
+  <text x="550" y="341" font-family="Arial, sans-serif" font-size="11" fill="#334155">• PID: 18920 (Chromium Renderer)</text>
+  <text x="550" y="359" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Empreinte mémoire estimée : ~45 Mo RAM</text>
+
+  <!-- Artefact 1.1.3 : BrowserView Agents -->
+  <rect x="980" y="245" width="405" height="145" rx="5" fill="#FAFBFD" stroke="#334155" stroke-width="1.4"/>
+  <text x="995" y="267" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">«artifact» Vue Agents (BrowserView 2 · Port :8001 / :8002)</text>
+  <text x="995" y="287" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Chargé depuis http://127.0.0.1:8001 (Workbench UI)</text>
+  <text x="995" y="305" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Moteur WebGPU / Canvas2D V3 (1,3M lignes isolées)</text>
+  <text x="995" y="323" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Interface Workbench &amp; agents Hilo (Port HTTP :8002)</text>
+  <text x="995" y="341" font-family="Arial, sans-serif" font-size="11" fill="#334155">• PID: 19452 (Chromium WebGPU Renderer)</text>
+  <text x="995" y="359" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Empreinte mémoire estimée : ~120 Mo RAM</text>
+
+  <!-- Environnement 1.2 : Backend FastAPI Python -->
+  <rect x="75" y="425" width="645" height="400" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <rect x="75" y="425" width="645" height="32" rx="6" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.2"/>
+  <text x="397" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#123C4A">«executionEnvironment» Python 3.10.12 / FastAPI / Uvicorn (Port :8000 · PID: 22104)</text>
+
+  <rect x="95" y="470" width="605" height="340" rx="5" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="1.4"/>
+  <text x="110" y="492" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#1E4E5F">«artifact» colab-ai-studio/app/main.py</text>
+  <text x="110" y="515" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• WorkerGateway &amp; TaskOrchestrator (gestion SSE /status)</text>
+  <text x="110" y="535" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Proxy OpenAI standardisé (/v1/chat/completions) pour agents Hilo</text>
+  <text x="110" y="555" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• ComfyWorkflowCompiler (compilation .api.json &amp; injection LoRAs)</text>
+  <text x="110" y="575" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• ColabSessionOrchestrator (tunnel public TLS &amp; allocation GPU)</text>
+  <text x="110" y="595" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• ModelSwapperLRU (cache mémoire modèles &amp; prévention OOM)</text>
+  <text x="110" y="615" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• JSONStoreLock (écritures atomiques avec asyncio.Lock sur data/)</text>
+  <text x="110" y="635" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• MediaFileStore (streaming binaire par chunks 64 Ko vers outputs/)</text>
+  <text x="110" y="655" font-family="Arial, sans-serif" font-size="11" fill="#334155">• PID: 22104 · Threads: 8 · Ecoute: 127.0.0.1:8000</text>
+  <text x="110" y="675" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Empreinte mémoire estimée : ~75 Mo RAM (&lt; 80 Mo max)</text>
+
+  <!-- Environnement 1.3 : Gateway NestJS Mini Design -->
+  <rect x="755" y="425" width="645" height="400" rx="6" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+  <rect x="755" y="425" width="645" height="32" rx="6" fill="#F1F5F9" stroke="#475569" stroke-width="1.2"/>
+  <text x="1077" y="446" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0F172A">«executionEnvironment» Node.js 20.11 / NestJS Gateway (Port :51491 &amp; Auth :45899 · PID: 24316)</text>
+
+  <rect x="775" y="470" width="605" height="340" rx="5" fill="#FAFBFD" stroke="#475569" stroke-width="1.4"/>
+  <text x="790" y="492" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">«artifact» mini-design-src/packages/gateway/dist/main.js</text>
+  <text x="790" y="515" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• OmniforgeInferenceAdapter (route les prompts IA vers :8000)</text>
+  <text x="790" y="535" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• WorkspaceKernel &amp; gestionnaire de session locale</text>
+  <text x="790" y="555" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• SQLiteRepository (gestion .hilo/index.sqlite · 46 tables)</text>
+  <text x="790" y="575" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• WorkspaceGuard &amp; validation jeton local mini-design-local-token</text>
+  <text x="790" y="595" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• ConfigServer &amp; Local Auth Server (Port :45899)</text>
+  <text x="790" y="615" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• ContractEngine (canvas-discipline &amp; anti-loop guard)</text>
+  <text x="790" y="635" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Outils MCP locaux (mcp-tools-v3, bundled-plugins, clip-studio-export)</text>
+  <text x="790" y="655" font-family="Arial, sans-serif" font-size="11" fill="#334155">• PID: 24316 · OpenCode Agent Runtime / Gateway IPC (:51491)</text>
+  <text x="790" y="675" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Empreinte mémoire estimée : ~95 Mo RAM</text>
+
+  <!-- Environnement 1.4 : Moteur Local ComfyUI Headless -->
+  <rect x="75" y="845" width="645" height="320" rx="6" fill="#FFFFFF" stroke="#8C6418" stroke-width="1.8"/>
+  <rect x="75" y="845" width="645" height="32" rx="6" fill="#FDF8E7" stroke="#8C6418" stroke-width="1.2"/>
+  <text x="397" y="866" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#66460D">«executionEnvironment» ComfyUI Headless API (Port :8188 · PID: 28540 · Option Local)</text>
+
+  <rect x="95" y="890" width="605" height="260" rx="5" fill="#FAFBFD" stroke="#8C6418" stroke-width="1.4"/>
+  <text x="110" y="912" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#66460D">«artifact» main.py --disable-auto-launch --listen 127.0.0.1 --port 8188</text>
+  <text x="110" y="935" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Exécution silencieuse en arrière-plan sans GUI nodale ouverte</text>
+  <text x="110" y="955" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Exécution des graphes compilés (.api.json) et chaînage LoRA loaders</text>
+  <text x="110" y="975" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Téléversement d'images de référence via POST /upload/image</text>
+  <text x="110" y="995" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Contrôle par ComfyProcessManager (cycle de vie sous-processus dédié)</text>
+  <text x="110" y="1015" font-family="Arial, sans-serif" font-size="11" fill="#334155">• PID: 28540 · Écoute: 127.0.0.1:8188</text>
+  <text x="110" y="1035" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Empreinte mémoire estimée : ~140 Mo RAM (base sans modèle)</text>
+
+  <!-- Environnement 1.5 : Système de Fichiers & Base SQLite (Requalifié) -->
+  <rect x="755" y="845" width="645" height="320" rx="6" fill="#F4F8FA" stroke="#1E4E5F" stroke-width="1.8"/>
+  <rect x="755" y="845" width="645" height="32" rx="6" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.2"/>
+  <text x="1077" y="866" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#123C4A">«executionEnvironment» SQLite Embedded Engine &amp; OS Storage</text>
+
+  <rect x="775" y="890" width="605" height="260" rx="5" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.4"/>
+  <text x="790" y="912" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#123C4A">«artifact» Stockage Local Partagé &amp; Moteur SQLite 3.42</text>
+  <text x="790" y="935" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• .hilo/index.sqlite (Base relationnelle Mini Design, 46 tables, mode WAL)</text>
+  <text x="790" y="955" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• table resource_v3 : indexation atomique des assets générés par Omniforge</text>
+  <text x="790" y="975" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• data/ : Documents JSON Omniforge (models.json, generations.json, loras.json)</text>
+  <text x="790" y="995" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• outputs/ &amp; .hilo/resources/ : Répertoire unifié pour médias (png, mp4, wav, glb)</text>
+  <text x="790" y="1015" font-family="Arial, sans-serif" font-size="11" fill="#334155">• Driver: sqlite3 natif via node-sqlite3 et Python sqlite3</text>
+  <text x="790" y="1035" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Isolation atomique : écritures concurrentes sécurisées sans collision</text>
+
+  <!-- Récapitulatif Empreinte Mémoire Totale PC Hôte -->
+  <rect x="75" y="1185" width="1325" height="85" rx="6" fill="#F0FDF4" stroke="#166534" stroke-width="1.6"/>
+  <text x="95" y="1210" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#166534">Bilan de l'Empreinte Mémoire Hôte Windows 11 (Au Repos &amp; Charge Modérée) :</text>
+  <text x="95" y="1232" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">• Electron Main (~60 Mo) + Vue Studio (~45 Mo) + Vue Agents (~120 Mo) + FastAPI (~75 Mo) + Gateway NestJS (~95 Mo) = ~395 Mo RAM</text>
+  <text x="95" y="1252" font-family="Arial, sans-serif" font-size="11.5" fill="#166534">• Estimations hors modèles : sans ComfyUI ~395 Mo (&lt; 450) ; avec ComfyUI ~535 Mo (&gt; 450) ; à mesurer</text>
+
+  <!-- ===================================================================== -->
+  <!-- NŒUD 2 : GOOGLE COLAB DISTANT (CUBE 3D PERSPECTIVE AXONOMÉTRIQUE)      -->
+  <!-- ===================================================================== -->
+  <!-- Face supérieure 3D (Top Polygon) -->
+  <polygon points="1520,140 1550,110 2160,110 2130,140" fill="#DCFCE7" stroke="#166534" stroke-width="2.4"/>
+  <!-- Face latérale droite 3D (Side Polygon) -->
+  <polygon points="2130,140 2160,110 2160,940 2130,970" fill="#BBF7D0" stroke="#166534" stroke-width="2.4"/>
+  <!-- Face principale avant (Front Face) -->
+  <rect x="1520" y="140" width="610" height="830" rx="4" fill="#FBFDFA" stroke="#166534" stroke-width="2.4"/>
+  <rect x="1520" y="140" width="610" height="42" rx="4" fill="#EBF6EE" stroke="#166534" stroke-width="1.5"/>
+  <text x="1825" y="166" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#166534">«device» Worker Distant Google Colab (Linux Cloud VM) [0..1]</text>
+
+  <rect x="1540" y="200" width="570" height="745" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="1.8"/>
+  <rect x="1540" y="200" width="570" height="32" rx="6" fill="#EBF6EE" stroke="#166534" stroke-width="1.2"/>
+  <text x="1825" y="221" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#166534">«executionEnvironment» PyTorch 2.4 / Torch-XLA / Python Server (Port :8000 distant · PID: 1142)</text>
+
+  <rect x="1555" y="245" width="540" height="680" rx="5" fill="#FAFDFB" stroke="#166534" stroke-width="1.4"/>
+  <text x="1570" y="270" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#166534">«artifact» colab_worker/server.py &amp; model_swapper.py</text>
+  <text x="1570" y="295" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Dynamic Model Swapper (gestion de cache LRU en VRAM / HBM)</text>
+  <text x="1570" y="315" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Support Matériel GPU NVIDIA : T4 (16 Go), L4 (24 Go), A100 (40/80 Go)</text>
+  <text x="1570" y="335" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Support Matériel TPU Google : TPU v5e, TPU v6e, TPU v2-8 (torch_xla)</text>
+  <text x="1570" y="355" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Pipelines Diffusers Image : SDXL, Flux.1, SD1.5 (t2i, i2i, inpainting)</text>
+  <text x="1570" y="375" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Pipelines Vidéo : Wan2.1, HunyuanVideo, CogVideoX (sortie .mp4 720p/1080p)</text>
+  <text x="1570" y="395" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Pipelines Audio &amp; Voix : Kokoro-82M, Chatterbox TTS (.wav)</text>
+  <text x="1570" y="415" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Pipelines Lip-sync : SadTalker, Wav2Lip (synchronisation labiale avatar)</text>
+  <text x="1570" y="435" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Modèles 3D Mesh : TripoSR, SV3D, CRM (sortie format 3D .glb / .obj)</text>
+  <text x="1570" y="455" font-family="Arial, sans-serif" font-size="11" fill="#17212B">• Tunnel public chiffré TLS automatique (sans configuration manuelle ngrok)</text>
+  <text x="1570" y="475" font-family="Arial, sans-serif" font-size="11" fill="#334155">• PID: 1142 · Écoute: 0.0.0.0:8000</text>
+  <text x="1570" y="495" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Déport total de la charge GPU : Zéro surchauffe ni crash mémoire sur le PC hôte</text>
+
+  <!-- ===================================================================== -->
+  <!-- LIAISONS DE COMMUNICATION (Communication Paths)-->
+  <!-- ===================================================================== -->
+
+  <!-- Liaison Locale 1 : Gateway NestJS -> FastAPI -->
+  <line x1="755" y1="620" x2="720" y2="620" stroke="#1E4E5F" stroke-width="2.4"/>
+  <text x="737" y="612" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">«communicationPath»</text>
+  <text x="737" y="635" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" fill="#1E4E5F">HTTP Localhost :8000</text>
+
+  <!-- Liaison Distante : FastAPI -> Worker Colab (Ligne CONTINUE pleine) -->
+  <line x1="1458" y1="580" x2="1520" y2="580" stroke="#166534" stroke-width="2.6"/>
+  <text x="1489" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">«communicationPath»</text>
+  <text x="1489" y="600" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#166534">HTTPS / WSS (Tunnel TLS Distant)</text>
+
+  <!-- Liaison Locale 2 : FastAPI -> ComfyUI -->
+  <line x1="397" y1="825" x2="397" y2="845" stroke="#8C6418" stroke-width="2.4"/>
+  <text x="445" y="838" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#8C6418">«communicationPath» HTTP :8188</text>
+</svg>

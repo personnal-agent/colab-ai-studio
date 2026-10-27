@@ -17,6 +17,8 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
 
 ## 🧠 Decisions Made
 
+- **2026-10-27 — PR #29, clarification de conception** : conserver cette PR dans son périmètre documentaire et expliciter les fonctions non implémentées. Catalogue cible : `data/models.json` devient la source éditable unique ; `known_models_catalog.json` reste une bibliothèque de signatures en lecture seule et les workflows custom sont intégrés dans `models.json` (le `custom_models.json` prévu dans la première version est abandonné pour éviter deux listes divergentes). Cette clarification modifie la conception cible, pas le stockage actuel, qui interroge encore le worker. La publication fichiers/SQLite est décrite comme un protocole avec compensation et reprise, sans prétendre à une transaction atomique commune.
+
 - **2026-10-09** : Adoption du socle de gouvernance à 6 piliers avec agent cible Antigravity 2.0 / IDE.
 - **2026-10-09** : Suivi de `.GCC/` sous contrôle de version Git pour synchroniser la mémoire des décisions d'architecture entre les sessions.
 - **2026-10-09** : Conception de hooks Git hybrides scope-aware (`pre-commit`, `commit-msg`, `pre-push`) prenant en charge Python (FastAPI/Colab) et TypeScript/JavaScript (React/Vite).
@@ -61,6 +63,8 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
 
 ## 🌿 Active Branches / Plans
 
+- **PR #29 — Corrections de revue documentaire** : [plan_pr29_review_feedback.md](branches/plan_pr29_review_feedback.md). Premier lot publié au commit `e985ef5f5db3375b71761c67f1be4c966d3fb612` après autorisation ; nouveau lot documentaire en validation/livraison. Instructions AGENTS.md/CLAUDE.md approuvées et appliquées ; aucun archivage.
+
 - **Chaîne d'implémentation logicielle & TDD (5 plans séquentiels)** :
   1. [`.GCC/branches/plan_01_backend_storage_domain.md`](branches/plan_01_backend_storage_domain.md) : Socle Backend FastAPI, Modèles de Domaine Pydantic v2 (`TaskStatus`, `Generation`, `BrandKit`, `Project`, `StudioConfig`), `JSONDocumentStore` atomique (`asyncio.Lock` + `os.replace`), `MediaFileStore` (isolation `storagePath`), extraction Brand Kit (`brand_extractor.py`) et routes CRUD.
   2. [`.GCC/branches/plan_02_backend_brand_compiler_orchestrator.md`](branches/plan_02_backend_brand_compiler_orchestrator.md) : `BrandContextCompiler` (repli déterministe anglais & priorité des fentes), `TaskOrchestrator` SSE & annulation idempotente, garde-fou mode Local (`501`), et Proxy LLM streaming OpenAI (`/v1/chat/completions`).
@@ -75,10 +79,12 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
 
 ## 📈 Current Status
 
+- **Session du 2026-10-27, PR #29** : premier lot publié au commit `e985ef5f5db3375b71761c67f1be4c966d3fb612` après autorisation utilisateur. Six revues locales terminées, dernière à zéro finding ; CI distante du premier lot verte. Revue distante suivante : cinq remarques directes (quatre majeures, une mineure), un nitpick et un complément, traités dans le nouveau lot documentaire. Validation et livraison de ce lot en cours ; aucun merge ni archivage. Les états historiques ci-dessous décrivent les étapes antérieures.
+
 - ✅ Terminé : Phase 1 (Spécifications et Modélisation UML fusionnées sur `main`), chaîne des 5 plans d'implémentation TDD, gouvernance anti-mauvais-code, Plan 01/05 fusionné sur `main` (`19156a6`), Plan 02/05 fusionné sur `main` (`7f46de9`), et **Plan 03/05** entièrement exécuté en TDD et validé sous pre-push (31 tests frontend verts, 71 tests backend verts, build Vite OK, ESLint 0 warning, depcruise 0 violation, budget LoC < 2000).
 - 🔄 En cours : Revue et validation de la PR du **Plan 03/05** (`feat/plan-03-frontend-foundation-gallery`).
 - ⏳ En attente : Plans 04/05 et 05/05.
 
 ## 👉 Next Session Direction
 
-Ouvrir la Pull Request pour le **Plan 03/05**, déclencher les revues Greptile (`@greptile-apps review`) et CodeRabbit (`@coderabbitai review`), puis enchaîner avec le **Plan 04/05** ([`.GCC/branches/plan_04_frontend_dock_brandkit_llm.md`](branches/plan_04_frontend_dock_brandkit_llm.md)).
+Terminer validation et revue du nouveau lot de corrections de la PR #29, puis le pousser sur sa branche source conformément à l’autorisation Git acquise et vérifier les fils distants ; plan actif sans archivage.
