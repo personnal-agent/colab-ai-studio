@@ -63,7 +63,7 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
 
 ## 🌿 Active Branches / Plans
 
-- **PR #29 — Corrections de revue documentaire** : [plan_pr29_review_feedback.md](branches/plan_pr29_review_feedback.md). Corrections et validations locales ; instructions protégées AGENTS.md/CLAUDE.md corrigées après accord explicite. Aucun archivage ni publication distante.
+- **PR #29 — Corrections de revue documentaire** : [plan_pr29_review_feedback.md](branches/plan_pr29_review_feedback.md). Premier lot publié au commit `e985ef5f5db3375b71761c67f1be4c966d3fb612` après autorisation ; nouveau lot documentaire en validation/livraison. Instructions AGENTS.md/CLAUDE.md approuvées et appliquées ; aucun archivage.
 
 - **Chaîne d'implémentation logicielle & TDD (5 plans séquentiels)** :
   1. [`.GCC/branches/plan_01_backend_storage_domain.md`](branches/plan_01_backend_storage_domain.md) : Socle Backend FastAPI, Modèles de Domaine Pydantic v2 (`TaskStatus`, `Generation`, `BrandKit`, `Project`, `StudioConfig`), `JSONDocumentStore` atomique (`asyncio.Lock` + `os.replace`), `MediaFileStore` (isolation `storagePath`), extraction Brand Kit (`brand_extractor.py`) et routes CRUD.
@@ -79,7 +79,7 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
 
 ## 📈 Current Status
 
-- **Session du 2026-10-27, PR #29** : documentation corrigée localement ; tests backend/frontend, build et pre-push complet passés. Cinq passes CodeRabbit terminées : 9, 4, 6, 5 puis 3 remarques (doublons inclus), toutes traitées. Dernière passe : trois mineures, vérifiées par assertions ciblées ; aucune nouvelle passe CLI à zéro finding revendiquée. ; patch AGENTS.md/CLAUDE.md approuvé et appliqué ; publication distante en attente. Les états historiques ci-dessous décrivent les étapes antérieures.
+- **Session du 2026-10-27, PR #29** : premier lot publié au commit `e985ef5f5db3375b71761c67f1be4c966d3fb612` après autorisation utilisateur. Six revues locales terminées, dernière à zéro finding ; CI distante du premier lot verte. Revue distante suivante : cinq remarques directes (quatre majeures, une mineure), un nitpick et un complément, traités dans le nouveau lot documentaire. Validation et livraison de ce lot en cours ; aucun merge ni archivage. Les états historiques ci-dessous décrivent les étapes antérieures.
 
 - ✅ Terminé : Phase 1 (Spécifications et Modélisation UML fusionnées sur `main`), chaîne des 5 plans d'implémentation TDD, gouvernance anti-mauvais-code, Plan 01/05 fusionné sur `main` (`19156a6`), Plan 02/05 fusionné sur `main` (`7f46de9`), et **Plan 03/05** entièrement exécuté en TDD et validé sous pre-push (31 tests frontend verts, 71 tests backend verts, build Vite OK, ESLint 0 warning, depcruise 0 violation, budget LoC < 2000).
 - 🔄 En cours : Revue et validation de la PR du **Plan 03/05** (`feat/plan-03-frontend-foundation-gallery`).
@@ -87,4 +87,4 @@ Exécution séquentielle en TDD (Red-Green-Refactor) de la chaîne des 5 plans d
 
 ## 👉 Next Session Direction
 
-La validation documentaire des corrections de la PR #29 est terminée (plan `plan_pr29_review_feedback.md`). Préparer la livraison Git après autorisation explicite, puis vérifier de nouveau la revue distante. Le patch AGENTS.md/CLAUDE.md a été explicitement approuvé et appliqué. La PR distante n’a pas été modifiée ; ne pas annoncer ses threads résolus ni sa revue 5/5 avant publication et nouvelle vérification.
+Terminer validation et revue du nouveau lot de corrections de la PR #29, puis le pousser sur sa branche source conformément à l’autorisation Git acquise et vérifier les fils distants ; plan actif sans archivage.

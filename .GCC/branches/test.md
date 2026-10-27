@@ -326,3 +326,42 @@ Passe 5 : RG-01 inclut config.json, description des trois moteurs qualifiée com
 Final review checks passed: identical agent guides, baseline references, target capabilities, supported typecheck, config persistence, canonical SQLite index and effective endpoint DoD.
 ```
 Dernier validateur documentaire : six JSON, schémas actuels, XML/liens/états/ports/tokens, sept règles conservées ; exit 0. Aucun commit/push effectué.
+
+
+## Nouvelle revue distante de la PR #29 — 2026-10-27 après e985ef5
+
+Premier lot publié au commit `e985ef5f5db3375b71761c67f1be4c966d3fb612` après autorisation explicite ; sixième passe locale zéro finding, CI distante ensuite verte. Le nouveau retour distant 5671529062 contient cinq remarques directes, un nitpick et un complément : Auth séparé et cycle de vie explicite, quatre sondes dont Local Service, coordinateur FastAPI unique / Gateway écrivain SQLite unique, publication no-replace avec preuve de propriété, dépendances externes de validation, prérequis Colab et inventaire handoff.
+
+Revue indépendante en lecture seule : incohérence temporaire conservé/supprimé et état incertain après timeout SQLite repérés et corrigés ; aucune modification par le reviewer. Sources Colab officielles vérifiées via HTTPS (outil web indisponible 401), scope/allowlist/eligible/proxy-token confirmés. Les deux anciens fils Local/formats restent des limites runtime, non déclarées implémentées.
+
+Commandes exécutées depuis la racine (exit 0) :
+`PYTHONPATH=. /home/vercel-sandbox/runtime/venv/bin/python /home/vercel-sandbox/workspace/workspace-context/pr29-validate-docs.py`
+```text
+Documentation checks passed: 6 JSON blocks, current request/config schemas, 14 UML types, SVG XML, local links, statuses, ports and tokens.
+Final review fixes passed: academic citations removed, 7 engineering rules retained, effective health URLs and current handoff verified.
+```
+`/home/vercel-sandbox/runtime/venv/bin/python /home/vercel-sandbox/workspace/workspace-context/pr29-validate-followup.py`
+```text
+Follow-up documentation checks passed: Auth lifecycle, four readiness probes, publication owner/no-replace/recovery, Colab prerequisites, portable handoff warning; 104 application/gate inputs unchanged.
+```
+`git diff --check` : sortie vide, exit 0. Les 99 tests backend, 74 frontend, build et gate du premier lot sont réutilisés après contrôle des empreintes inchangées. Le hook obligatoire sera exécuté normalement lors du push. Les scripts et logs `workspace-context/` sont externes à ce dépôt et absents d’un checkout indépendant.
+
+Prochaine étape : revue CodeRabbit du nouveau diff, puis publication autorisée. Les événements terminaux et résultats de livraison seront conservés dans le registre externe de validation pour garder le patch effectivement relu inchangé.
+
+
+### Revue locale du nouveau lot
+
+La première session CodeRabbit a été interrompue par la reprise d’environnement, sans résultat terminal observé. La session relancée a terminé `review_completed`, exit 0, trois remarques (deux majeures, une mineure) : attendre la fin de l’opération Colab et ses erreurs, définir le prérequis de durabilité Windows, synchroniser l’index GCC de publication. Toutes corrigées. Les sources officielles operations.get/wait ont été consultées ; aucune garantie Windows actuellement implémentée ou testée n’est revendiquée.
+
+Après corrections, les deux commandes documentaires ci-dessus ont été réexécutées : mêmes sorties, exit 0 ; `git diff --check` sortie vide, exit 0. Les assertions vérifient aussi Operation.done/error et le blocage de publication durable avant validation de l’adaptateur Windows. Passe de confirmation sélectionnée ; résultat terminal puis livraison seront enregistrés dans le registre externe `workspace-context/validation-record.md` et les logs associés sans modifier le patch relu.
+
+
+### Résultat de la passe de confirmation
+
+CodeRabbit : terminal `review_completed`, exit 0, neuf remarques mineures. Une précision valide corrigée : repli Colab manuel uniquement si URL/secret effectif déjà configurés et worker joignable ; sinon Local déjà configuré/joignable, ou état Configuration requise. Huit suggestions d’espacement non reproduites : aucun blanc répété dans les 28 lignes source citées, indentation Markdown préservée.
+
+Commande : `/home/vercel-sandbox/runtime/venv/bin/python /home/vercel-sandbox/workspace/workspace-context/pr29-check-review-spacing.py`, exit 0 :
+```text
+Review spacing check passed: no repeated whitespace in 28 cited source lines (Markdown indentation preserved).
+```
+Les deux validateurs documentaires ont été réexécutés après correction, mêmes sorties, exit 0. `git diff --check` : sortie vide, exit 0. Bilan du nouveau lot : première session interrompue sans résultat, puis 3 remarques (2 majeures/1 mineure) corrigées, puis 9 mineures (1 corrigée/8 non reproduites). Aucune passe zéro finding revendiquée pour ce lot. Livraison autorisée sur la même PR ; preuve de publication et nouveaux résultats des hooks dans le registre externe.

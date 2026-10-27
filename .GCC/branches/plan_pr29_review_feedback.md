@@ -22,7 +22,14 @@ Documentation checks passed: 5 JSON blocks, current request/config schemas, 14 U
 
 ### Step 3: Corrections des instructions protégées et livraison
 - [x] **Action**: Accord explicite obtenu et patch appliqué à AGENTS.md et CLAUDE.md (trois remarques mineures).
-- [ ] **Action**: Livraison Git après autorisation ; aucun commit, push ou résolution de thread distant effectué. Le sandbox autorise uniquement le push de `coderabbit/address-pr-review-feedback/701424ac`, pas celui de `docs/modelisation-v3`.
+- [x] **Action**: Premier lot publié au commit `e985ef5f5db3375b71761c67f1be4c966d3fb612` sur `docs/modelisation-v3`, conformément à l’autorisation explicite de mise à jour de la PR #29 ; dernière revue locale du lot : zéro finding.
+
+### Step 4: Nouvelle revue distante après publication
+- [x] **Action**: Lire intégralement la revue du 2026-10-27 17:26 UTC, cinq retours directs, un nitpick et un complément ; consulter les deux anciens fils encore ouverts.
+- [x] **Action**: Clarifier Auth séparé, readiness Local Service, coordination FastAPI/NestJS et publication no-replace ; documenter prérequis Colab et dépendances externes du handoff.
+- [x] **Verify**: Validations documentaires et revue indépendante en lecture seule passées ; sorties et correctifs dans test.md.
+- [x] **Verify**: Revue CodeRabbit du diff : 3 remarques corrigées puis 9 mineures (1 corrigée, 8 espaces non reproduits) ; événements terminaux et preuves dans test.md et registre externe.
+- [ ] **Action**: Publier le nouveau lot et vérifier les fils distants sans déclarer de garantie runtime non implémentée.
 
 ## ⚠️ Mitigations & Edge Cases
 - **Risk**: Confondre les cibles d’architecture avec les fonctions disponibles ou élargir une PR documentaire en implémentation multimoteur.

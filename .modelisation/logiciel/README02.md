@@ -121,7 +121,7 @@ L'intégration v3 concrétise la fusion technique des deux stations :
     * `TokenValidator` : vérification du jeton local `mini-design-local-token`.
     * `ContractEngine` : vérification formelle de la discipline de calques (`canvas-discipline`) et garde anti-bouclage (`anti-loop`).
     * `Valider Ingrédients` : validation stricte des entrées selon `capabilities.acceptedInputTypes` (prompt, image initiale, masque, audio).
-    * `Insertion Atomique dans resource_v3` : protocole cible avec staging, clé d’idempotence, publication puis COMMIT SQLite, nettoyage compensatoire et reprise ; voir `INTEGRATION_PLAN_V3.md` Phase 4. Aucune transaction atomique commune fichiers/SQLite n’est garantie.
+    * `Insertion Atomique dans resource_v3` : protocole cible coordonné uniquement par FastAPI (une instance par workspace), avec staging, publication no-replace, COMMIT via NestJS seul écrivain SQLite, nettoyage compensatoire et reprise détenus par FastAPI ; voir `INTEGRATION_PLAN_V3.md` Phase 4. Aucune transaction atomique commune fichiers/SQLite n’est garantie.
 
 ### 3.4 Diagramme de Séquence (`06-sequence-inference02.svg`)
 - **Périmètre Temporel** : Chronologie détaillée des interactions et synchronisations multi-processus.
@@ -145,11 +145,13 @@ Tous les composants de la Version 3 communiquent via des canaux réseau strictem
 | **`:8001`** | HTTP (Static Serve) | Navigateur / BrowserView 2 | Mini Design Workbench | Distribution des bundles désobfusqués et assets de la station Mini Design. |
 | **`:8002`** | HTTP / WS | Mini Design Workbench | Mini Design Local Service | Communication interne entre le Workbench et le gestionnaire de workspace local. |
 | **`:51491`** | HTTP / JSON-RPC | Workbench UI & Electron Main | Gateway NestJS Mini Design | Runtime des agents Hilo, supervision SQLite, middleware `WorkspaceGuard`, moteur de contrats et outils MCP. |
-| **`:45899`** | HTTP / Local Auth | Electron Main & Scripts | NestJS Local Auth Server | Serveur de synchronisation, injection des configurations et validation du jeton `mini-design-local-token`. |
+| **`:45899`** | HTTP / Local Auth | Electron Main & Scripts | Auth NestJS séparé, supervisé par Electron | Serveur de synchronisation, injection des configurations et validation du jeton `mini-design-local-token`. |
 | **`:8188`** | HTTP / WebSocket | FastAPI Backend Local | ComfyUI Headless | Moteur d'inférence local optionnel (exécution de graphes compilés `.api.json` et chargement de LoRAs). |
 | **Distant :8000** | HTTPS / WSS (Tunnel TLS) | FastAPI Backend Local | Worker Colab Distant | Acheminement sécurisé des prompts et rapatriement des binaires lourds (GPU T4/A100 ou TPU Google v5e/v6e). |
 
 ---
+
+**Cycle de vie cible** : Electron supervise séparément FastAPI, Gateway, Auth et Local Service. Les quatre sondes sur les URL effectives sont obligatoires avant disponibilité ; voir `INTEGRATION_PLAN_V3.md` Phase 1 pour démarrage, crash et arrêt. La Gateway ne démarre pas Auth implicitement.
 
 ## 5. Synthèse des Éléments d'Extensibilité : Skills, MCP & Plugins
 
