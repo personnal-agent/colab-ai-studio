@@ -24,6 +24,7 @@ ngrok.token
 outputs/
 downloads/
 cache/
+data/
 *.mp4
 *.png
 *.jpg

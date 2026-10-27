@@ -57,9 +57,14 @@ class MediaFileStore:
 
     def resolve_destination_dir(self, project: Project | None = None) -> Path:
         if project and project.storagePath:
-            resolved = Path(project.storagePath).expanduser().resolve()
+            raw_str = str(project.storagePath).strip()
+            resolved = Path(raw_str).expanduser().resolve()
             # 1. Protection absolue des dossiers critiques du dépôt (sans exception)
-            if any(resolved == p or resolved.is_relative_to(p) for p in _FORBIDDEN_REPO_PATHS):
+            if (
+                any(p in _REPO_DIRS for p in resolved.parts)
+                or raw_str in _REPO_DIRS
+                or any(resolved == p or resolved.is_relative_to(p) for p in _FORBIDDEN_REPO_PATHS)
+            ):
                 raise ValueError(
                     f"Chemin storagePath interdit pour raisons de sécurité : {project.storagePath}"
                 )
@@ -72,6 +77,11 @@ class MediaFileStore:
             if (resolved == _VAR_DIR or resolved.is_relative_to(_VAR_DIR)) and not (
                 resolved == _MACOS_TEMP_DIR or resolved.is_relative_to(_MACOS_TEMP_DIR)
             ):
+                raise ValueError(
+                    f"Chemin storagePath interdit pour raisons de sécurité : {project.storagePath}"
+                )
+            # 4. Protection contre les fichiers existants
+            if resolved.exists() and not resolved.is_dir():
                 raise ValueError(
                     f"Chemin storagePath interdit pour raisons de sécurité : {project.storagePath}"
                 )

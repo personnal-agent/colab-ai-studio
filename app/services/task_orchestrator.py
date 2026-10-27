@@ -10,17 +10,20 @@ import time
 import uuid
 from collections import defaultdict
 from collections.abc import AsyncGenerator
+from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
 
 from app.config import (
     BRAND_KITS_FILE,
+    CHARACTERS_FILE,
     CONFIG_FILE,
     DATA_DIR,
     GENERATIONS_FILE,
     OUTPUTS_DIR,
     PROJECTS_FILE,
+    UPLOADS_DIR,
 )
 from app.models.domain import (
     BrandKit,
@@ -49,6 +52,8 @@ class GenerationCreateRequest(BaseModel):
     references: GenerationReferences = Field(default_factory=GenerationReferences)
     brandKitId: str | None = None
     projectId: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    cameraAngleLabel: str | None = None
 
 
 class TaskOrchestrator:
@@ -61,7 +66,7 @@ class TaskOrchestrator:
         worker_gateway: WorkerGateway | None = None,
         brand_compiler: BrandContextCompiler | None = None,
         poll_interval: float = 1.0,
-        task_timeout: float = 120.0,
+        task_timeout: float = 600.0,
     ) -> None:
         self._json_store = json_store or JSONDocumentStore(DATA_DIR)
         self._media_store = media_store or MediaFileStore(OUTPUTS_DIR)
@@ -132,35 +137,114 @@ class TaskOrchestrator:
                 ):
                     max_image_refs = 0
 
+            # Compilation des Fiches Personnages (@Nom) (Module B)
+            from app.api.routes_characters import compile_character_mentions
+
+            chars_raw = await self._json_store.read_list(CHARACTERS_FILE.name)
+            char_prompt, matched_char_ids, matched_char_imgs, char_seed = (
+                compile_character_mentions(req.prompt, chars_raw)
+            )
+            if char_seed and (req.parameters.seed is None or req.parameters.seed <= 0):
+                req.parameters.seed = char_seed
+
             # Compilation du Brand Kit avec llm_config
             compiled = await self._compiler.compile(
-                prompt=req.prompt,
+                prompt=char_prompt,
                 brand_kit=kit,
                 user_refs=req.references.imageRefs,
                 max_image_refs=max_image_refs,
                 llm_config=cfg.compilerLlm,
             )
 
+            from app.services.story_director import StoryDirector, parse_explicit_script_segments
+
+            _, explicit_segs = parse_explicit_script_segments(char_prompt)
+            has_explicit_script = len(explicit_segs) >= 2
+
+            is_auto_timeline = (
+                (req.parameters.duration or "").strip().lower() == "auto"
+                or getattr(req.parameters, "chaining", False) is True
+                or has_explicit_script
+            )
+            script_plan = None
+            if is_auto_timeline:
+                director = StoryDirector()
+                script_plan = await director.plan_timeline(char_prompt, max_segment_sec=10.0)
+                if matched_char_ids and script_plan.segments:
+                    for seg_obj in script_plan.segments:
+                        seg_compiled, _, _, _ = compile_character_mentions(
+                            seg_obj.action_prompt, chars_raw
+                        )
+                        seg_obj.action_prompt = seg_compiled
+                req.parameters.duration = f"{script_plan.total_duration_sec:.0f}s"
+                req.parameters.scriptPlan = script_plan.model_dump()
+                req.parameters.chaining = True
+
             gen_id = f"gen_{uuid.uuid4().hex[:10]}"
             refs = req.references.model_copy()
             # Remplacement systématique de refs.imageRefs par le résultat compilé (même vide)
             refs.imageRefs = compiled.image_refs
+            for c_img in matched_char_imgs:
+                if c_img and c_img not in refs.imageRefs and len(refs.imageRefs) < max_image_refs:
+                    refs.imageRefs.append(c_img)
+                if c_img and not refs.startFrame and req.type == "video":
+                    refs.startFrame = c_img
+
+            # Résolution de la source d'upscaling
+            if refs.upscaleSource:
+                src = refs.upscaleSource.strip()
+                gen_match_id = None
+                if "/api/generations/" in src and "/file" in src:
+                    gen_match_id = src.split("/api/generations/")[1].split("/")[0]
+                elif src.startswith("gen_") and len(src) <= 20:
+                    gen_match_id = src
+
+                if gen_match_id:
+                    all_gens = await self._json_store.read_list(GENERATIONS_FILE.name)
+                    found_gen = next((g for g in all_gens if g.get("id") == gen_match_id), None)
+                    if found_gen and found_gen.get("filePath"):
+                        refs.upscaleSource = found_gen["filePath"]
+                elif "/api/uploads/" in src:
+                    fn = src.split("/api/uploads/")[1]
+                    up_p = UPLOADS_DIR / fn
+                    is_f = await asyncio.to_thread(up_p.is_file)
+                    if is_f:
+                        refs.upscaleSource = str(up_p.resolve())
+
+            seq_total = script_plan.num_segments if script_plan else None
+            seq_idx = 1 if (seq_total and seq_total > 1) else None
+            seq_id = gen_id if (seq_total and seq_total > 1) else None
+            initial_prompt = (
+                script_plan.segments[0].action_prompt
+                if (script_plan and seq_total and seq_total > 1)
+                else req.prompt
+            )
+
+            auto_tags = list(req.tags or [])
+            if seq_total and seq_total > 1 and "chained-series" not in auto_tags:
+                auto_tags.append("chained-series")
 
             gen = Generation(
                 id=gen_id,
                 status=TaskStatus.PENDING,
                 mediaType=req.type,
-                prompt=req.prompt,
+                prompt=initial_prompt,
                 negativePrompt=req.negativePrompt or compiled.negative_prompt,
-                compiledPrompt=compiled.prompt,
+                compiledPrompt=initial_prompt if (seq_total and seq_total > 1) else compiled.prompt,
                 modelId=req.modelId,
                 modelName=req.modelName or req.modelId,
                 parameters=req.parameters,
                 references=refs,
                 brandKitSnapshot=compiled.snapshot,
+                tags=auto_tags,
+                characterIds=matched_char_ids,
+                cameraAngleLabel=req.cameraAngleLabel,
                 projectId=req.projectId,
                 progress=0,
                 workerUrl=worker_url,
+                sequenceId=seq_id,
+                sequenceIndex=seq_idx,
+                sequenceTotal=seq_total,
             )
 
             async with self._json_store.lock_for(GENERATIONS_FILE.name):
@@ -209,7 +293,13 @@ class TaskOrchestrator:
                         )
                         return Generation.model_validate(g)
 
-                    g.update(kwargs)
+                    clean_kwargs: dict[str, Any] = {}
+                    for k, v in kwargs.items():
+                        if hasattr(v, "model_dump"):
+                            clean_kwargs[k] = v.model_dump()
+                        else:
+                            clean_kwargs[k] = v
+                    g.update(clean_kwargs)
                     gens[idx] = g
                     await self._json_store.write_list_unlocked(GENERATIONS_FILE.name, gens)
                     return Generation.model_validate(g)
@@ -238,25 +328,186 @@ class TaskOrchestrator:
             }
             await self._gateway.infer(task_spec, base_url=target_worker_url)
 
+            # Résolution préalable du projet
+            project: Project | None = None
+            if gen.projectId:
+                projects = await self._json_store.read_list(PROJECTS_FILE.name)
+                p_dict = next((p for p in projects if p.get("id") == gen.projectId), None)
+                if p_dict:
+                    project = Project.model_validate(p_dict)
+
             # 3. Boucle de suivi d'avancement
+            synced_segments: set[int] = set()
+            last_progress_time = time.monotonic()
+            last_seen_progress = 0
+            total_segs_planned = 1
+            consecutive_status_errors = 0
+            if gen.parameters and gen.parameters.scriptPlan:
+                total_segs_planned = int(gen.parameters.scriptPlan.get("num_segments", 1))
+
+            # Timeout dynamique : chaque plan peut prendre jusqu'à 600s sur GPU
+            segment_timeout = max(self._task_timeout, 600.0)
+            overall_timeout = segment_timeout * max(1, total_segs_planned)
+
             while True:
                 if cancel_evt.is_set():
                     logger.info("Tâche %s interrompue par annulation utilisateur", gen_id)
                     break
 
-                if (time.monotonic() - start_time) > self._task_timeout:
+                now = time.monotonic()
+                if (now - last_progress_time) > segment_timeout or (
+                    now - start_time
+                ) > overall_timeout:
                     with contextlib.suppress(Exception):
                         await self._gateway.cancel_task(gen_id, base_url=target_worker_url)
-                    raise TimeoutError(f"Timeout d'exécution dépassé ({self._task_timeout}s)")
+                    raise TimeoutError(
+                        f"Timeout d'exécution dépassé (inactivité="
+                        f"{now - last_progress_time:.0f}s, total={now - start_time:.0f}s)"
+                    )
 
-                status_resp = await self._gateway.get_task_status(
-                    gen_id, base_url=target_worker_url
-                )
+                try:
+                    status_resp = await self._gateway.get_task_status(
+                        gen_id, base_url=target_worker_url
+                    )
+                    consecutive_status_errors = 0
+                except Exception as we:
+                    consecutive_status_errors += 1
+                    logger.warning(
+                        "Glitch temporaire get_task_status pour %s (%d/5) : %s",
+                        gen_id,
+                        consecutive_status_errors,
+                        we,
+                    )
+                    if consecutive_status_errors >= 5:
+                        raise
+                    await asyncio.sleep(self._poll_interval)
+                    continue
                 remote_status = status_resp.get("status")
                 progress_pct = status_resp.get("progress", 0)
+                if progress_pct != last_seen_progress:
+                    last_seen_progress = progress_pct
+                    last_progress_time = now
+
+                # Traitement incrémental des segments complétés (chaînage)
+                remote_anchors = status_resp.get("characterAnchors")
+                if remote_anchors and not getattr(gen.parameters, "characterAnchors", None):
+                    gen.parameters.characterAnchors = remote_anchors
+                    await self._update_generation(
+                        gen_id,
+                        allow_from_terminal=True,
+                        parameters=gen.parameters.model_dump(),
+                    )
+
+                completed_segs = status_resp.get("completedSegments") or []
+                for seg in completed_segs:
+                    idx = seg.get("index")
+                    if idx and idx not in synced_segments:
+                        synced_segments.add(idx)
+                        last_progress_time = (
+                            time.monotonic()
+                        )  # Réinitialise le watchdog pour le plan suivant
+                        total_segs = seg.get("total", 1)
+                        seg_dur = seg.get("duration", "10s")
+                        seg_prompt = seg.get("prompt", gen.prompt)
+                        seg_file_path = seg.get("filePath")
+                        part_filename = seg.get("filename") or f"{gen_id}_p{idx:02d}.mp4"
+
+                        # Résolution du fichier sur disque ou rapatriement
+                        def _check_local_file(p_str: str) -> str | None:
+                            p_obj = Path(p_str).resolve()
+                            return str(p_obj) if p_obj.is_file() else None
+
+                        dest_file_path = seg_file_path
+                        if seg_file_path:
+                            local_resolved = await asyncio.to_thread(
+                                _check_local_file, seg_file_path
+                            )
+                            if local_resolved:
+                                dest_file_path = local_resolved
+                            else:
+                                with contextlib.suppress(Exception):
+                                    part_bytes = await self._gateway.download_file(
+                                        part_filename, base_url=target_worker_url
+                                    )
+                                    dest_file_path, _ = await self._media_store.save_media(
+                                        filename=part_filename,
+                                        content=part_bytes,
+                                        project=project,
+                                    )
+                        else:
+                            with contextlib.suppress(Exception):
+                                part_bytes = await self._gateway.download_file(
+                                    part_filename, base_url=target_worker_url
+                                )
+                                dest_file_path, _ = await self._media_store.save_media(
+                                    filename=part_filename,
+                                    content=part_bytes,
+                                    project=project,
+                                )
+
+                        if idx == 1 and total_segs > 1:
+                            await self._update_generation(
+                                gen_id,
+                                allow_from_terminal=True,
+                                status=TaskStatus.RUNNING.value,
+                                progress=int(round(idx / total_segs * 100)),
+                                filePath=dest_file_path,
+                            )
+                        elif idx > 1:
+                            sub_gen_id = f"{gen_id}_p{idx:02d}"
+                            sub_params = gen.parameters.model_copy()
+                            sub_params.duration = seg_dur
+                            sub_gen = Generation(
+                                id=sub_gen_id,
+                                status=TaskStatus.COMPLETED,
+                                mediaType=gen.mediaType,
+                                prompt=seg_prompt,
+                                compiledPrompt=seg_prompt,
+                                modelId=gen.modelId,
+                                modelName=gen.modelName,
+                                parameters=sub_params,
+                                references=gen.references,
+                                brandKitSnapshot=gen.brandKitSnapshot,
+                                tags=list(gen.tags or []),
+                                characterIds=list(gen.characterIds or []),
+                                projectId=gen.projectId,
+                                progress=100,
+                                filePath=dest_file_path,
+                                workerUrl=gen.workerUrl,
+                                sequenceId=gen_id,
+                                sequenceIndex=idx,
+                                sequenceTotal=total_segs,
+                            )
+                            async with self._json_store.lock_for(GENERATIONS_FILE.name):
+                                cur_gens = await self._json_store.read_list_unlocked(
+                                    GENERATIONS_FILE.name
+                                )
+                                if not any(g.get("id") == sub_gen_id for g in cur_gens):
+                                    cur_gens.insert(0, sub_gen.model_dump())
+                                    await self._json_store.write_list_unlocked(
+                                        GENERATIONS_FILE.name, cur_gens
+                                    )
+
+                        step_msg = f"Plan {idx}/{total_segs} généré avec succès"
+                        await self._emit_event(
+                            gen_id,
+                            {
+                                "type": "segment_completed",
+                                "status": "running" if idx < total_segs else "completed",
+                                "progress": progress_pct,
+                                "step": step_msg,
+                                "segment": seg,
+                                "taskId": gen_id,
+                            },
+                        )
 
                 if remote_status == "running":
-                    await self._update_generation(gen_id, progress=progress_pct)
+                    await self._update_generation(
+                        gen_id,
+                        allow_from_terminal=True,
+                        status=TaskStatus.RUNNING.value,
+                        progress=progress_pct,
+                    )
                     await self._emit_event(
                         gen_id,
                         {
@@ -291,7 +542,32 @@ class TaskOrchestrator:
                             )
                         break
 
-                    # Rapatriement du binaire
+                    # En mode chaînage multi-plans, tous les segments ont déjà été persistés
+                    if len(synced_segments) > 1:
+                        final_anchors = status_resp.get("characterAnchors") or getattr(
+                            gen.parameters, "characterAnchors", None
+                        )
+                        if final_anchors:
+                            gen.parameters.characterAnchors = final_anchors
+                        await self._update_generation(
+                            gen_id,
+                            allow_from_terminal=True,
+                            status=TaskStatus.COMPLETED.value,
+                            progress=100,
+                            parameters=gen.parameters.model_dump(),
+                        )
+                        await self._emit_event(
+                            gen_id,
+                            {
+                                "type": "completed",
+                                "status": "completed",
+                                "progress": 100,
+                                "taskId": gen_id,
+                            },
+                        )
+                        break
+
+                    # Rapatriement du binaire standard (mode simple)
                     artifact_uri = status_resp.get("artifactUri")
                     if not artifact_uri:
                         output_url = status_resp.get("outputUrl", "")
@@ -324,7 +600,14 @@ class TaskOrchestrator:
                         if p_dict:
                             project = Project.model_validate(p_dict)
 
-                    ext = "mp4" if gen.mediaType == "video" else "png"
+                    if artifact_uri and "." in artifact_uri:
+                        ext = artifact_uri.split(".")[-1].lower()
+                    else:
+                        is_v = (
+                            gen.mediaType in {"video", "lipsync"}
+                            or gen.references.upscaleSourceType == "video"
+                        )
+                        ext = "mp4" if is_v else "png"
                     filename = f"{gen_id}.{ext}"
                     dest_file, thumb_file = await self._media_store.save_media(
                         filename, media_bytes, project=project
@@ -394,13 +677,32 @@ class TaskOrchestrator:
                 logger.exception("Échec exécution tâche %s : %s", gen_id, e)
                 with contextlib.suppress(Exception):
                     await self._gateway.cancel_task(gen_id, base_url=target_worker_url)
-                up = await self._update_generation(
-                    gen_id, status=TaskStatus.FAILED.value, errorMessage=str(e)
-                )
-                if up and up.status == TaskStatus.FAILED:
-                    await self._emit_event(
-                        gen_id, {"type": "failed", "status": "failed", "error": str(e)}
+                if len(synced_segments) > 0:
+                    logger.info(
+                        "Tâche %s interrompue mais %d segments ont été sauvés.",
+                        gen_id,
+                        len(synced_segments),
                     )
+                    await self._emit_event(
+                        gen_id,
+                        {
+                            "type": "completed",
+                            "status": "completed",
+                            "progress": 100,
+                            "taskId": gen_id,
+                        },
+                    )
+                else:
+                    up = await self._update_generation(
+                        gen_id,
+                        allow_from_terminal=True,
+                        status=TaskStatus.FAILED.value,
+                        errorMessage=str(e),
+                    )
+                    if up and up.status == TaskStatus.FAILED:
+                        await self._emit_event(
+                            gen_id, {"type": "failed", "status": "failed", "error": str(e)}
+                        )
         finally:
             self._active_tasks.pop(gen_id, None)
             if not self._listeners.get(gen_id):

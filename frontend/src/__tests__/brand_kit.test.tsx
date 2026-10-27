@@ -149,6 +149,21 @@ describe('Brand Kit System (TDD)', () => {
       fireEvent.change(textarea, { target: { value: 'XDesign @', selectionStart: 1 } });
       expect(onOpenSelector).not.toHaveBeenCalled();
     });
+
+    it('toggles prompt textarea height between standard and tall format', () => {
+      render(<ControlledPromptEditor />);
+      const textarea = screen.getByPlaceholderText(/Describe what you want to create/i);
+      expect(textarea).toHaveAttribute('rows', '4');
+
+      const tallToggle = screen.getByRole('button', { name: /Grand format/i });
+      fireEvent.click(tallToggle);
+
+      expect(textarea).toHaveAttribute('rows', '9');
+      expect(screen.getByRole('button', { name: /Hauteur standard/i })).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('button', { name: /Hauteur standard/i }));
+      expect(textarea).toHaveAttribute('rows', '4');
+    });
   });
 
   describe('BrandKitCreateModal', () => {

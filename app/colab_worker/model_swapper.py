@@ -10,8 +10,11 @@ Conforme à 11-etats-model-swapper.svg et SPECIFICATION.md §5.1 :
 
 from __future__ import annotations
 
+import contextlib
 import gc
 import logging
+import shutil
+import subprocess
 import time
 from collections.abc import Callable
 from enum import Enum
@@ -54,26 +57,57 @@ class ModelSwapperState(str, Enum):
 class DefaultCudaBackend:
     """Interface d'interaction réelle avec torch.cuda ou repli propre sans crash."""
 
+    def _query_nvidia_smi(self) -> tuple[str, float] | None:
+        """Tente de détecter le GPU et la VRAM via nvidia-smi si torch.cuda n'est pas dispo."""
+        wsl_local_smi = "/home/instructeur/.local/lib/wsl/nvidia-smi"
+        smi_bin = (
+            wsl_local_smi
+            if shutil.which(wsl_local_smi) or shutil.os.path.exists(wsl_local_smi)
+            else (shutil.which("nvidia-smi") or "/usr/lib/wsl/lib/nvidia-smi")
+        )
+        with contextlib.suppress(Exception):
+            env = shutil.os.environ.copy()
+            env["LD_LIBRARY_PATH"] = (
+                f"/home/instructeur/.local/lib/wsl:{env.get('LD_LIBRARY_PATH', '')}"
+            )
+            out = subprocess.check_output(
+                [smi_bin, "--query-gpu=name,memory.total", "--format=csv,noheader,nounits"],
+                text=True,
+                timeout=2,
+                env=env,
+            ).strip()
+            if out:
+                parts = [p.strip() for p in out.split(",")]
+                name = parts[0]
+                total_mb = float(parts[1]) if len(parts) > 1 else 16384.0
+                return name, total_mb
+        return None
+
     def is_available(self) -> bool:
-        return bool(TORCH_AVAILABLE and torch and torch.cuda.is_available())
+        if bool(TORCH_AVAILABLE and torch and torch.cuda.is_available()):
+            return True
+        return self._query_nvidia_smi() is not None
 
     def empty_cache(self) -> None:
-        if self.is_available() and torch:
+        if bool(TORCH_AVAILABLE and torch and torch.cuda.is_available()):
             torch.cuda.empty_cache()
 
     def ipc_collect(self) -> None:
-        if self.is_available() and torch and hasattr(torch.cuda, "ipc_collect"):
+        has_ipc = hasattr(torch.cuda, "ipc_collect") if TORCH_AVAILABLE and torch else False
+        if bool(TORCH_AVAILABLE and torch and torch.cuda.is_available()) and has_ipc:
             torch.cuda.ipc_collect()
 
     def memory_allocated(self, device: int | None = None) -> int:
-        return torch.cuda.memory_allocated(device) if self.is_available() and torch else 0
+        has_cuda = bool(TORCH_AVAILABLE and torch and torch.cuda.is_available())
+        return torch.cuda.memory_allocated(device) if has_cuda else 0
 
     def get_device_name(self, device: int | None = None) -> str:
-        return (
-            torch.cuda.get_device_name(device)
-            if self.is_available() and torch
-            else "CPU / Host (GPU non détecté)"
-        )
+        if bool(TORCH_AVAILABLE and torch and torch.cuda.is_available()):
+            return torch.cuda.get_device_name(device)
+        smi = self._query_nvidia_smi()
+        if smi:
+            return smi[0]
+        return "CPU / Host (GPU non détecté)"
 
 
 class ModelSwapper:
@@ -170,9 +204,7 @@ class ModelSwapper:
             self.active_pipeline = pipeline
             self.pipeline_ready = True
             self.last_activity_time = time.time()
-            self.vram_allocated_gb = round(
-                self.cuda_backend.memory_allocated() / (1024**3), 2
-            )
+            self.vram_allocated_gb = round(self.cuda_backend.memory_allocated() / (1024**3), 2)
             self.state = ModelSwapperState.MODELE_ACTIF
 
             if on_progress:
@@ -214,7 +246,12 @@ class ModelSwapper:
 
     def get_telemetry(self) -> dict[str, Any]:
         """Génère un dictionnaire de télémétrie conforme pour les endpoints de diagnostic."""
-        free_mb = 16384.0 - (self.vram_allocated_gb * 1024.0)
+        total_mb = 16384.0
+        if hasattr(self.cuda_backend, "_query_nvidia_smi"):
+            smi = self.cuda_backend._query_nvidia_smi()
+            if smi:
+                total_mb = smi[1]
+        free_mb = total_mb - (self.vram_allocated_gb * 1024.0)
         return {
             "state": self.state.value,
             "activeModel": self.active_model,

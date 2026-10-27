@@ -6,18 +6,41 @@ export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cance
 export type ExecutionMode = 'colab' | 'local';
 export type MediaType = 'image' | 'video' | 'audio' | 'upscale' | 'lip_sync' | 'text';
 
+export interface CharacterAnchorData {
+  url?: string;
+  label?: string;
+  sourceShotIndex?: number;
+  description?: string;
+  seed?: number;
+}
+
 export interface GenerationParameters {
   seed: number; aspectRatio: string; resolution: string; duration: string;
   frameRate?: string | null; audio?: boolean | null; enhance?: boolean | null;
   talkingStyle?: string; upscaleScale?: string; upscaleQuality?: string; upscaleFrameRate?: string;
+  horizontalAngle?: number | null; verticalAngle?: number | null; zoomFactor?: number | null;
+  autoVoiceOver?: boolean | null; chaining?: boolean | null;
+  steps?: number | null; guidanceScale?: number | null;
+  characterAnchors?: Record<string, CharacterAnchorData> | null;
+  scriptPlan?: Record<string, unknown> | null;
 }
 export interface GenerationReferences {
   startFrame?: string | null; endFrame?: string | null; imageRefs?: string[];
   videoRefs?: string[]; audioRefs?: string[]; upscaleSource?: string | null;
-  upscaleSourceType?: 'image' | 'video' | null; brandKitId?: string | null;
+  upscaleSourceType?: 'image' | 'video' | null; upscaleSourceFilename?: string | null; brandKitId?: string | null;
 }
 export interface BrandKitSnapshot {
   id: string; name: string; overview: string; colors: string[]; logos: string[]; fonts: string[]; guidelines: string[];
+}
+export interface Character {
+  id: string; name: string; triggerToken: string; physicalPrompt: string;
+  referenceImagePath?: string | null; voiceSamplePath?: string | null; voiceStyle?: string | null;
+  loraName?: string | null; loraStrength?: number; defaultSeed?: number | null; createdAt: string;
+}
+export interface WorkloadEstimate {
+  mediaType: string; modelId: string; numSegments: number; totalDurationSec: number;
+  isChained: boolean; estimatedSecondsGpu: number; estimatedVramGb: number; vramTotalGb: number;
+  detectedCharacters: string[]; detectedDialoguesCount: number;
 }
 export interface Generation {
   id: string; status: TaskStatus; mediaType: string; prompt: string;
@@ -26,7 +49,9 @@ export interface Generation {
   errorMessage?: string | null; modelId: string; modelName: string;
   parameters: GenerationParameters; references: GenerationReferences;
   brandKitSnapshot?: BrandKitSnapshot | null; isFavorite: boolean;
+  rating?: number; tags?: string[]; characterIds?: string[]; cameraAngleLabel?: string | null;
   projectId?: string | null; createdAt: string; workerUrl?: string | null;
+  sequenceId?: string | null; sequenceIndex?: number | null; sequenceTotal?: number | null;
 }
 export interface Project {
   id: string; name: string; description?: string | null;
@@ -88,10 +113,11 @@ export interface ModelDefinition {
 export interface GenerationSubmitRequest {
   modelId: string; prompt: string; type?: string; negativePrompt?: string;
   parameters?: Partial<GenerationParameters>; references?: GenerationReferences;
-  projectId?: string | null; brandKitId?: string | null;
+  projectId?: string | null; brandKitId?: string | null; tags?: string[]; cameraAngleLabel?: string;
 }
-export interface GenerationSubmitResponse { taskId: string; status: TaskStatus; }
+export interface GenerationSubmitResponse { taskId: string; status: TaskStatus; generationId?: string; }
 export interface TaskStatusEvent {
+  type?: string;
   taskId: string; status: TaskStatus; progress: number;
   step?: string; filePath?: string | null; outputUrl?: string; thumbnailUrl?: string; error?: string;
   generation?: Generation;

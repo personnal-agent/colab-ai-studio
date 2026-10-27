@@ -49,7 +49,8 @@ class WorkerGateway:
     async def aclose(self) -> None:
         """Ferme les ressources réseau associées si créées en interne."""
         if not self._custom_client and not self._http_client.is_closed:
-            await self._http_client.aclose()
+            with contextlib.suppress(Exception):
+                await self._http_client.aclose()
 
     async def get_worker_headers(self) -> dict[str, str]:
         """Génère les en-têtes d'authentification et de contexte vers le worker."""
@@ -198,7 +199,7 @@ class WorkerGateway:
             resp = await self._http_client.get(
                 f"{base_url}/tasks/{task_id}/status",
                 headers=headers,
-                timeout=5.0,
+                timeout=30.0,
             )
             resp.raise_for_status()
             return resp.json()

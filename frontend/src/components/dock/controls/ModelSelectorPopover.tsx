@@ -25,23 +25,33 @@ export const ModelSelectorPopover: React.FC<ModelSelectorPopoverProps> = ({
   mode,
   onSelect,
 }) => {
+  const defaultTab = mode === 'llm' ? 'text' : (mode || 'all');
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const [selectedTab, setSelectedTab] = useState('all');
+  const [selectedTab, setSelectedTab] = useState(defaultTab);
+
+  React.useEffect(() => {
+    if (open && mode) {
+      setSelectedTab(mode === 'llm' ? 'text' : mode);
+    }
+  }, [open, mode]);
 
   const filteredModels = useMemo(() => {
     return models.filter((m) => {
       // Si en mode LLM, forcer text
       if (mode === 'llm' || mode === 'text') {
         if (m.type !== 'text' && m.type !== 'llm') return false;
-      } else if (selectedTab !== 'all') {
-        if (m.type !== selectedTab) return false;
       }
       if (search.trim()) {
         const q = search.toLowerCase().trim();
         const matchName = m.name.toLowerCase().includes(q);
         const matchDesc = m.description?.toLowerCase().includes(q);
-        if (!matchName && !matchDesc) return false;
+        return Boolean(matchName || matchDesc);
+      }
+      if (selectedTab !== 'all') {
+        const isLipSync = (selectedTab === 'lip_sync' || selectedTab === 'lipsync') && (m.type === 'lipsync' || m.type === 'lip_sync');
+        const isText = (selectedTab === 'text' || selectedTab === 'llm') && (m.type === 'text' || m.type === 'llm');
+        if (!isLipSync && !isText && m.type !== selectedTab) return false;
       }
       return true;
     });
@@ -52,6 +62,7 @@ export const ModelSelectorPopover: React.FC<ModelSelectorPopoverProps> = ({
     let colorClass = 'bg-gray-100 text-gray-700';
     if (badge === 'New') colorClass = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
     if (badge === 'Beta') colorClass = 'bg-amber-50 text-amber-700 border border-amber-200';
+    if (badge === 'Local') colorClass = 'bg-purple-50 text-purple-700 border border-purple-200';
     if (badge.includes('Slow')) colorClass = 'bg-rose-50 text-rose-700 border border-rose-200';
 
     return (

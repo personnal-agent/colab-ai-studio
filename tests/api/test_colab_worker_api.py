@@ -14,11 +14,20 @@ from app.colab_worker.server import create_worker_app
 
 
 class MockCudaBackend:
-    def is_available(self) -> bool: return True
-    def empty_cache(self) -> None: pass
-    def ipc_collect(self) -> None: pass
-    def memory_allocated(self, device: int | None = None) -> int: return 2 * 1024 * 1024 * 1024
-    def get_device_name(self, device: int | None = None) -> str: return "Tesla T4 Test"
+    def is_available(self) -> bool:
+        return True
+
+    def empty_cache(self) -> None:
+        pass
+
+    def ipc_collect(self) -> None:
+        pass
+
+    def memory_allocated(self, device: int | None = None) -> int:
+        return 2 * 1024 * 1024 * 1024
+
+    def get_device_name(self, device: int | None = None) -> str:
+        return "Tesla T4 Test"
 
 
 @pytest.fixture
@@ -161,7 +170,9 @@ async def test_worker_secret_authentication(temp_storage: Path) -> None:
 async def test_idle_timeout_lifespan_trigger(temp_storage: Path) -> None:
     sw = ModelSwapper(cuda_backend=MockCudaBackend(), idle_timeout_seconds=0.15)
     worker_app = create_worker_app(
-        model_swapper=sw, storage_dir=temp_storage, idle_check_interval=0.08,
+        model_swapper=sw,
+        storage_dir=temp_storage,
+        idle_check_interval=0.08,
     )
     t = ASGITransport(app=worker_app)
     ctx = worker_app.router.lifespan_context(worker_app)
@@ -186,14 +197,17 @@ async def test_real_callable_pipeline_execution(temp_storage: Path) -> None:
 
     sw = ModelSwapper(cuda_backend=MockCudaBackend())
     app_real = create_worker_app(
-        model_swapper=sw, storage_dir=temp_storage,
-        model_loaders={"flux-schnell": lambda _: mock_pipe}, simulation_mode=False,
+        model_swapper=sw,
+        storage_dir=temp_storage,
+        model_loaders={"flux-schnell": lambda _: mock_pipe},
+        simulation_mode=False,
     )
     transport = ASGITransport(app=app_real)
     async with httpx.AsyncClient(transport=transport, base_url="http://real") as c:
         # 1. Test conversion de paramètres et respect du format (Issue 1)
         p_real = {
-            "taskId": "real_1", "modelId": "flux-schnell",
+            "taskId": "real_1",
+            "modelId": "flux-schnell",
             "parameters": {"aspectRatio": "16:9", "resolution": "1024x1024"},
         }
         assert (await c.post("/infer", json=p_real)).status_code == 200
@@ -342,9 +356,7 @@ async def test_chat_no_tokenizer_cancellation_and_lock(
     class ObservedThread(real_thread):
         def __init__(self, *args, **kwargs):
             target = kwargs.get("target")
-            self.observes_no_tok_cleanup = (
-                getattr(target, "__name__", "") == "_no_tok_worker"
-            )
+            self.observes_no_tok_cleanup = getattr(target, "__name__", "") == "_no_tok_worker"
             super().__init__(*args, **kwargs)
 
         def join(self, *args, **kwargs):
@@ -516,6 +528,3 @@ async def test_chat_no_tokenizer_asyncio_task_cancellation(
 
         # Vérifier que le critère d'arrêt a bien été prévenu grâce à active_chat_cancels
         assert stopping_criteria_seen.wait(timeout=2.0)
-
-
-

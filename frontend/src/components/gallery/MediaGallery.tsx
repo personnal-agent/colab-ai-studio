@@ -17,11 +17,12 @@ export interface MediaGalleryProps {
   generations?: Generation[];
   onGenerationsChange?: (updater: (prev: Generation[]) => Generation[]) => void;
   onFavoriteToggled?: (updated: Generation) => void;
+  onDeleteGeneration?: (generation: Generation) => void;
 }
 
 export const MediaGallery: React.FC<MediaGalleryProps> = ({
   favoritesOnly, activeProjectId, onSelectGeneration, activeTask, onTaskCancelled,
-  generations: propGenerations, onGenerationsChange, onFavoriteToggled,
+  generations: propGenerations, onGenerationsChange, onFavoriteToggled, onDeleteGeneration,
 }) => {
   const [localGenerations, setLocalGenerations] = useState<Generation[]>([]);
   const generations = propGenerations !== undefined ? propGenerations : localGenerations;
@@ -29,6 +30,11 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
     if (onGenerationsChange) onGenerationsChange(updater);
     else setLocalGenerations(updater);
   }, [onGenerationsChange]);
+
+  const handleLocalDelete = (deleted: Generation) => {
+    updateGenerations((prev) => prev.filter((g) => g.id !== deleted.id));
+    onDeleteGeneration?.(deleted);
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,7 +94,14 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
         if (!gen.prompt?.toLowerCase().includes(query) && !gen.modelName?.toLowerCase().includes(query)) return false;
       }
       if (activePills.length > 0) {
-        const match = activePills.some((p) => (p === 'image' ? (gen.mediaType === 'image' || gen.mediaType === 'upscale') : gen.mediaType === p));
+        const match = activePills.some((p) => {
+          if (p === 'image') return gen.mediaType === 'image' || gen.mediaType === 'upscale';
+          if (p === 'video') return gen.mediaType === 'video';
+          if (p === 'lip_sync') return gen.mediaType === 'lip_sync';
+          if (p === 'chained-series') return Boolean((gen.sequenceTotal && gen.sequenceTotal > 1) || gen.tags?.includes('chained-series'));
+          if (p === 'angle-matrix') return Boolean(gen.cameraAngleLabel || gen.tags?.includes('angle-matrix'));
+          return gen.mediaType === p;
+        });
         if (!match) return false;
       }
       return true;
@@ -123,7 +136,7 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
               <TaskProgressCard event={activeTask.event} prompt={activeTask.prompt} modelName={activeTask.modelName} onCancelled={(id) => onTaskCancelled?.(id)} />
             )}
             {filteredGenerations.map((gen) => (
-              <MediaCard key={gen.id} generation={gen} onSelect={onSelectGeneration} onFavoriteToggled={handleLocalFavorite} />
+              <MediaCard key={gen.id} generation={gen} onSelect={onSelectGeneration} onFavoriteToggled={handleLocalFavorite} onDelete={handleLocalDelete} />
             ))}
           </div>
         )}

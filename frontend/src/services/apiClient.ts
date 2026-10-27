@@ -2,9 +2,9 @@
  * Client API & SSE pour Colab AI Studio (frontend/src/services/apiClient.ts).
  */
 import type {
-  BrandKit, ExecutionMode, Generation, GenerationSubmitRequest,
+  BrandKit, Character, ExecutionMode, Generation, GenerationSubmitRequest,
   GenerationSubmitResponse, HealthResponse, ModelDefinition,
-  Project, StudioConfig, TaskStatusEvent,
+  Project, StudioConfig, TaskStatusEvent, WorkloadEstimate,
 } from '../types/studio';
 
 class ApiError extends Error {
@@ -58,6 +58,15 @@ export const apiClient = {
     }),
   getHealth: () => request<HealthResponse>('/api/health'),
   listModels: () => request<ModelDefinition[]>('/api/models'),
+  uploadFile: async (file: File): Promise<{ filePath: string; filename: string; url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const origin = (typeof window !== 'undefined' && window.location?.origin) ? window.location.origin : 'http://localhost';
+    return request<{ filePath: string; filename: string; url: string }>(`${origin}/api/upload`, {
+      method: 'POST',
+      body: formData,
+    });
+  },
   switchModel: (modelId: string) =>
     request<Record<string, unknown>>('/api/models/switch', {
       method: 'POST', body: JSON.stringify({ modelId }),
@@ -78,6 +87,23 @@ export const apiClient = {
     request<GenerationSubmitResponse>('/api/generate/media', { method: 'POST', body: JSON.stringify(req) }),
   toggleFavorite: (id: string) =>
     request<{ id: string; isFavorite: boolean }>(`/api/generations/${id}/favorite`, { method: 'PATCH' }),
+  updateGenerationMetadata: (generationId: string, data: { rating?: number; tags?: string[] }) =>
+    request<Generation>(`/api/generations/${generationId}/metadata`, { method: 'PATCH', body: JSON.stringify(data) }),
+  estimateWorkload: (data: { prompt: string; modelId: string; type: string; duration: string; resolution?: string; batchCount?: number }) =>
+    request<WorkloadEstimate>('/api/generate/estimate', { method: 'POST', body: JSON.stringify(data) }),
+  generateAngleMatrix: (data: { sourceImage: string; prompt?: string; modelId?: string; aspectRatio?: string; resolution?: string; projectId?: string | null }) =>
+    request<{ count: number; jobs: Array<{ taskId: string; generationId: string; cameraAngleLabel: string; status: string }> }>('/api/generate/angle-matrix', {
+      method: 'POST', body: JSON.stringify(data),
+    }),
+  extractLastFrame: (generationId: string) =>
+    request<{ filePath: string; filename: string; url: string }>('/api/generate/extract-last-frame', {
+      method: 'POST', body: JSON.stringify({ generationId }),
+    }),
+  listCharacters: () => request<Character[]>('/api/characters'),
+  createCharacter: (char: { name: string; physicalPrompt: string; triggerToken?: string; referenceImagePath?: string | null; voiceStyle?: string }) =>
+    request<Character>('/api/characters', { method: 'POST', body: JSON.stringify(char) }),
+  deleteCharacter: (id: string) =>
+    request<{ deleted: boolean; id: string }>(`/api/characters/${id}`, { method: 'DELETE' }),
   deleteGeneration: (id: string) =>
     request<{ status: string; id: string }>(`/api/generations/${id}`, { method: 'DELETE' }),
   cancelTask: (taskId: string) =>

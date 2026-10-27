@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 import type { GenerationReferences, ModelDefinition } from '../../../types/studio';
+import { apiClient } from '../../../services/apiClient';
 import { ReferenceSlot } from './ReferenceSlot';
 
 /**
@@ -38,6 +39,8 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
   const ingredientAccept = canAddVideo ? (canAddImage ? 'image/*,video/*' : 'video/*') : 'image/*';
 
   const createdUrlsRef = useRef<Set<string>>(new Set());
+  const latestRefsRef = useRef(references);
+  latestRefsRef.current = references;
 
   const isUrlReferenced = (url: string, refs: GenerationReferences) => {
     if (refs.startFrame === url || refs.endFrame === url || refs.upscaleSource === url) return true;
@@ -57,6 +60,7 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
   };
 
   const updateReferences = (nextRefs: GenerationReferences) => {
+    latestRefsRef.current = nextRefs;
     const oldUrls = [
       references.startFrame, references.endFrame, references.upscaleSource,
       ...(references.imageRefs || []), ...(references.videoRefs || []), ...(references.audioRefs || []),
@@ -88,41 +92,99 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
     createdUrlsRef.current.add(blobUrl);
 
     if (slotType === 'startFrame') {
-      updateReferences({ ...references, startFrame: blobUrl });
+      updateReferences({ ...latestRefsRef.current, startFrame: blobUrl });
+      apiClient.uploadFile(file).then((res) => {
+        updateReferences({ ...latestRefsRef.current, startFrame: res.filePath });
+      }).catch((e) => console.warn('Erreur téléversement startFrame:', e));
     } else if (slotType === 'endFrame') {
-      updateReferences({ ...references, endFrame: blobUrl });
+      updateReferences({ ...latestRefsRef.current, endFrame: blobUrl });
+      apiClient.uploadFile(file).then((res) => {
+        updateReferences({ ...latestRefsRef.current, endFrame: res.filePath });
+      }).catch((e) => console.warn('Erreur téléversement endFrame:', e));
     } else if (slotType === 'upscaleSource') {
       const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
-      updateReferences({ ...references, upscaleSource: blobUrl, upscaleSourceType: isVideo ? 'video' : 'image' });
+      updateReferences({
+        ...latestRefsRef.current,
+        upscaleSource: blobUrl,
+        upscaleSourceType: isVideo ? 'video' : 'image',
+        upscaleSourceFilename: file.name,
+      });
+      apiClient.uploadFile(file).then((res) => {
+        updateReferences({
+          ...latestRefsRef.current,
+          upscaleSource: res.filePath,
+          upscaleSourceType: isVideo ? 'video' : 'image',
+          upscaleSourceFilename: file.name,
+        });
+      }).catch((e) => {
+        console.warn('Erreur téléversement média source:', e);
+      });
     } else if (slotType === 'lipSyncImage') {
-      updateReferences({ ...references, imageRefs: [blobUrl] });
+      updateReferences({ ...latestRefsRef.current, imageRefs: [blobUrl] });
+      apiClient.uploadFile(file).then((res) => {
+        updateReferences({ ...latestRefsRef.current, imageRefs: [res.filePath] });
+      }).catch((e) => console.warn('Erreur téléversement lipSyncImage:', e));
     } else if (slotType === 'lipSyncAudio') {
-      updateReferences({ ...references, audioRefs: [blobUrl] });
+      updateReferences({ ...latestRefsRef.current, audioRefs: [blobUrl] });
+      apiClient.uploadFile(file).then((res) => {
+        updateReferences({ ...latestRefsRef.current, audioRefs: [res.filePath] });
+      }).catch((e) => console.warn('Erreur téléversement lipSyncAudio:', e));
     } else if (slotType === 'ingredient') {
       const isVideo = file.type.startsWith('video/') || /\.(mp4|webm|mov|mkv)$/i.test(file.name);
       if (isVideo) {
-        if (!supportsVideoRef || videoRefs.length >= maxVideoRefs) {
+        if (!supportsVideoRef || (latestRefsRef.current.videoRefs || []).length >= maxVideoRefs) {
           try { URL.revokeObjectURL(blobUrl); } catch { /* ignore */ }
           createdUrlsRef.current.delete(blobUrl);
           return;
         }
-        updateReferences({ ...references, videoRefs: [...videoRefs, blobUrl] });
+        updateReferences({
+          ...latestRefsRef.current,
+          videoRefs: [...(latestRefsRef.current.videoRefs || []), blobUrl],
+        });
+        apiClient.uploadFile(file).then((res) => {
+          const cur = latestRefsRef.current;
+          const currentVideoRefs = cur.videoRefs || [];
+          const nextList = currentVideoRefs.map((u) => (u === blobUrl ? res.filePath : u));
+          if (!nextList.includes(res.filePath) && !currentVideoRefs.includes(res.filePath)) {
+            nextList.push(res.filePath);
+          }
+          updateReferences({
+            ...cur,
+            videoRefs: nextList,
+          });
+        }).catch((e) => console.warn('Erreur téléversement ingrédient vidéo:', e));
       } else {
-        if (imageRefs.length >= maxImageRefs) {
+        if ((latestRefsRef.current.imageRefs || []).length >= maxImageRefs) {
           try { URL.revokeObjectURL(blobUrl); } catch { /* ignore */ }
           createdUrlsRef.current.delete(blobUrl);
           return;
         }
-        updateReferences({ ...references, imageRefs: [...imageRefs, blobUrl] });
+        updateReferences({
+          ...latestRefsRef.current,
+          imageRefs: [...(latestRefsRef.current.imageRefs || []), blobUrl],
+        });
+        apiClient.uploadFile(file).then((res) => {
+          const cur = latestRefsRef.current;
+          const currentImageRefs = cur.imageRefs || [];
+          const nextList = currentImageRefs.map((u) => (u === blobUrl ? res.filePath : u));
+          if (!nextList.includes(res.filePath) && !currentImageRefs.includes(res.filePath)) {
+            nextList.push(res.filePath);
+          }
+          updateReferences({
+            ...cur,
+            imageRefs: nextList,
+          });
+        }).catch((e) => console.warn('Erreur téléversement ingrédient image:', e));
       }
     }
   };
 
   const removeIngredient = (idx: number, isVideo: boolean) => {
+    const cur = latestRefsRef.current;
     if (isVideo) {
-      updateReferences({ ...references, videoRefs: videoRefs.filter((_, i) => i !== idx) });
+      updateReferences({ ...cur, videoRefs: (cur.videoRefs || []).filter((_, i) => i !== idx) });
     } else {
-      updateReferences({ ...references, imageRefs: imageRefs.filter((_, i) => i !== idx) });
+      updateReferences({ ...cur, imageRefs: (cur.imageRefs || []).filter((_, i) => i !== idx) });
     }
   };
 
@@ -150,14 +212,14 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
               <ReferenceSlot
                 label="Start frame" fileUrl={references.startFrame} accept="image/*"
                 onFileSelected={(f: File) => handleFileSelect('startFrame', f)}
-                onClear={() => updateReferences({ ...references, startFrame: null })}
+                onClear={() => updateReferences({ ...latestRefsRef.current, startFrame: null })}
               />
             )}
             {supportsLastFrame && (
               <ReferenceSlot
                 label="End frame" fileUrl={references.endFrame} accept="image/*"
                 onFileSelected={(f: File) => handleFileSelect('endFrame', f)}
-                onClear={() => updateReferences({ ...references, endFrame: null })}
+                onClear={() => updateReferences({ ...latestRefsRef.current, endFrame: null })}
               />
             )}
             {imageRefs.map((url, idx) => (
@@ -203,12 +265,12 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
             <ReferenceSlot
               label="Portrait source" fileUrl={imageRefs[0] || null} accept="image/*"
               onFileSelected={(f: File) => handleFileSelect('lipSyncImage', f)}
-              onClear={() => updateReferences({ ...references, imageRefs: [] })}
+              onClear={() => updateReferences({ ...latestRefsRef.current, imageRefs: [] })}
             />
             <ReferenceSlot
               label="Voix / Audio vocal" mediaType="audio" fileUrl={references.audioRefs?.[0] || null} accept="audio/*"
               onFileSelected={(f: File) => handleFileSelect('lipSyncAudio', f)}
-              onClear={() => updateReferences({ ...references, audioRefs: [] })}
+              onClear={() => updateReferences({ ...latestRefsRef.current, audioRefs: [] })}
             />
           </>
         )}
@@ -218,7 +280,7 @@ export const ConditioningTray: React.FC<ConditioningTrayProps> = ({
             label="Média source" fileUrl={references.upscaleSource}
             mediaType={references.upscaleSourceType || 'image'} accept="image/*,video/*"
             onFileSelected={(f: File) => handleFileSelect('upscaleSource', f)}
-            onClear={() => updateReferences({ ...references, upscaleSource: null, upscaleSourceType: null })}
+            onClear={() => updateReferences({ ...latestRefsRef.current, upscaleSource: null, upscaleSourceType: null, upscaleSourceFilename: null })}
           />
         )}
       </div>

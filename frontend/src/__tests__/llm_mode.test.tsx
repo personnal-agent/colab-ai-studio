@@ -142,5 +142,34 @@ describe('LLM Mode & FloatingPromptDock Integration (TDD)', () => {
       fireEvent.click(screen.getByRole('button', { name: /Dismiss error/i }));
       expect(screen.queryByText(/GPU worker offline/i)).not.toBeInTheDocument();
     });
+
+    it('allows minimizing and restoring the dock to view the gallery, preserving user input', () => {
+      render(
+        <FloatingPromptDock
+          models={mockModels} brandKits={[mockBrandKit]}
+        />
+      );
+
+      const textarea = screen.getByPlaceholderText(/Describe what you want to create/i);
+      fireEvent.change(textarea, { target: { value: 'Prompt de test pour la vidéo' } });
+
+      // Click "Réduire"
+      const reduceBtn = screen.getByRole('button', { name: /Réduire la fenêtre de saisie/i });
+      fireEvent.click(reduceBtn);
+
+      // Dock is minimized: textarea is hidden, prompt preview and "Restaurer" button appear
+      expect(screen.queryByPlaceholderText(/Describe what you want to create/i)).not.toBeInTheDocument();
+      expect(screen.getByText('Prompt de test pour la vidéo')).toBeInTheDocument();
+      const restoreBtn = screen.getByRole('button', { name: /Restaurer la fenêtre de saisie/i });
+      expect(restoreBtn).toBeInTheDocument();
+
+      // Click "Restaurer"
+      fireEvent.click(restoreBtn);
+
+      // Dock is restored: textarea is back with preserved prompt
+      const restoredTextarea = screen.getByPlaceholderText(/Describe what you want to create/i);
+      expect(restoredTextarea).toBeInTheDocument();
+      expect(restoredTextarea).toHaveValue('Prompt de test pour la vidéo');
+    });
   });
 });

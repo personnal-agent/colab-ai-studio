@@ -30,11 +30,20 @@ from app.storage.media_store import MediaFileStore
 
 
 class MockWorkerCuda:
-    def is_available(self) -> bool: return True
-    def empty_cache(self) -> None: pass
-    def ipc_collect(self) -> None: pass
-    def memory_allocated(self, device: int | None = None) -> int: return 2 * 1024 * 1024 * 1024
-    def get_device_name(self, device: int | None = None) -> str: return "Tesla T4 Test"
+    def is_available(self) -> bool:
+        return True
+
+    def empty_cache(self) -> None:
+        pass
+
+    def ipc_collect(self) -> None:
+        pass
+
+    def memory_allocated(self, device: int | None = None) -> int:
+        return 2 * 1024 * 1024 * 1024
+
+    def get_device_name(self, device: int | None = None) -> str:
+        return "Tesla T4 Test"
 
 
 @pytest.fixture
@@ -64,16 +73,24 @@ def e2e_env(tmp_path: Path):
     )
     gateway = WorkerGateway(json_store=json_store, http_client=worker_client)
     orchestrator = TaskOrchestrator(
-        json_store=json_store, media_store=media_store, worker_gateway=gateway,
-        brand_compiler=BrandContextCompiler(), poll_interval=0.02, task_timeout=15.0,
+        json_store=json_store,
+        media_store=media_store,
+        worker_gateway=gateway,
+        brand_compiler=BrandContextCompiler(),
+        poll_interval=0.02,
+        task_timeout=15.0,
     )
     app.dependency_overrides[get_worker_gateway] = lambda: gateway
     app.dependency_overrides[get_task_orchestrator] = lambda: orchestrator
 
     try:
         yield {
-            "data_dir": d_dir, "outputs_dir": out_dir, "custom_project_storage": c_storage,
-            "json_store": json_store, "gateway": gateway, "orchestrator": orchestrator,
+            "data_dir": d_dir,
+            "outputs_dir": out_dir,
+            "custom_project_storage": c_storage,
+            "json_store": json_store,
+            "gateway": gateway,
+            "orchestrator": orchestrator,
             "worker_secret": worker_secret,
         }
     finally:
@@ -122,8 +139,11 @@ async def test_full_pipeline_uc01_to_uc08(
 
     # --- UC-01 & UC-03 : Produire un média & Suivre la génération via SSE ---
     gen_payload = {
-        "prompt": "Un agent cyborg sous une pluie néon", "modelId": "wan-2.1-t2v",
-        "type": "video", "brandKitId": kit_id, "projectId": proj_id,
+        "prompt": "Un agent cyborg sous une pluie néon",
+        "modelId": "wan-2.1-t2v",
+        "type": "video",
+        "brandKitId": kit_id,
+        "projectId": proj_id,
         "parameters": {"aspectRatio": "16:9", "duration": "5s", "seed": 101},
     }
     gen_submit_resp = await client.post("/api/generate/media", json=gen_payload)
@@ -166,8 +186,10 @@ async def test_full_pipeline_uc01_to_uc08(
 
     # Génération d'image (flux-schnell) avec rapatriement en .png conforme (Thread #5)
     img_payload = {
-        "prompt": "Portrait cyberpunk", "modelId": "flux-schnell",
-        "type": "image", "projectId": proj_id,
+        "prompt": "Portrait cyberpunk",
+        "modelId": "flux-schnell",
+        "type": "image",
+        "projectId": proj_id,
     }
     img_submit_resp = await client.post("/api/generate/media", json=img_payload)
     assert img_submit_resp.status_code == 202

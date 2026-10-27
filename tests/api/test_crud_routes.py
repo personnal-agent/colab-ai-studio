@@ -387,3 +387,21 @@ async def test_lifespan_cleans_orphaned_tasks(tmp_path, monkeypatch):
     assert "Interrompue par redémarrage" in updated[0]["errorMessage"]
     assert updated[1]["status"] == TaskStatus.FAILED.value
     assert updated[2]["status"] == "completed"
+
+
+@pytest.mark.asyncio
+async def test_upload_file(test_env):
+    client, store, media_store, tmp_path = test_env
+    files = {"file": ("pecheur.mp4", b"\x00\x00\x00\x20ftypisom", "video/mp4")}
+    res = await client.post("/api/upload", files=files)
+    assert res.status_code == 200
+    data = res.json()
+    assert "filePath" in data
+    assert "url" in data
+    assert data["filename"].endswith("_pecheur.mp4")
+    assert Path(data["filePath"]).is_file()
+
+    # Récupération du fichier
+    get_res = await client.get(data["url"])
+    assert get_res.status_code == 200
+    assert get_res.content == b"\x00\x00\x00\x20ftypisom"

@@ -6,7 +6,13 @@ interface SearchAndFilterBarProps {
   activePills: string[]; onTogglePill: (pill: string) => void;
 }
 
-const PILLS = [{ id: 'image', label: '+ Image' }, { id: 'video', label: '+ Video' }, { id: 'lip_sync', label: '+ Lip sync' }];
+const PILLS = [
+  { id: 'image', label: '+ Image' },
+  { id: 'video', label: '+ Video' },
+  { id: 'lip_sync', label: '+ Lip sync' },
+  { id: 'chained-series', label: '🎬 Séries Chaînées' },
+  { id: 'angle-matrix', label: '🎥 4 Angles' },
+];
 
 export const SearchAndFilterBar: React.FC<SearchAndFilterBarProps> = ({ searchValue, onSearchChange, activePills, onTogglePill }) => {
   return (

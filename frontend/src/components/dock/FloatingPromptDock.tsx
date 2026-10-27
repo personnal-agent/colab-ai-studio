@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowUp, Square, Image, Video, Mic, Maximize2, MessageSquare, AlertCircle } from 'lucide-react';
+import { ArrowUp, Square, Image, Video, Mic, Maximize2, MessageSquare, AlertCircle, Wand2, Sparkles, User, ChevronDown, ChevronUp } from 'lucide-react';
 import type {
   ModelDefinition, BrandKit, Generation, GenerationParameters,
-  GenerationReferences, GenerationSubmitRequest,
+  GenerationReferences, GenerationSubmitRequest, WorkloadEstimate,
 } from '../../types/studio';
 import { ConditioningTray } from './conditioning/ConditioningTray';
 import { ParameterRegistry } from './ParameterRegistry';
@@ -10,8 +10,10 @@ import { PromptEditorWithChip } from '../brand-kit/PromptEditorWithChip';
 import { BrandKitSelectorPopover } from '../brand-kit/BrandKitSelectorPopover';
 import { BrandKitCreateModal } from '../brand-kit/BrandKitCreateModal';
 import { BrandKitInspectorModal } from '../brand-kit/BrandKitInspectorModal';
+import { CharactersModal } from '../characters/CharactersModal';
 import { LlmChatView, type ChatMessage } from './LlmChatView';
 import { apiClient } from '../../services/apiClient';
+import { getAutoDirectorEnabled, MASTER_DIRECTOR_PROMPT, LLM_PROMPT_PRESETS, type LlmPromptPreset } from './LlmPromptPresets';
 
 export type DockMode = 'image' | 'video' | 'lip_sync' | 'upscale' | 'llm';
 
@@ -71,7 +73,47 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
 
   const [isBrandKitPopoverOpen, setIsBrandKitPopoverOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCharactersModalOpen, setIsCharactersModalOpen] = useState(false);
   const [inspectingKit, setInspectingKit] = useState<BrandKit | null>(null);
+  const [presetFeedback, setPresetFeedback] = useState<string | null>(null);
+  const [estimate, setEstimate] = useState<WorkloadEstimate | null>(null);
+  const [isMinimized, setIsMinimized] = useState(false);
+
+  const current = modeStates[activeMode];
+
+  const updateCurrent = useCallback((patch: Partial<ModeState>) => {
+    setModeStates((prev) => ({
+      ...prev, [activeMode]: { ...prev[activeMode], ...patch },
+    }));
+  }, [activeMode]);
+
+  useEffect(() => {
+    if (!current.prompt.trim() || activeMode === 'llm' || activeMode === 'upscale') {
+      setEstimate(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      apiClient.estimateWorkload({
+        prompt: current.prompt,
+        modelId: current.model?.id || 'minimax-h3',
+        type: activeMode,
+        duration: current.parameters.duration || '5s',
+        resolution: current.parameters.resolution,
+        batchCount: current.batchCount,
+      }).then(setEstimate).catch(() => setEstimate(null));
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [current.prompt, activeMode, current.model, current.parameters.duration, current.parameters.resolution, current.batchCount]);
+
+  const handleApplyPresetInDock = (preset: LlmPromptPreset) => {
+    if (activeMode === 'llm') {
+      updateCurrent({ prompt: preset.prompt });
+    } else {
+      updateCurrent({ prompt: preset.videoPrompt });
+    }
+    setPresetFeedback(preset.title);
+    setTimeout(() => setPresetFeedback(null), 2500);
+  };
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [isSubmittingMedia, setIsSubmittingMedia] = useState(false);
 
@@ -80,9 +122,18 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
       const next = { ...prev };
       const modes: DockMode[] = ['image', 'video', 'lip_sync', 'upscale', 'llm'];
       modes.forEach((m) => {
-        if (!next[m].model) {
-          const typeMatch = m === 'llm' ? 'text' : m;
-          const found = models.find((mod) => mod.type === typeMatch || (m === 'llm' && mod.type === 'llm'));
+        const typeMatch = m === 'llm' ? 'text' : m === 'lip_sync' ? 'lipsync' : m;
+        const currentModel = next[m].model;
+        const matchType = (t: string) => {
+          if (typeMatch === 'text') return t === 'text' || t === 'llm';
+          if (typeMatch === 'lipsync') return t === 'lipsync' || t === 'lip_sync';
+          return t === typeMatch;
+        };
+        const isCurrentValid = currentModel && matchType(currentModel.type);
+        const isCurrentLocal = currentModel?.badge === 'Local';
+        const localFound = models.find((mod) => matchType(mod.type) && mod.badge === 'Local');
+        if (!isCurrentValid || (!isCurrentLocal && localFound)) {
+          const found = localFound || models.find((mod) => matchType(mod.type));
           if (found) next[m].model = found;
         }
       });
@@ -101,7 +152,14 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
       setActiveMode(targetMode);
       setModeStates((prev) => {
         const cur = prev[targetMode];
-        const matchingModel = models.find((m) => m.id === remixContext.modelId) || cur.model;
+        let matchingModel: ModelDefinition | null = models.find((m) => m.id === remixContext.modelId) || null;
+        if (!matchingModel || (targetMode === 'upscale' && matchingModel.type !== 'upscale')) {
+          if (targetMode === 'upscale') {
+            matchingModel = models.find((m) => m.type === 'upscale' && m.badge === 'Local') || models.find((m) => m.type === 'upscale') || cur.model;
+          } else {
+            matchingModel = cur.model;
+          }
+        }
         const matchingKit = remixContext.brandKitSnapshot
           ? brandKits.find((k) => k.id === remixContext.brandKitSnapshot?.id) || null
           : null;
@@ -119,13 +177,37 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
     }
   }, [remixContext, models, brandKits, onClearRemix]);
 
-  const current = modeStates[activeMode];
+  const resolveBlobToUploaded = async (url: string | null | undefined): Promise<string | null | undefined> => {
+    if (!url || typeof url !== 'string' || !url.startsWith('blob:')) return url;
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const ext = blob.type.includes('mp4') ? 'mp4' : blob.type.includes('webp') ? 'webp' : 'png';
+      const file = new File([blob], `ref_${Date.now()}.${ext}`, { type: blob.type || 'image/png' });
+      const res = await apiClient.uploadFile(file);
+      return res.filePath;
+    } catch (err) {
+      console.warn('Erreur téléversement référence blob:', err);
+      return url;
+    }
+  };
 
-  const updateCurrent = useCallback((patch: Partial<ModeState>) => {
-    setModeStates((prev) => ({
-      ...prev, [activeMode]: { ...prev[activeMode], ...patch },
-    }));
-  }, [activeMode]);
+  const resolveAllBlobReferences = async (refs: GenerationReferences): Promise<GenerationReferences> => {
+    const next: GenerationReferences = { ...refs };
+    if (next.startFrame?.startsWith('blob:')) next.startFrame = await resolveBlobToUploaded(next.startFrame);
+    if (next.endFrame?.startsWith('blob:')) next.endFrame = await resolveBlobToUploaded(next.endFrame);
+    if (next.upscaleSource?.startsWith('blob:')) next.upscaleSource = await resolveBlobToUploaded(next.upscaleSource);
+    if (next.imageRefs?.length) {
+      next.imageRefs = (await Promise.all(next.imageRefs.map(resolveBlobToUploaded))).filter(Boolean) as string[];
+    }
+    if (next.videoRefs?.length) {
+      next.videoRefs = (await Promise.all(next.videoRefs.map(resolveBlobToUploaded))).filter(Boolean) as string[];
+    }
+    if (next.audioRefs?.length) {
+      next.audioRefs = (await Promise.all(next.audioRefs.map(resolveBlobToUploaded))).filter(Boolean) as string[];
+    }
+    return next;
+  };
 
   const handleSubmit = async () => {
     if (activeMode === 'llm') {
@@ -145,6 +227,12 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
       llmAbortRef.current = controller;
 
       let chatPayloadMessages = newMessages.map((m) => ({ role: m.role, content: m.content }));
+      if (getAutoDirectorEnabled()) {
+        chatPayloadMessages = [
+          { role: 'system', content: MASTER_DIRECTOR_PROMPT },
+          ...chatPayloadMessages,
+        ];
+      }
       if (current.selectedBrandKit) {
         const kit = current.selectedBrandKit;
         const brandSummary = [
@@ -159,7 +247,10 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
 
       try {
         await apiClient.streamChatCompletion(
-          { model: current.model?.name || 'Llama-3-8B', messages: chatPayloadMessages },
+          {
+            model: current.model?.name || current.model?.id || 'Qwen 3.5 9B Defiant Fable Heretic',
+            messages: chatPayloadMessages,
+          },
           (chunk) => {
             setLlmMessages((prev) => prev.map((msg) => (msg.id === assistantId ? { ...msg, content: msg.content + chunk } : msg)));
           },
@@ -187,6 +278,7 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
       try {
         const count = Math.max(1, current.batchCount || 1);
         const mediaType = activeMode === 'upscale' ? 'upscale' : activeMode === 'lip_sync' ? 'lip_sync' : activeMode;
+        const resolvedReferences = await resolveAllBlobReferences(current.references);
         for (let i = 0; i < count; i++) {
           await onSubmitGeneration({
             modelId: current.model.id,
@@ -200,7 +292,7 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
               upscaleQuality: current.upscaleQuality,
               upscaleFrameRate: current.upscaleFrameRate,
             },
-            references: current.references,
+            references: resolvedReferences,
             projectId: activeProjectId,
             brandKitId: current.selectedBrandKit?.id,
           });
@@ -235,6 +327,65 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
     { id: 'llm', label: 'LLM', icon: MessageSquare },
   ];
 
+  if (isMinimized) {
+    const activeTab = modeTabs.find((t) => t.id === activeMode) || modeTabs[0];
+    const ActiveIcon = activeTab.icon;
+    return (
+      <div className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-40 px-4 transition-all duration-200 ease-out animate-in fade-in slide-in-from-bottom-2 ${className}`}>
+        <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-full shadow-2xl border border-gray-200/90 dark:border-gray-800 px-4 py-2 flex items-center space-x-3 max-w-xl sm:max-w-2xl">
+          <div className="flex items-center space-x-1.5 flex-shrink-0">
+            <span className="p-1.5 rounded-full bg-black text-white dark:bg-white dark:text-black">
+              <ActiveIcon className="w-3.5 h-3.5" />
+            </span>
+            <span className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+              {activeTab.label}
+            </span>
+            {current.model && (
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 hidden sm:inline">
+                • {current.model.name}
+              </span>
+            )}
+          </div>
+
+          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+
+          <div
+            className="flex-1 min-w-0 cursor-pointer"
+            onClick={() => setIsMinimized(false)}
+            title="Cliquer pour restaurer la fenêtre de saisie"
+          >
+            {current.prompt.trim() ? (
+              <p className="text-xs text-gray-600 dark:text-gray-300 truncate font-mono">
+                {current.prompt}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-400 italic">
+                Fenêtre de saisie réduite (cliquer pour restaurer)
+              </p>
+            )}
+          </div>
+
+          {estimate && (
+            <span className="hidden md:inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-[10px] font-medium text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-900/50 flex-shrink-0">
+              <span>🎬 {estimate.numSegments > 1 ? `${estimate.numSegments} plans` : '1 plan'}</span>
+            </span>
+          )}
+
+          <button
+            type="button"
+            aria-label="Restaurer la fenêtre de saisie"
+            onClick={() => setIsMinimized(false)}
+            title="Restaurer la fenêtre de saisie à sa place"
+            className="flex items-center space-x-1.5 py-1.5 px-3.5 rounded-full text-xs font-semibold bg-black text-white dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 shadow-sm transition-all active:scale-95 flex-shrink-0"
+          >
+            <ChevronUp className="w-3.5 h-3.5" />
+            <span>Restaurer</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl z-40 px-4 transition-all duration-150 ease-out ${className}`}>
       <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/80 dark:border-gray-800 p-3 sm:p-4 flex flex-col space-y-2">
@@ -255,6 +406,15 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
             })}
           </div>
           <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              aria-label="Personnages"
+              onClick={() => setIsCharactersModalOpen(true)}
+              className="text-xs text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 font-medium py-1 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-1"
+            >
+              <User className="w-3.5 h-3.5 text-indigo-500" />
+              <span>Personnages</span>
+            </button>
             <BrandKitSelectorPopover
               isOpen={isBrandKitPopoverOpen} onOpenChange={setIsBrandKitPopoverOpen}
               brandKits={brandKits} selectedBrandKitId={current.selectedBrandKit?.id}
@@ -271,11 +431,27 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
                 </button>
               }
             />
+            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700 mx-0.5" />
+            <button
+              type="button"
+              aria-label="Réduire la fenêtre de saisie"
+              onClick={() => setIsMinimized(true)}
+              title="Réduire pour laisser mieux entrevoir la galerie"
+              className="text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 font-medium py-1 px-2.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-1"
+            >
+              <ChevronDown className="w-3.5 h-3.5 text-gray-500" />
+              <span>Réduire</span>
+            </button>
           </div>
         </div>
 
         {activeMode === 'llm' && (
-          <LlmChatView messages={llmMessages} isStreaming={isLlmStreaming} onStopStreaming={handleStopLlmStreaming} />
+          <LlmChatView
+            messages={llmMessages}
+            isStreaming={isLlmStreaming}
+            onStopStreaming={handleStopLlmStreaming}
+            onSelectPromptPreset={(presetText) => updateCurrent({ prompt: presetText })}
+          />
         )}
 
         {activeMode !== 'llm' && (
@@ -296,6 +472,79 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
         )}
 
         <div className="bg-gray-50 dark:bg-gray-800/60 rounded-2xl p-3 border border-gray-100 dark:border-gray-700/60 focus-within:border-gray-300 dark:focus-within:border-gray-600 transition-colors">
+          {/* Barre 1-Clic Presets Réalisateur & Styles (Accessible partout) */}
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200/50 dark:border-gray-700/50 overflow-x-auto scrollbar-none gap-1.5">
+            <div className="flex items-center space-x-1.5 flex-nowrap flex-shrink-0">
+              <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 flex items-center space-x-1 flex-shrink-0">
+                <Wand2 className="w-3.5 h-3.5 text-indigo-500" />
+                <span>Presets :</span>
+              </span>
+              {LLM_PROMPT_PRESETS.map((p) => {
+                const isJustApplied = presetFeedback === p.title;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => handleApplyPresetInDock(p)}
+                    title={activeMode === 'llm' ? p.shortDesc : `Injecter le prompt : ${p.videoPrompt}`}
+                    className={`flex-shrink-0 px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all flex items-center space-x-1 border ${
+                      isJustApplied
+                        ? 'bg-emerald-500 text-white border-emerald-600 font-bold shadow-xs'
+                        : 'bg-white dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-gray-700 dark:text-gray-200 hover:text-indigo-600 dark:hover:text-indigo-400 border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <span>{p.title}</span>
+                    {isJustApplied && <span className="text-[10px] ml-1">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+            {activeMode !== 'llm' && (
+              <button
+                type="button"
+                onClick={() => setActiveMode('llm')}
+                className="hidden sm:flex items-center space-x-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 hover:underline flex-shrink-0 ml-auto whitespace-nowrap"
+                title="Basculer vers la discussion LLM pour affiner vos idées"
+              >
+                <Sparkles className="w-3 h-3" />
+                <span>Discussion LLM</span>
+              </button>
+            )}
+          </div>
+
+          {estimate && (
+            <div className="flex items-center flex-wrap gap-2 px-2.5 py-1.5 mb-2 bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 rounded-xl text-[11px] text-indigo-900 dark:text-indigo-200 animate-in fade-in duration-100">
+              <span className="font-semibold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{estimate.numSegments > 1 ? `🎬 ${estimate.numSegments} plans (${estimate.totalDurationSec}s)` : `🎬 1 plan (${estimate.totalDurationSec}s)`}</span>
+              </span>
+              <span className="text-gray-300 dark:text-gray-600">•</span>
+              <span className="font-mono text-gray-700 dark:text-gray-300">
+                ⚡ ~{Math.max(1, Math.round(estimate.estimatedSecondsGpu / 60))} min (RTX 5000 Ada)
+              </span>
+              <span className="text-gray-300 dark:text-gray-600">•</span>
+              <span className="text-gray-600 dark:text-gray-400">
+                💾 {estimate.estimatedVramGb} Go VRAM
+              </span>
+              {estimate.detectedDialoguesCount > 0 && (
+                <>
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                  <span className="text-purple-700 dark:text-purple-300 font-medium">
+                    🎙️ {estimate.detectedDialoguesCount} dialogue(s) audio
+                  </span>
+                </>
+              )}
+              {estimate.detectedCharacters.length > 0 && (
+                <>
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold font-mono">
+                    👤 {estimate.detectedCharacters.join(' ')}
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+
           <PromptEditorWithChip
             prompt={current.prompt}
             onPromptChange={(prompt) => {
@@ -316,6 +565,7 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
               upscaleQuality={current.upscaleQuality} onUpscaleQualityChange={(quality) => updateCurrent({ upscaleQuality: quality })}
               upscaleFrameRate={current.upscaleFrameRate} onUpscaleFrameRateChange={(fps) => updateCurrent({ upscaleFrameRate: fps })}
               negativePrompt={current.negativePrompt} onNegativePromptChange={(val) => updateCurrent({ negativePrompt: val })}
+              steps={current.parameters.steps ?? 25} onStepsChange={(steps) => updateCurrent({ parameters: { ...current.parameters, steps } })}
             />
             <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
               {activeMode === 'llm' && isLlmStreaming ? (
@@ -353,6 +603,14 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
       <BrandKitInspectorModal
         brandKit={inspectingKit} isOpen={Boolean(inspectingKit)} onClose={() => setInspectingKit(null)}
         onSelectBrandKit={(kit) => { updateCurrent({ selectedBrandKit: kit }); setInspectingKit(null); }}
+      />
+      <CharactersModal
+        isOpen={isCharactersModalOpen}
+        onClose={() => setIsCharactersModalOpen(false)}
+        onSelectCharacterToken={(token) => {
+          const separator = current.prompt.trim() ? ' ' : '';
+          updateCurrent({ prompt: `${current.prompt}${separator}${token} ` });
+        }}
       />
     </div>
   );

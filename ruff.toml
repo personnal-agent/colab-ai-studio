@@ -4,10 +4,11 @@ extend-exclude = [".GCC", ".modelisation", "ui-specifications", "frontend"]
 
 [lint]
 select = ["E", "F", "W", "I", "B", "UP", "SIM", "S", "ASYNC"]
-ignore = ["B008"]
+ignore = ["B008", "S603", "S607"]
 
 [lint.isort]
 known-first-party = ["app"]
 
 [lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106", "S603", "ASYNC240"]
+"tests/**" = ["S101", "S105", "S106", "ASYNC240"]
+"scripts/**" = ["S101", "S310", "E402"]

@@ -251,3 +251,35 @@ async def test_subscribe_task_drains_queued_final_event_when_inactive(stores):
 
     with pytest.raises(StopAsyncIteration):
         await gen_sub.__anext__()
+
+
+@pytest.mark.asyncio
+async def test_update_generation_serializes_pydantic_parameters(stores):
+    js, ms = stores
+    gen = Generation(
+        id="gen_pydantic_serialize",
+        status=TaskStatus.RUNNING,
+        prompt="test prompt",
+        modelId="m",
+        modelName="M",
+        parameters=GenerationParameters(seed=42),
+    )
+    await js.write_list("generations.json", [gen.model_dump()])
+    orch = TaskOrchestrator(js, ms, MockWorkerGateway(), BrandContextCompiler())
+
+    # On passe directement un objet Pydantic GenerationParameters avec characterAnchors
+    params = GenerationParameters(
+        seed=42,
+        characterAnchors={"char_1": {"label": "Man", "sourceShotIndex": 1}},
+    )
+    updated = await orch._update_generation(
+        "gen_pydantic_serialize",
+        allow_from_terminal=True,
+        parameters=params,
+    )
+    assert updated is not None
+    assert updated.parameters.characterAnchors["char_1"]["label"] == "Man"
+
+    # Vérification que le fichier JSON sur disque est valide et lisible
+    raw_list = await js.read_list("generations.json")
+    assert raw_list[0]["parameters"]["characterAnchors"]["char_1"]["label"] == "Man"

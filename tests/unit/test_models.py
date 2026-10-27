@@ -35,8 +35,13 @@ def test_task_status_and_params():
         "cancelled",
     }
     p = GenerationParameters(
-        seed=42, aspectRatio="16:9", resolution="720p", duration="5s",
-        talkingStyle="Expressive", upscaleScale="4x", upscaleQuality="Slow",
+        seed=42,
+        aspectRatio="16:9",
+        resolution="720p",
+        duration="5s",
+        talkingStyle="Expressive",
+        upscaleScale="4x",
+        upscaleQuality="Slow",
         upscaleFrameRate="60fps",
     )
     assert (

@@ -22,13 +22,20 @@ class MockTorchCuda:
         self._is_available, self._total_memory_mb, self._allocated_mb = is_available, memory_mb, 0.0
         self.empty_cache_called, self.ipc_collect_called = 0, 0
 
-    def is_available(self) -> bool: return self._is_available
+    def is_available(self) -> bool:
+        return self._is_available
+
     def empty_cache(self) -> None:
         self.empty_cache_called, self._allocated_mb = self.empty_cache_called + 1, 0.0
-    def ipc_collect(self) -> None: self.ipc_collect_called += 1
+
+    def ipc_collect(self) -> None:
+        self.ipc_collect_called += 1
+
     def memory_allocated(self, device: int | None = None) -> int:
         return int(self._allocated_mb * 1024 * 1024)
-    def get_device_name(self, device: int | None = None) -> str: return "NVIDIA Tesla T4"
+
+    def get_device_name(self, device: int | None = None) -> str:
+        return "NVIDIA Tesla T4"
 
 
 @pytest.fixture
@@ -51,7 +58,9 @@ def test_initialization_state(swapper: ModelSwapper) -> None:
 def test_load_model_on_demand(swapper: ModelSwapper) -> None:
     history: list[float] = []
     p = swapper.ensure_model(
-        "flux-schnell", load_fn=lambda mid: {"name": mid}, on_progress=history.append,
+        "flux-schnell",
+        load_fn=lambda mid: {"name": mid},
+        on_progress=history.append,
     )
     assert swapper.state == ModelSwapperState.MODELE_ACTIF
     assert swapper.active_model == "flux-schnell"
@@ -76,9 +85,7 @@ def test_direct_reuse_when_model_already_resident(swapper: ModelSwapper) -> None
     assert swapper.last_activity_time >= initial_activity_time
 
 
-def test_eviction_before_loading_new_model(
-    swapper: ModelSwapper, mock_cuda: MockTorchCuda
-) -> None:
+def test_eviction_before_loading_new_model(swapper: ModelSwapper, mock_cuda: MockTorchCuda) -> None:
     """Vérifie le protocole strict d'éviction VRAM lors de la bascule vers un nouveau modèle."""
     loader = MagicMock(side_effect=lambda mid: {"model": mid})
 
@@ -160,4 +167,3 @@ def test_default_cuda_backend_execution() -> None:
     backend.ipc_collect()
     assert isinstance(backend.memory_allocated(), int)
     assert isinstance(backend.get_device_name(), str)
-

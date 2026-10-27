@@ -13,6 +13,23 @@ export interface ReferenceSlotProps {
   isWarning?: boolean;
 }
 
+const getDisplayUrl = (url: string | null | undefined): string | undefined => {
+  if (!url) return undefined;
+  if (url.startsWith('blob:') || url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/api/')) {
+    return url;
+  }
+  const normalized = url.replace(/\\/g, '/');
+  if (normalized.includes('/uploads/')) {
+    const fn = normalized.split('/uploads/')[1];
+    return `/api/uploads/${fn}`;
+  }
+  if (normalized.includes('/outputs/')) {
+    const fn = normalized.split('/outputs/')[1];
+    return `/api/generations/file/${fn}`;
+  }
+  return url;
+};
+
 export const ReferenceSlot: React.FC<ReferenceSlotProps> = ({
   label,
   fileUrl,
@@ -92,11 +109,11 @@ export const ReferenceSlot: React.FC<ReferenceSlotProps> = ({
               </div>
             ) : mediaType === 'video' || fileUrl.endsWith('.mp4') ? (
               <div className="relative w-full h-full bg-black flex items-center justify-center">
-                <video src={fileUrl} className="w-full h-full object-cover" muted />
+                <video src={getDisplayUrl(fileUrl)} className="w-full h-full object-cover" muted />
                 <VideoIcon className="w-4 h-4 text-white/80 absolute" />
               </div>
             ) : (
-              <img src={fileUrl} alt={label} className="w-full h-full object-cover" />
+              <img src={getDisplayUrl(fileUrl)} alt={label} className="w-full h-full object-cover" />
             )}
 
             {onClear && (

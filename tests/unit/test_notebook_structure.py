@@ -24,7 +24,8 @@ def test_notebook_structure_and_content() -> None:
 
     sources = [
         "".join(c.get("source", []))
-        for c in data["cells"] if c.get("cell_type") in {"code", "markdown"}
+        for c in data["cells"]
+        if c.get("cell_type") in {"code", "markdown"}
     ]
     txt = "\n".join(sources).lower()
     for kw in ("nvidia-smi", "fastapi", "uvicorn", "modelswapper", "http"):

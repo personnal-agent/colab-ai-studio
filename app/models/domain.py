@@ -50,6 +50,15 @@ class GenerationParameters(DomainBase):
     upscaleScale: str | None = None
     upscaleQuality: str | None = None
     upscaleFrameRate: str | None = None
+    chaining: bool | None = None
+    scriptPlan: dict[str, Any] | None = None
+    horizontalAngle: float | None = None
+    verticalAngle: float | None = None
+    zoomFactor: float | None = None
+    autoVoiceOver: bool | None = True
+    steps: int | None = None
+    guidanceScale: float | None = None
+    characterAnchors: dict[str, Any] | None = None
 
     @field_validator("aspectRatio")
     @classmethod
@@ -77,6 +86,7 @@ class GenerationReferences(DomainBase):
     audioRefs: list[str] = Field(default_factory=list)
     upscaleSource: str | None = None
     upscaleSourceType: str | None = None
+    upscaleSourceFilename: str | None = None
     brandKitId: str | None = None
 
     def has_visual_references(self) -> bool:
@@ -193,6 +203,20 @@ class Project(DomainBase):
         return v.upper() if v else None
 
 
+class Character(DomainBase):
+    id: str
+    name: str
+    triggerToken: str
+    physicalPrompt: str
+    referenceImagePath: str | None = None
+    voiceSamplePath: str | None = None
+    voiceStyle: str | None = "feminine_soft"
+    loraName: str | None = None
+    loraStrength: float = 0.85
+    defaultSeed: int | None = None
+    createdAt: str = Field(default_factory=_utc_now_iso)
+
+
 class Generation(DomainBase):
     id: str
     status: TaskStatus = TaskStatus.PENDING
@@ -210,7 +234,14 @@ class Generation(DomainBase):
     references: GenerationReferences = Field(default_factory=GenerationReferences)
     brandKitSnapshot: BrandKitSnapshot | None = None
     isFavorite: bool = False
+    rating: int = 0
+    tags: list[str] = Field(default_factory=list)
+    characterIds: list[str] = Field(default_factory=list)
+    cameraAngleLabel: str | None = None
     projectId: str | None = None
+    sequenceId: str | None = None
+    sequenceIndex: int | None = None
+    sequenceTotal: int | None = None
     createdAt: str = Field(default_factory=_utc_now_iso)
     workerUrl: str | None = None
 

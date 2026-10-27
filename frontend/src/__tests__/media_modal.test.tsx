@@ -5,7 +5,7 @@ import { apiClient } from '../services/apiClient';
 import type { Generation } from '../types/studio';
 
 vi.mock('../services/apiClient', () => ({
-  apiClient: { toggleFavorite: vi.fn() },
+  apiClient: { toggleFavorite: vi.fn(), deleteGeneration: vi.fn() },
   getMediaFileUrl: (g: { filePath?: string | null }) => g.filePath || '',
   getMediaThumbnailUrl: (g: { thumbnailPath?: string | null; filePath?: string | null }) => g.thumbnailPath || g.filePath || '',
 }));
@@ -68,5 +68,32 @@ describe('MediaPlayerModal', () => {
     render(<MediaPlayerModal generation={mockGen} isOpen={true} onClose={onClose} onRemix={() => {}} />);
     fireEvent.click(screen.getByRole('button', { name: /fermer/i }));
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('triggers delete flow when delete button is confirmed', async () => {
+    vi.mocked(apiClient.deleteGeneration).mockResolvedValue({ status: 'ok', id: 'gen_modal_1' });
+    const onDelete = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <MediaPlayerModal
+        generation={mockGen}
+        isOpen={true}
+        onClose={onClose}
+        onRemix={() => {}}
+        onDelete={onDelete}
+      />
+    );
+
+    // Initial delete button click opens confirmation
+    fireEvent.click(screen.getByRole('button', { name: /supprimer la génération/i }));
+    expect(screen.getByRole('button', { name: /confirmer la suppression/i })).toBeInTheDocument();
+
+    // Confirm delete
+    fireEvent.click(screen.getByRole('button', { name: /confirmer la suppression/i }));
+    await waitFor(() => {
+      expect(apiClient.deleteGeneration).toHaveBeenCalledWith('gen_modal_1');
+      expect(onDelete).toHaveBeenCalledWith(mockGen);
+      expect(onClose).toHaveBeenCalled();
+    });
   });
 });

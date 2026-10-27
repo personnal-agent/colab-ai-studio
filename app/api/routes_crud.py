@@ -32,6 +32,7 @@ from app.config import (
     GENERATIONS_FILE,
     OUTPUTS_DIR,
     PROJECTS_FILE,
+    UPLOADS_DIR,
 )
 from app.models.domain import HEX_COLOR_REGEX, Project, StudioConfig, TaskStatus
 from app.services.brand_extractor import BrandKitExtractor
@@ -91,6 +92,11 @@ class ProjectCreate(BaseModel):
         return v.upper() if v else None
 
 
+class GenerationMetadataUpdate(BaseModel):
+    rating: int | None = None
+    tags: list[str] | None = None
+
+
 # --- Generations ---
 
 
@@ -99,6 +105,9 @@ async def list_generations(
     favorite: bool | None = Query(default=None),
     mediaType: str | None = Query(default=None),
     projectId: str | None = Query(default=None),
+    minRating: int | None = Query(default=None),
+    tag: str | None = Query(default=None),
+    sequenceId: str | None = Query(default=None),
     q: str | None = Query(default=None),
 ) -> list[dict[str, Any]]:
     items = await _json_store.read_list("generations.json")
@@ -108,14 +117,41 @@ async def list_generations(
         if (favorite is None or item.get("isFavorite") == favorite)
         and (not mediaType or item.get("mediaType") == mediaType)
         and (not projectId or item.get("projectId") == projectId)
+        and (minRating is None or int(item.get("rating") or 0) >= minRating)
+        and (not tag or any(tag.lower() == str(t).lower() for t in (item.get("tags") or [])))
+        and (not sequenceId or item.get("sequenceId") == sequenceId)
         and (
             not q
             or q.lower() in str(item.get("prompt", "")).lower()
             or q.lower() in str(item.get("modelName", "")).lower()
+            or any(q.lower() in str(t).lower() for t in (item.get("tags") or []))
         )
     ]
     results.sort(key=lambda x: str(x.get("createdAt", "")), reverse=True)
     return results
+
+
+@router.patch(
+    "/generations/{generation_id}/metadata",
+    response_model=dict[str, Any],
+    dependencies=[Depends(verify_trusted_origin)],
+)
+async def update_generation_metadata(
+    generation_id: str, payload: GenerationMetadataUpdate
+) -> dict[str, Any]:
+    """Met à jour la note (0-5 étoiles) et/ou les tags d'une génération."""
+    async with _json_store.lock_for("generations.json"):
+        items = await _json_store.read_list_unlocked("generations.json")
+        for item in items:
+            if item.get("id") == generation_id:
+                if payload.rating is not None:
+                    item["rating"] = max(0, min(5, int(payload.rating)))
+                if payload.tags is not None:
+                    clean_tags = [t.strip() for t in payload.tags if t and t.strip()]
+                    item["tags"] = list(dict.fromkeys(clean_tags))
+                await _json_store.write_list_unlocked("generations.json", items)
+                return item
+    raise HTTPException(status_code=404, detail="Génération introuvable")
 
 
 @router.patch(
@@ -193,6 +229,37 @@ async def get_generation_thumbnail(generation_id: str) -> FileResponse:
         raise HTTPException(status_code=404, detail="Miniature introuvable sur disque")
     media_type, _ = mimetypes.guess_type(str(path))
     return FileResponse(path=path, media_type=media_type or "image/jpeg")
+
+
+@router.post("/upload")
+async def upload_file(file: UploadFile = File(...)) -> dict[str, Any]:
+    """Téléverse un fichier média de référence ou source (image, vidéo, audio)."""
+    clean_name = Path(file.filename or "upload").name
+    safe_name = f"{uuid.uuid4().hex[:12]}_{clean_name}"
+    await asyncio.to_thread(UPLOADS_DIR.mkdir, parents=True, exist_ok=True)
+    dest_path = UPLOADS_DIR / safe_name
+
+    content = await file.read()
+    await asyncio.to_thread(dest_path.write_bytes, content)
+
+    return {
+        "filePath": str(dest_path.resolve()),
+        "filename": safe_name,
+        "url": f"/api/uploads/{safe_name}",
+        "size": len(content),
+    }
+
+
+@router.get("/uploads/{filename}")
+async def get_uploaded_file(filename: str) -> FileResponse:
+    """Sert un fichier téléversé."""
+    clean_name = Path(filename).name
+    path = UPLOADS_DIR / clean_name
+    exists = await asyncio.to_thread(path.is_file)
+    if not exists:
+        raise HTTPException(status_code=404, detail="Fichier introuvable")
+    media_type, _ = mimetypes.guess_type(str(path))
+    return FileResponse(path=path, media_type=media_type or "application/octet-stream")
 
 
 # --- Brand Kits ---

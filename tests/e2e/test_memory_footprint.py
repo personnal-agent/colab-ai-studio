@@ -32,8 +32,14 @@ def test_isolated_backend_memory_footprint(tmp_path) -> None:
     env["PYTHONPATH"] = str(REPO_ROOT)
 
     cmd = [
-        sys.executable, "-m", "uvicorn", "app.main:app",
-        "--port", str(port), "--host", "127.0.0.1",
+        sys.executable,
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--port",
+        str(port),
+        "--host",
+        "127.0.0.1",
     ]
     proc = subprocess.Popen(
         cmd, cwd=str(REPO_ROOT), env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE

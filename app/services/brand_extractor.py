@@ -111,10 +111,15 @@ async def _fetch_safe_website(initial_url: str, max_redirects: int = 5) -> httpx
                             if parsed_u.password:
                                 userinfo += f":{parsed_u.password}"
                             netloc = f"{userinfo}@{netloc}"
-                        current_url = urlunsplit((
-                            parsed_u.scheme, netloc, parsed_u.path,
-                            parsed_u.query, parsed_u.fragment,
-                        ))
+                        current_url = urlunsplit(
+                            (
+                                parsed_u.scheme,
+                                netloc,
+                                parsed_u.path,
+                                parsed_u.query,
+                                parsed_u.fragment,
+                            )
+                        )
 
             await _validate_safe_url(current_url)
             if not re.fullmatch(
@@ -180,6 +185,7 @@ class BrandKitExtractor:
         overview: str = "",
     ) -> BrandKit:
         """Extrait logos, polices et palettes de couleurs depuis des fichiers importés."""
+
         def _process_files() -> tuple[list[Logo], list[Color], list[Font]]:
             """Analyse et classe les fichiers de marque sur le disque."""
             logos: list[Logo] = []

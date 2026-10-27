@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { AtSign, X } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { AtSign, Maximize2, Minimize2, X } from 'lucide-react';
 import type { BrandKit } from '../../types/studio';
 
 export interface PromptEditorWithChipProps {
@@ -26,6 +26,7 @@ export const PromptEditorWithChip: React.FC<PromptEditorWithChipProps> = ({
   className = '',
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isTallMode, setIsTallMode] = useState(false);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Backspace' && textareaRef.current?.selectionStart === 0 && selectedBrandKit) {
@@ -85,16 +86,38 @@ export const PromptEditorWithChip: React.FC<PromptEditorWithChipProps> = ({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenBrandKitSelector}
-          aria-label="@ Brand Kit"
-          title="Attach or change Brand Kit"
-          className="inline-flex items-center space-x-1 text-xs font-medium text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors py-0.5 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-        >
-          <AtSign className="w-3.5 h-3.5" />
-          <span>Brand Kit</span>
-        </button>
+        <div className="flex items-center space-x-1.5">
+          <button
+            type="button"
+            onClick={() => setIsTallMode(!isTallMode)}
+            aria-label={isTallMode ? 'Hauteur standard' : 'Grand format'}
+            title={isTallMode ? 'Réduire à la hauteur normale' : 'Agrandir la hauteur de saisie'}
+            className="inline-flex items-center space-x-1 text-xs font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors py-0.5 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            {isTallMode ? (
+              <>
+                <Minimize2 className="w-3 h-3 text-gray-500" />
+                <span className="hidden sm:inline">Hauteur standard</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-3 h-3 text-gray-500" />
+                <span className="hidden sm:inline">Grand format</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenBrandKitSelector}
+            aria-label="@ Brand Kit"
+            title="Attach or change Brand Kit"
+            className="inline-flex items-center space-x-1 text-xs font-medium text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors py-0.5 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            <AtSign className="w-3.5 h-3.5" />
+            <span>Brand Kit</span>
+          </button>
+        </div>
       </div>
 
       <textarea
@@ -104,8 +127,10 @@ export const PromptEditorWithChip: React.FC<PromptEditorWithChipProps> = ({
         onKeyDown={handleKeyDown}
         disabled={disabled}
         placeholder={placeholder}
-        rows={2}
-        className="w-full resize-none bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-0 border-0 p-0 leading-relaxed"
+        rows={isTallMode ? 9 : 4}
+        className={`w-full resize-y ${
+          isTallMode ? 'min-h-[210px]' : 'min-h-[115px]'
+        } max-h-[480px] bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-0 border-0 p-0 leading-relaxed overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600`}
       />
     </div>
   );

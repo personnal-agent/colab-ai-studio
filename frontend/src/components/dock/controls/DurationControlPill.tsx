@@ -26,9 +26,9 @@ export const DurationControlPill: React.FC<DurationControlPillProps> = ({
 
   let discreteOptions: string[];
   if (Array.isArray(config)) {
-    discreteOptions = config;
+    discreteOptions = [...config];
   } else if (config.options && config.options.length > 0) {
-    discreteOptions = config.options;
+    discreteOptions = [...config.options];
   } else if (config.min !== undefined && config.max !== undefined) {
     const step = config.max - config.min >= 10 ? 5 : 1;
     const opts: string[] = [];
@@ -43,6 +43,12 @@ export const DurationControlPill: React.FC<DurationControlPillProps> = ({
     discreteOptions = ['5s', '10s', '15s'];
   }
 
+  if (!discreteOptions.some((o) => o.toLowerCase() === 'auto')) {
+    discreteOptions.push('Auto');
+  }
+
+  const isAuto = value?.toLowerCase() === 'auto';
+  const displayLabel = isAuto ? 'Auto (Scénarisé)' : (value || '5s');
   const numericValue = parseInt(value, 10) || rangeMin;
 
   return (
@@ -50,11 +56,15 @@ export const DurationControlPill: React.FC<DurationControlPillProps> = ({
       <Popover.Trigger asChild>
         <button
           type="button"
-          aria-label={`Durée ${value}`}
-          className="h-8 px-2.5 rounded-pill text-xs font-medium border border-studio-border bg-white hover:bg-gray-50 text-gray-700 flex items-center gap-1.5 transition-colors shadow-sm select-none"
+          aria-label={`Durée ${displayLabel}`}
+          className={`h-8 px-2.5 rounded-pill text-xs font-medium border flex items-center gap-1.5 transition-colors shadow-sm select-none ${
+            isAuto
+              ? 'bg-indigo-50 border-indigo-300 text-indigo-700 font-semibold hover:bg-indigo-100'
+              : 'border-studio-border bg-white hover:bg-gray-50 text-gray-700'
+          }`}
         >
-          <span className="text-gray-400">⏱ </span>
-          <span>{value || '5s'}</span>
+          <span className={isAuto ? 'text-indigo-500' : 'text-gray-400'}>⏱ </span>
+          <span>{displayLabel}</span>
         </button>
       </Popover.Trigger>
       <Popover.Portal>
@@ -66,7 +76,7 @@ export const DurationControlPill: React.FC<DurationControlPillProps> = ({
         >
           <div className="flex items-center justify-between text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
             <span>Durée</span>
-            <span className="text-gray-700">{value}</span>
+            <span className="text-gray-700">{displayLabel}</span>
           </div>
 
           {isRange ? (
@@ -88,23 +98,29 @@ export const DurationControlPill: React.FC<DurationControlPillProps> = ({
             </div>
           ) : (
             <div className="flex flex-wrap gap-1.5">
-              {discreteOptions.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt);
-                    setOpen(false);
-                  }}
-                  className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                    value === opt
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-studio-subtle text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
+              {discreteOptions.map((opt) => {
+                const isSelected = value?.toLowerCase() === opt.toLowerCase();
+                const isOptionAuto = opt.toLowerCase() === 'auto';
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => {
+                      onChange(isOptionAuto ? 'auto' : opt);
+                      setOpen(false);
+                    }}
+                    className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                      isSelected
+                        ? 'bg-gray-900 text-white font-bold'
+                        : isOptionAuto
+                        ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold border border-indigo-200'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    {isOptionAuto ? '✨ Auto (Scénarisé)' : opt}
+                  </button>
+                );
+              })}
             </div>
           )}
         </Popover.Content>
