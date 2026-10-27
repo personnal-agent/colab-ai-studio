@@ -1,0 +1,204 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1580" viewBox="0 0 2200 1580">
+  <defs>
+    <marker id="syncArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7 Z" fill="#1E4E5F"/>
+    </marker>
+    <marker id="asyncArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#1E4E5F" stroke-width="1.5"/>
+    </marker>
+    <marker id="replyArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#52616B" stroke-width="1.5"/>
+    </marker>
+    <marker id="purpleSyncArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7 Z" fill="#5B21B6"/>
+    </marker>
+    <marker id="purpleReplyArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#5B21B6" stroke-width="1.5"/>
+    </marker>
+    <marker id="graySyncArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7 Z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <!-- Fond blanc pur -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- En-tête -->
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">06 · Séquence d'exécution &amp; délégation d'inférence (v3) — Omniforge &amp; Mini Design</text>
+  <text x="48" y="68" font-family="Arial, sans-serif" font-size="13.5" fill="#52616B">Diagramme de Séquence UML 2.5.1 · Fragment Loop Normé avec Cartouche Pentagonal, Sens Requête/Réponse Corrigé, Barres et Sous-Barres Réflexives</text>
+  <line x1="48" y1="82" x2="2152" y2="82" stroke="#D5DEE5" stroke-width="1.5"/>
+
+  <!-- ===================================================================== -->
+  <!-- LIGNES DE VIE (LIFELINES)                                             -->
+  <!-- ===================================================================== -->
+
+  <!-- Lifeline 1 : Utilisateur -->
+  <rect x="80" y="105" width="180" height="42" rx="4" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="170" y="131" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#123C4A">Utilisateur</text>
+  <line x1="170" y1="147" x2="170" y2="1520" stroke="#7E929F" stroke-width="1.2" stroke-dasharray="6,4"/>
+
+  <!-- Lifeline 2 : Electron Window -->
+  <rect x="360" y="105" width="220" height="42" rx="4" fill="#F1F5F9" stroke="#334155" stroke-width="1.6"/>
+  <text x="470" y="131" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#0F172A">ElectronMain (Host)</text>
+  <line x1="470" y1="147" x2="470" y2="1520" stroke="#7E929F" stroke-width="1.2" stroke-dasharray="6,4"/>
+
+  <!-- Lifeline 3 : Mini Design Workbench UI -->
+  <rect x="680" y="105" width="240" height="42" rx="4" fill="#EDE9FE" stroke="#5B21B6" stroke-width="1.6"/>
+  <text x="800" y="131" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#4C1D95">MiniDesignWorkbench</text>
+  <line x1="800" y1="147" x2="800" y2="1520" stroke="#7E929F" stroke-width="1.2" stroke-dasharray="6,4"/>
+
+  <!-- Lifeline 4 : NestJS Gateway (:51491) -->
+  <rect x="1040" y="105" width="230" height="42" rx="4" fill="#F1F5F9" stroke="#475569" stroke-width="1.6"/>
+  <text x="1155" y="131" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#1E293B">NestJSGateway (:51491)</text>
+  <line x1="1155" y1="147" x2="1155" y2="1520" stroke="#7E929F" stroke-width="1.2" stroke-dasharray="6,4"/>
+
+  <!-- Lifeline 5 : FastAPI Backend (:8000) -->
+  <rect x="1400" y="105" width="240" height="42" rx="4" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="1520" y="131" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#123C4A">FastAPI Backend (:8000)</text>
+  <line x1="1520" y1="147" x2="1520" y2="1520" stroke="#7E929F" stroke-width="1.2" stroke-dasharray="6,4"/>
+
+  <!-- Lifeline 6 : GPU Worker (Colab / ComfyUI) -->
+  <rect x="1780" y="105" width="240" height="42" rx="4" fill="#EBF6EE" stroke="#166534" stroke-width="1.6"/>
+  <text x="1900" y="131" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#166534">ColabGPU / ComfyUI</text>
+  <line x1="1900" y1="147" x2="1900" y2="1520" stroke="#7E929F" stroke-width="1.2" stroke-dasharray="6,4"/>
+
+  <!-- ===================================================================== -->
+  <!-- BARRES D'ACTIVATION ET ÉCHANGES CHRONOLOGIQUES                        -->
+  <!-- ===================================================================== -->
+
+  <!-- Étape 1 : Bascule de Mode via TopNavBar -->
+  <rect x="163" y="165" width="14" height="60" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.4"/>
+  <rect x="463" y="175" width="14" height="70" fill="#FFFFFF" stroke="#334155" stroke-width="1.4"/>
+
+  <line x1="177" y1="180" x2="463" y2="180" stroke="#1E4E5F" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="320" y="172" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">1: Clic 'mode [Agents]'</text>
+
+  <!-- Message 2 vers Workbench avec BARRE D'ACTIVATION AJOUTÉE (Correction Anomalie) -->
+  <rect x="793" y="205" width="14" height="35" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.4"/>
+  <line x1="477" y1="210" x2="793" y2="210" stroke="#334155" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="635" y="202" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#334155">2: attachBrowserView(MiniDesignView)</text>
+
+  <!-- Réponse de Workbench à ElectronMain -->
+  <line x1="793" y1="235" x2="477" y2="235" stroke="#5B21B6" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#purpleReplyArrow)"/>
+  <text x="635" y="230" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#5B21B6">vue attachée &amp; context isolation validé</text>
+
+  <!-- Étape 2 : Prompt Utilisateur dans le Chat des Agents Hilo -->
+  <rect x="163" y="260" width="14" height="280" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.4"/>
+  <rect x="793" y="275" width="14" height="255" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.4"/>
+
+  <line x1="177" y1="280" x2="793" y2="280" stroke="#1E4E5F" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="485" y="272" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">3: Saisir prompt: "Conçois une bannière avec avatar 3D"</text>
+
+  <!-- Étape 3 : Workbench -> NestJS Gateway -->
+  <rect x="1148" y="300" width="14" height="215" fill="#FFFFFF" stroke="#475569" stroke-width="1.4"/>
+  <line x1="807" y1="305" x2="1148" y2="305" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="977" y="297" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#5B21B6">4: POST /api/agent/chat (prompt, workspaceId)</text>
+
+  <!-- Étape 4 : NestJS Gateway délègue l'inférence LLM à FastAPI -->
+  <rect x="1513" y="325" width="14" height="175" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.4"/>
+  <line x1="1162" y1="330" x2="1513" y2="330" stroke="#475569" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="1337" y="322" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">5: POST /v1/chat/completions (stream=True)</text>
+
+  <!-- Étape 5 : FastAPI appelle Colab / LLM -->
+  <rect x="1893" y="350" width="14" height="100" fill="#FFFFFF" stroke="#166534" stroke-width="1.4"/>
+  <line x1="1527" y1="355" x2="1893" y2="355" stroke="#1E4E5F" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="1710" y="347" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">6: Exécuter prompt sur modèle distant</text>
+
+  <!-- ===================================================================== -->
+  <!-- FRAGMENT COMBINÉ LOOP CONFORME OMG UML 2.5.1 (CARTOUCHE PENTAGONAL)   -->
+  <!-- ===================================================================== -->
+  <!-- Cadre extérieur en trait plein continu (Solid Stroke) -->
+  <rect x="730" y="390" width="1220" height="120" rx="4" fill="none" stroke="#475569" stroke-width="1.6"/>
+  
+  <!-- Cartouche Pentagonal Officiel (Top-Left Pentagonal Tab) -->
+  <polygon points="730,390 955,390 970,405 955,420 730,420" fill="#F1F5F9" stroke="#475569" stroke-width="1.4"/>
+  <text x="740" y="411" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#0F172A">loop [Tokens en streaming SSE]</text>
+
+  <line x1="1893" y1="435" x2="1527" y2="435" stroke="#166534" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#replyArrow)"/>
+  <text x="1710" y="427" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#166534">SSE chunk data: {"choices":[{"delta":{"content":"..."}}]}</text>
+
+  <line x1="1513" y1="465" x2="1162" y2="465" stroke="#1E4E5F" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#replyArrow)"/>
+  <text x="1337" y="457" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#1E4E5F">Relai SSE tokens vers Gateway</text>
+
+  <line x1="1148" y1="490" x2="807" y2="490" stroke="#475569" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#replyArrow)"/>
+  <text x="977" y="482" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#475569">Rendu temps réel incrémental dans chat Hilo</text>
+
+  <!-- ===================================================================== -->
+  <!-- SECONDE PHASE : GÉNÉRATION DU MÉDIA (3D / IMAGE) PAR OMNIFORGE       -->
+  <!-- ===================================================================== -->
+
+  <!-- Étape 6 : L'agent Hilo déclenche un outil de génération média -->
+  <rect x="793" y="580" width="14" height="490" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.4"/>
+  <rect x="1148" y="600" width="14" height="450" fill="#FFFFFF" stroke="#475569" stroke-width="1.4"/>
+
+  <line x1="807" y1="610" x2="1148" y2="610" stroke="#5B21B6" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="977" y="602" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#5B21B6">7: invokeTool('generate_media', {type: '3d', prompt: '...'})</text>
+
+  <!-- Étape 7 : NestJS Gateway appelle POST /api/generate/media d'Omniforge -->
+  <rect x="1513" y="630" width="14" height="390" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.4"/>
+  <line x1="1162" y1="640" x2="1513" y2="640" stroke="#475569" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="1337" y="632" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">8: POST /api/generate/media (type='3d', model='TripoSR')</text>
+
+  <!-- Étape 8 : FastAPI route vers Worker GPU Colab -->
+  <rect x="1893" y="660" width="14" height="250" fill="#FFFFFF" stroke="#166534" stroke-width="1.4"/>
+  <line x1="1527" y1="670" x2="1893" y2="670" stroke="#1E4E5F" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="1710" y="662" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">9: POST /infer (pipeline 3d_gen mesh)</text>
+
+  <!-- ===================================================================== -->
+  <!-- CORRECTION ANOMALIE 10 : SENS REQUÊTE GET (NestJS -> FastAPI)         -->
+  <!-- ===================================================================== -->
+  <!-- Message 10 : Requête GET envoyée de NestJS (Client) vers FastAPI (Serveur) -->
+  <line x1="1162" y1="715" x2="1513" y2="715" stroke="#475569" stroke-width="1.5" marker-end="url(#syncArrow)"/>
+  <text x="1337" y="707" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#475569">10: GET /api/tasks/{task_id}/status (SSE subscription)</text>
+
+  <!-- Message 10b : Événement SSE poussé de FastAPI vers NestJS -->
+  <line x1="1513" y1="745" x2="1162" y2="745" stroke="#1E4E5F" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#replyArrow)"/>
+  <text x="1337" y="737" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#1E4E5F">10b: event: task_progress (progress=45%, stage='meshing')</text>
+
+  <!-- Notification de progression vers Workbench -->
+  <line x1="1148" y1="775" x2="807" y2="775" stroke="#475569" stroke-width="1.4" marker-end="url(#asyncArrow)"/>
+  <text x="977" y="767" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#475569">Progression barre de statut canevas (45%)</text>
+
+  <!-- Étape 10 : Worker termine et renvoie l'artefact .glb -->
+  <line x1="1893" y1="890" x2="1527" y2="890" stroke="#166534" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#replyArrow)"/>
+  <text x="1710" y="882" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#166534">11: Réponse HTTP 200 (binaire .glb en streaming)</text>
+
+  <!-- Étape 11 : Enregistrement disque et SQLite -->
+  <line x1="1513" y1="930" x2="1162" y2="930" stroke="#1E4E5F" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#replyArrow)"/>
+  <text x="1337" y="922" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#1E4E5F">12: Tâche 'DONE' + path binaire dans outputs/</text>
+
+  <!-- ===================================================================== -->
+  <!-- SOUS-BARRE D'ACTIVATION RÉFLEXIVE SUR GATEWAY NESTJS (SQLITE)         -->
+  <!-- ===================================================================== -->
+  <!-- Sous-barre imbriquée décalée pour l'auto-appel SQLite -->
+  <rect x="1155" y="960" width="14" height="45" fill="#E2E8F0" stroke="#475569" stroke-width="1.4"/>
+  
+  <line x1="1162" y1="965" x2="1205" y2="965" stroke="#475569" stroke-width="1.4"/>
+  <line x1="1205" y1="965" x2="1205" y2="995" stroke="#475569" stroke-width="1.4"/>
+  <line x1="1205" y1="995" x2="1169" y2="995" stroke="#475569" stroke-width="1.4" marker-end="url(#graySyncArrow)"/>
+  <text x="1305" y="982" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#475569">INSERT INTO resource_v3 (transaction atomique)</text>
+
+  <!-- Étape 12 : Injection sur le canevas WebGPU -->
+  <line x1="1148" y1="1025" x2="807" y2="1025" stroke="#475569" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#replyArrow)"/>
+  <text x="977" y="1017" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#475569">13: WS event: 'resource-created' (nouvel asset 3D prêt)</text>
+
+  <!-- ===================================================================== -->
+  <!-- SOUS-BARRE D'ACTIVATION RÉFLEXIVE SUR WORKBENCH (RENDU WEBGPU)        -->
+  <!-- ===================================================================== -->
+  <rect x="793" y="1055" width="14" height="85" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.4"/>
+  
+  <!-- Sous-barre imbriquée décalée pour le rendu WebGPU -->
+  <rect x="800" y="1075" width="14" height="50" fill="#DDD6FE" stroke="#5B21B6" stroke-width="1.4"/>
+  
+  <line x1="807" y1="1080" x2="855" y2="1080" stroke="#5B21B6" stroke-width="1.4"/>
+  <line x1="855" y1="1080" x2="855" y2="1115" stroke="#5B21B6" stroke-width="1.4"/>
+  <line x1="855" y1="1115" x2="814" y2="1115" stroke="#5B21B6" stroke-width="1.4" marker-end="url(#purpleSyncArrow)"/>
+  <text x="955" y="1100" font-family="Arial, sans-serif" font-size="10" font-weight="600" fill="#5B21B6">Rendu WebGPU / Fallback Canvas2D sur calque actif</text>
+
+  <!-- ===================================================================== -->
+  <!-- MESSAGE 14 AVEC BARRE D'ACTIVATION RÉCEPTION SUR UTILISATEUR          -->
+  <!-- ===================================================================== -->
+  <rect x="163" y="1165" width="14" height="50" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.4"/>
+  <line x1="793" y1="1175" x2="177" y2="1175" stroke="#5B21B6" stroke-width="1.4" stroke-dasharray="5,3" marker-end="url(#purpleReplyArrow)"/>
+  <text x="485" y="1167" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#5B21B6">14: Affichage visuel du maillage 3D dans le canevas (Notification Asynchrone)</text>
+</svg>
