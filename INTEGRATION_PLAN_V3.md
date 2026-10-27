@@ -34,7 +34,7 @@ L'intégration totale des deux environnements est non seulement possible, mais c
 │  └────────────────────┬─────────────────────┘    └─────────────────────┬──────────────────────┘  │
 │                       │                                                │                         │
 │                       │ IStudioAPI (REST/SSE :8000)                    │ IWorkspaceProtocol      │
-│                       ▼                                                ▼ (REST :8001 / WS :51491)│
+│                       ▼                                                ▼ (HTTP/JSON-RPC :51491)│
 │  ┌──────────────────────────────────────────┐         HTTP/SSE         ┌────────────────────────────┐  │
 │  │      Backend FastAPI (:8000)             │◄─────────────────────────┤   Gateway NestJS (:51491)  │  │
 │  │  • WorkerGateway & ColabOrchestrator     │   IInferenceService      │ • WorkspaceGuard & Auth    │  │
@@ -70,12 +70,16 @@ L'intégration totale des deux environnements est non seulement possible, mais c
 | **`:8000`** | HTTP / REST / SSE | BrowserView 1 & NestJS Gateway | Backend Local FastAPI | Point d'entrée unique d'inférence multimodale, proxy standardisé `/v1/chat/completions` et flux SSE `/api/tasks/{task_id}/status`. |
 | **`:8001`** | HTTP (Serveur Statique) | BrowserView 2 | Mini Design Workbench | Distribution des bundles désobfusqués et composants du canevas infini. |
 | **`:8002`** | HTTP / WebSocket | Mini Design Workbench | Mini Design Local Service | Communication synchrone du Workbench avec les services de documents locaux. |
-| **`:51491`** | HTTP / IPC / JSON-RPC | Workbench & Electron Main | Gateway NestJS Mini Design | Runtime des agents Hilo, supervision SQLite, middleware `WorkspaceGuard`, moteur de contrats et outils MCP. |
+| **`:51491`** | HTTP / JSON-RPC | Workbench & Electron Main | Gateway NestJS Mini Design | Runtime des agents Hilo, supervision SQLite, middleware `WorkspaceGuard`, moteur de contrats et outils MCP. |
 | **`:45899`** | HTTP / Auth Sécurisée | Electron Main & Scripts | Serveur d'Authentification NestJS | Validation du jeton `mini-design-local-token` et distribution des variables d'environnement. |
 | **`:8188`** | HTTP / WebSocket | FastAPI Backend Local | ComfyUI Headless Local | Moteur local optionnel pour génération sur GPU physique disponible. |
 | **Distant :8000** | HTTPS / WSS (Tunnel TLS) | FastAPI Backend Local | Worker Distant Colab | Acheminement chiffré des prompts et streaming des artefacts binaires lourds. |
 
 ---
+
+**Endpoint canonique cible `IWorkspaceProtocol`** : `http://127.0.0.1:51491` (HTTP/JSON-RPC de la Gateway). Le port `8001` sert uniquement les fichiers du Workbench ; `8002` appartient au service de documents locaux. Aucun WebSocket Gateway n'est supposé disponible sans contrat explicite. L'IPC Electron est un transport de processus distinct, sans port HTTP. Ces interfaces Mini Design sont à vérifier lors de l'intégration.
+
+**Configuration d'exécution commune cible** : Electron construit un objet `runtimeEndpoints` unique, contenant les URL effectives de Studio, FastAPI, Workbench, Local Service, Gateway et Auth, après réservation des ports. Les valeurs du tableau sont des défauts. Après un repli, cet objet est transmis aux processus (configuration de démarrage) et aux BrowserViews (pont IPC limité aux URL publiques locales). Les sondes et tous les clients HTTP/LLM FastAPI lisent les mêmes URL ; les exemples à ports fixes ci-dessous désignent les valeurs par défaut.
 
 ## 3. Feuille de Route en 5 Phases d'Ingénierie Détaillée
 
@@ -84,13 +88,14 @@ L'intégration totale des deux environnements est non seulement possible, mais c
 - **Tâches d'ingénierie** :
   1. Initialisation d'Electron 28+ dans la racine du projet avec support TypeScript strict.
   2. Implémentation de `electron/main.ts` :
-     - `child_process.spawn('uvicorn', ['app.main:app', '--port', '8000', '--host', '127.0.0.1'])`.
-     - `child_process.spawn('node', ['mini-design-src/packages/gateway/dist/main.js'], { env: { PORT: '51491', AUTH_PORT: '45899' } })`.
-  3. Mise en place de sondes de santé HTTP synchronisées (`GET http://127.0.0.1:8000/health` et `GET http://127.0.0.1:51491/api/health`).
+     - `child_process.spawn('uvicorn', ['app.main:app', '--port', new URL(runtimeEndpoints.fastapi).port, '--host', '127.0.0.1'])`.
+     - `child_process.spawn('node', ['mini-design-src/packages/gateway/dist/main.js'], { env: { ...process.env, PORT: new URL(runtimeEndpoints.gateway).port, AUTH_PORT: new URL(runtimeEndpoints.auth).port } })`.
+     - Le processus Local Service, dont le point d’entrée reste à vérifier, reçoit lui aussi le port réservé de `runtimeEndpoints.localService` au lancement. Chaque service doit confirmer son URL liée ; ne pas annoncer prêt sur un repli non transmis au sous-processus.
+  3. Mise en place de sondes de santé HTTP synchronisées : `GET new URL('/api/health', runtimeEndpoints.fastapi)`, `GET new URL('/api/health', runtimeEndpoints.gateway)` et `GET new URL('/api/health', runtimeEndpoints.auth)`. La route FastAPI existe ; les routes Gateway/Auth restent à vérifier ou ajouter avant l’intégration. Les ports 8000, 51491 et 45899 ne sont que les défauts du tableau. Aucun état « prêt » ne doit être émis avant la réussite des trois sondes sur leurs URL effectives.
   4. Gestion sécurisée du cycle de vie : interception de `window-all-closed` et émission de signaux `SIGTERM` / `SIGKILL` avec purge des PIDs enfants.
 - **Critère de validation (DoD)** :
   - Lancement via `npm run electron:dev`.
-  - Les ports `:8000`, `:51491` et `:45899` répondent avec statut 200 en moins de 5 secondes.
+  - Les trois routes `/api/health` construites à partir de `runtimeEndpoints.fastapi`, `runtimeEndpoints.gateway` et `runtimeEndpoints.auth` répondent avec statut 200 en moins de 5 secondes, y compris après repli sur collision. Tester séparément le démarrage sans collision avec les ports par défaut `:8000`, `:51491`, `:45899`.
   - Fermeture de la fenêtre principale : zéro processus Node.js ou Python subsistant dans le gestionnaire des tâches.
 
 ---
@@ -136,11 +141,15 @@ L'intégration totale des deux environnements est non seulement possible, mais c
 - **Objectif** : Assurer l'accès partagé et cohérent aux assets entre Omniforge et Mini Design.
 - **Tâches d'ingénierie** :
   1. Unification des répertoires de sortie :
-     - Streaming des binaires par fragments de 64 Ko via `MediaFileStore64k` vers `outputs/` et `.hilo/resources/`.
-     - Verrouillage des écritures JSON sur `data/*.json` via `JSONStoreLock` (`asyncio.Lock`).
-  2. Enregistrement transactionnel SQLite :
-     - `SQLiteRepository` exécute l'insertion atomique dans la table `resource_v3` (.hilo/index.sqlite, 46 tables) lors de chaque fin de tâche réussie.
-     - Rollback automatique en cas d'échec d'écriture disque.
+     - Prévoir le streaming par fragments de 64 Ko via `MediaFileStore64k` ; le téléchargement actuel accumule le binaire entier. Respecter le dossier résolu par `MediaFileStore` (`storagePath` exclusif ou `outputs/`) ; la table `resource_v3` de `.hilo/index.sqlite` indexe ce chemin sans dupliquer le fichier.
+     - Écritures JSON via `JSONDocumentStore` et son verrou `asyncio.Lock` ; aucun accès JSON direct.
+  2. Protocole de cohérence fichiers/SQLite à implémenter (pas de transaction atomique commune aux deux supports) :
+     - Clé d'idempotence `(workspaceId, generationId, artifactId)`, contrainte UNIQUE dans l'index des ressources ; verrou par clé et journal durable des étapes pour reprise après crash.
+     - Écrire le flux dans un fichier temporaire du même dossier que la destination, vérifier taille/intégrité, fermer et synchroniser le fichier avant publication. Les lecteurs ignorent les temporaires et les opérations non validées.
+     - Journaliser l'intention (clé, chemins, état), puis publier par renommage atomique sans écraser un fichier utilisateur. Ensuite seulement, ouvrir la transaction SQLite, insérer `resource_v3` avec le chemin final et la clé, puis COMMIT. Notifier les vues après COMMIT ; la galerie attend aussi la validation du journal avant d'exposer l'artefact.
+     - Avant publication, un échec supprime le temporaire. Après publication mais avant COMMIT, ROLLBACK SQLite et nettoyage compensatoire du seul fichier créé par cette opération ; si le nettoyage échoue, conserver une entrée à réconcilier. Aucun fichier préexistant n'est supprimé.
+     - Après COMMIT, une reprise retrouve la ressource via la clé et termine le journal/les notifications sans nouvel insert ni suppression du média validé. Après crash entre renommage et COMMIT, le réconciliateur vérifie l'index : finaliser une ressource validée ou nettoyer l'orphelin de l'opération. Un replay vérifie chemin et intégrité puis réutilise la ressource.
+     - Tester les interruptions après chaque étape, les replays et les échecs SQLite/disque avant de déclarer la cohérence garantie.
   3. Intégration du bouton "Injecter dans le Canevas" sur les cartes de la `MediaGallery`.
 - **Critère de validation (DoD)** :
   - Tout média créé dans le Studio apparaît instantanément dans la palette d'assets du Workbench.
@@ -152,8 +161,8 @@ L'intégration totale des deux environnements est non seulement possible, mais c
 - **Objectif** : Garantir des performances optimales sur la configuration cible de l'utilisateur (Intel Core i7-6600U @ 2.60GHz, 16 Go RAM, GPU Intel HD Graphics 520).
 - **Tâches d'ingénierie** :
   1. Profilage de l'empreinte mémoire totale hôte :
-     - Electron Main (~60 Mo) + Studio View (~45 Mo) + Agents View (~120 Mo) + FastAPI (~75 Mo) + NestJS (~95 Mo) = ~395 Mo RAM.
-     - Vérification stricte du plafond : l'ensemble reste sous la barre des 450 Mo RAM au repos.
+     - Electron Main (~60 Mo) + Studio View (~45 Mo) + Agents View (~120 Mo) + FastAPI (~75 Mo) + NestJS (~95 Mo) = ~395 Mo RAM sans ComfyUI ; avec ComfyUI au repos (~140 Mo supplémentaires), total estimé ~535 Mo. Ces estimations excluent les modèles chargés et doivent être mesurées sur l’ensemble des sous-processus, dont Auth et Local Service.
+     - Le scénario sans ComfyUI vise le plafond de 450 Mo RAM au repos ; le scénario avec ComfyUI (~535 Mo estimés hors modèles) le dépasse et ne doit pas être déclaré conforme à ce plafond. Valider les deux scénarios séparément ; aucune mesure réelle n’est fournie ici.
   2. Validation du fallback WebGPU :
      - Détection des capacités graphiques au montage du canevas.
      - Bascule automatique vers le moteur `Canvas2DFallback` si WebGPU n'est pas supporté par le pilote Intel HD Graphics 520, préservant 60 fps sur le manipulateur de calques.
@@ -169,7 +178,7 @@ L'intégration totale des deux environnements est non seulement possible, mais c
 | Risque Identifié | Impact | Probabilité | Stratégie d'Atténuation Validée |
 | :--- | :---: | :---: | :--- |
 | **Incompatibilité build Vite sur les 1,3M lignes Mini Design** | Critique | Haute | **Architecture Electron Multi-View (BrowserView)** : le runtime pré-packagé s'exécute dans son environnement naturel sans tentative de re-bundle destructif. |
-| **Collision de ports réseau locaux** | Modéré | Faible | Détection dynamique de disponibilité au boot d'Electron avec attribution de secours et injection d'environnement. |
+| **Collision de ports réseau locaux** | Modéré | Faible | Détection au boot, réservation du port et publication de toute attribution de secours dans `runtimeEndpoints`. Electron, BrowserViews, sondes de santé et clients FastAPI/LLM consomment cette même configuration avant de se connecter ; aucun consommateur ne conserve le port initial. |
 | **Saturation mémoire RAM sur l'hôte (16 Go)** | Élevé | Moyenne | Déport obligatoire de l'inférence lourde sur Colab Cloud (GPU T4/A100) ; FastAPI reste bridé à moins de 80 Mo de RAM. |
 | **Conflits d'accès concurrent à SQLite** | Faible | Faible | Mode WAL (*Write-Ahead Logging*) activé sur `.hilo/index.sqlite` ; la Gateway NestJS centralise l'accès en écriture exclusive. |
 | **Crash pilote WebGPU sur GPU Intel HD 520** | Modéré | Moyenne | Maintien du composant `Canvas2DFallback` avec détection automatique du contexte `navigator.gpu`. |

@@ -52,3 +52,9 @@
   - Verification: Vérifier les routes distantes (`/infer`, `/tasks/{id}/cancel`, `/v1/chat/completions`) et la validité JSON/cellules du notebook Colab.
 - [ ] **Scenario**: Parcours E2E (`UC-01` à `UC-08`) et mesure RSS portable dans un sous-processus backend isolé (< 80 Mo) (`tests/e2e/test_full_pipeline.py`, `tests/e2e/test_memory_footprint.py`)
   - Verification: Valider le parcours complet avec worker simulé, mesurer de façon portable (`psutil.Process(proc.pid).memory_info().rss` compatible Linux/macOS/Windows) le RSS exclusif du processus backend FastAPI séparé (sans worker ni lanceur de tests chargé dedans), et exécuter `.githooks/pre-push`.
+
+
+## PR #29 — Restant pour la livraison
+- [x] Cinq passes CodeRabbit terminées : 9, 4, 6, 5 puis 3 remarques (doublons inclus), toutes traitées. Dernière passe : trois mineures, vérifiées par assertions ciblées ; aucune nouvelle passe CLI à zéro finding revendiquée. Validation documentaire passée.
+- [x] Accord explicite et application du patch protégé AGENTS.md / CLAUDE.md ; validation documentaire passée.
+- [ ] Publication autorisée et nouvelle revue distante avant résolution des threads ; aucun score 5/5 ni zéro finding distant revendiqué.

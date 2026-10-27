@@ -1,6 +1,8 @@
 # Modélisation Logicielle UML 2.5 — Omniforge (Version 01)
 
-Ce dossier regroupe l'ensemble des diagrammes d'architecture, de conception logicielle et du dossier documentaire d'accompagnement d'**Omniforge** (évolution avancée de *Colab AI Studio*) selon le standard international **OMG UML 2.5.1** et les exigences méthodologiques et académiques du **Dr TRAORE (L3 MIAGE)**.
+> **Statut documentaire — cible à implémenter.** Les documents numérotés décrivent l'évolution Omniforge ; ils ne prouvent pas sa disponibilité. Le code actuel accepte seulement `colab` et `local` via le contrat worker (`/infer`, `/tasks/{task_id}/status`, `/tasks/{task_id}/cancel`, `/files/{path}`). OAuth Colab automatique, TPU/LRU, ComfyUI direct, mode API, catalogue hors-ligne, LoRAs, audio/3D et validation `acceptedInputTypes` restent des objectifs. Voir [SPECIFICATION01.md](../../SPECIFICATION01.md#4-spécifications-des-3-moteurs-dexécution-colab--local--api) pour les écarts avec l'existant.
+
+Ce dossier regroupe les diagrammes d’architecture et le dossier de conception d’Omniforge, évolution de Colab AI Studio.
 
 L'ensemble de la modélisation `01` formalise :
 - L'architecture d'exécution tri-mode (**Google Colab GPU CUDA & TPU XLA**, **ComfyUI en "Headless API" locale sur PC `127.0.0.1:8188`** et **Fournisseurs Clés API distants**).
@@ -12,26 +14,26 @@ L'ensemble de la modélisation `01` formalise :
 
 ---
 
-## 1. Synthèse de l'Architecture et Décisions Structurantes (Version 01)
+## 1. Synthèse de l’Architecture Cible et Décisions Structurantes (Version 01)
 
 | Axe Architectural | Décision de Conception Modélisée | Diagrammes de Référence |
 | :--- | :--- | :--- |
-| **1. Commutateur Global `[ Studio \| Agents ]`** | Barre de navigation supérieure (`TopNavBar`) dotée d'un bouton segmenté épuré à deux modes : `Studio` (création multimédia) et `Agents` (dialogue et assistance créative). Aucune sous-vue inventée ; bascule réactive d'espace de travail. | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [09](diagrammes/09-etats-dock-adaptatif01.svg) |
-| **2. Exécution Tri-Mode & Orchestration Colab GPU/TPU (`Colab` \| `Local` \| `API`)** | Le composant `WorkerGateway` route chaque tâche selon `ExecutionMode` vers : (1) `ColabSessionOrchestrator` + `ColabClient` (connexion compte Google OAuth2, détection automatique des GPU `T4 16 Go`, `L4 24 Go`, `A100 40-80 Go` et TPU `v5e / v6e / v2-8 HBM`, tunnel chiffré sans ngrok manuel et cache VRAM multi-modèles LRU `ModelSwapper`), (2) `ComfyLocalClient` (`127.0.0.1:8188` sans interface nodale) ou (3) `ApiProviderClient` (passerelles REST distantes). | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [03](diagrammes/03-deploiement01.svg), [05](diagrammes/05-activite-generation01.svg), [06](diagrammes/06-sequence-generation01.svg) |
-| **3. Moteur Local ComfyUI en "Headless API"** | `ComfyProcessManager` s'attache à une instance existante sur `:8188` ou lance/arrête un sous-processus silencieux (`--disable-auto-launch`). `ComfyWorkflowCompiler` sélectionne le template `.api.json` (`t2v`, `i2v_start`, `flf2v`, `ref2v`, `audio`, `3d`...) et chaîne dynamiquement les nœuds `LoraLoader`. | [02](diagrammes/02-composants01.svg), [03](diagrammes/03-deploiement01.svg), [05](diagrammes/05-activite-generation01.svg), [06](diagrammes/06-sequence-generation01.svg) |
-| **4. Catalogue de Modèles Utilisateur Dynamique & Hors-Ligne** | La liste des modèles est persistée localement (`data/models.json`) et reste 100 % accessible hors-ligne : l'utilisateur peut ajouter/supprimer ses modèles Colab (`hfRepoId`, `.safetensors`, estimation VRAM), ses modèles locaux auto-détectés (`GET /object_info` ComfyUI) et ses mappings personnalisés via l'interface. | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [04](diagrammes/04-modele-de-donnees01.svg) |
-| **5. Dock Adaptatif à 6 Catégories & Filtrage Strict** | Le `FloatingPromptDock` expose 6 onglets : `[ Image ]`, `[ Video ]`, `[ Audio ]`, `[ Lip sync ]`, `[ Upscaling ]`, `[ 3D Gen ]`. La zone de saisie principale gère les prompts visuels, paroles audio (`[verse]`, `[chorus]`) et tags vocaux. Les fentes d'ingrédients bloquent tout fichier incompatible via `ModelCapability.acceptedInputTypes`. | [02](diagrammes/02-composants01.svg), [04](diagrammes/04-modele-de-donnees01.svg), [05](diagrammes/05-activite-generation01.svg), [09](diagrammes/09-etats-dock-adaptatif01.svg) |
-| **6. UX LoRA en 1 Clic (`LoraPillControl`)** | Pilule LoRA dans la rangée inférieure du Dock (si `supportsLora == true`), filtrée par `baseModel`. Activation/désactivation en 1 clic au poids par défaut (`0.8`), support multi-LoRA, curseur de poids (`0.1` à `1.5`) et injection automatique des `triggerWords`. | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [04](diagrammes/04-modele-de-donnees01.svg), [06](diagrammes/06-sequence-generation01.svg), [07](diagrammes/07-sequence-brand-context01.svg) |
-| **7. Assistant IA Créatif & Proxy OpenAI Local** | L'onglet `Agents` active un assistant conversationnel pour l'aide à l'écriture de scénarios et de prompts. Route `/v1/chat/completions` sur `:8000` en streaming SSE avec gestion native de l'interruption (`AbortSignal`). | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [08](diagrammes/08-sequence-proxy-llm01.svg) |
-| **8. Persistance Documentaire Atomique & Rapatriement 64 Ko** | Remplacement de la base SQL lourde par un `JSONDocumentStore` léger avec `asyncio.Lock` et écriture atomique (`.tmp` + `os.replace`). Téléchargement des médias en streaming par chunks de 64 Ko (`MediaFileStore`) vers `outputs/`. | [02](diagrammes/02-composants01.svg), [03](diagrammes/03-deploiement01.svg), [04](diagrammes/04-modele-de-donnees01.svg), [06](diagrammes/06-sequence-generation01.svg) |
+| **1. Commutateur Global `[ Studio \| Agents ]`** | **Conception cible :** Barre de navigation supérieure (`TopNavBar`) dotée d'un bouton segmenté épuré à deux modes : `Studio` (création multimédia) et `Agents` (dialogue et assistance créative). Aucune sous-vue inventée ; bascule réactive d'espace de travail. | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [09](diagrammes/09-etats-dock-adaptatif01.svg) |
+| **2. Exécution Tri-Mode & Orchestration Colab GPU/TPU (`Colab` \| `Local` \| `API`)** | **Conception cible :** Le composant `WorkerGateway` route chaque tâche selon `ExecutionMode` vers : (1) `ColabSessionOrchestrator` + `ColabClient` (connexion compte Google OAuth2, détection automatique des GPU `T4 16 Go`, `L4 24 Go`, `A100 40-80 Go` et TPU `v5e / v6e / v2-8 HBM`, tunnel chiffré sans ngrok manuel et cache VRAM multi-modèles LRU `ModelSwapper`), (2) `ComfyLocalClient` (`127.0.0.1:8188` sans interface nodale) ou (3) `ApiProviderClient` (passerelles REST distantes). | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [03](diagrammes/03-deploiement01.svg), [05](diagrammes/05-activite-generation01.svg), [06](diagrammes/06-sequence-generation01.svg) |
+| **3. Moteur Local ComfyUI en "Headless API"** | **Conception cible :** `ComfyProcessManager` s'attache à une instance existante sur `:8188` ou lance/arrête un sous-processus silencieux (`--disable-auto-launch`). `ComfyWorkflowCompiler` sélectionne le template `.api.json` (`t2v`, `i2v_start`, `flf2v`, `ref2v`, `audio`, `3d`...) et chaîne dynamiquement les nœuds `LoraLoader`. | [02](diagrammes/02-composants01.svg), [03](diagrammes/03-deploiement01.svg), [05](diagrammes/05-activite-generation01.svg), [06](diagrammes/06-sequence-generation01.svg) |
+| **4. Catalogue de Modèles Utilisateur Dynamique & Hors-Ligne** | **Conception cible :** La liste des modèles est persistée localement (`data/models.json`) et reste 100 % accessible hors-ligne : l'utilisateur peut ajouter/supprimer ses modèles Colab (`hfRepoId`, `.safetensors`, estimation VRAM), ses modèles locaux auto-détectés (`GET /object_info` ComfyUI) et ses mappings personnalisés via l'interface. | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [04](diagrammes/04-modele-de-donnees01.svg) |
+| **5. Dock Adaptatif à 6 Catégories & Filtrage Strict** | **Conception cible :** Le `FloatingPromptDock` expose 6 onglets : `[ Image ]`, `[ Video ]`, `[ Audio ]`, `[ Lip sync ]`, `[ Upscaling ]`, `[ 3D Gen ]`. La zone de saisie principale gère les prompts visuels, paroles audio (`[verse]`, `[chorus]`) et tags vocaux. Les fentes d'ingrédients bloquent tout fichier incompatible via `ModelCapability.acceptedInputTypes`. | [02](diagrammes/02-composants01.svg), [04](diagrammes/04-modele-de-donnees01.svg), [05](diagrammes/05-activite-generation01.svg), [09](diagrammes/09-etats-dock-adaptatif01.svg) |
+| **6. UX LoRA en 1 Clic (`LoraPillControl`)** | **Conception cible :** Pilule LoRA dans la rangée inférieure du Dock (si `supportsLora == true`), filtrée par `baseModel`. Activation/désactivation en 1 clic au poids par défaut (`0.8`), support multi-LoRA, curseur de poids (`0.1` à `1.5`) et injection automatique des `triggerWords`. | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [04](diagrammes/04-modele-de-donnees01.svg), [06](diagrammes/06-sequence-generation01.svg), [07](diagrammes/07-sequence-brand-context01.svg) |
+| **7. Assistant IA Créatif & Proxy OpenAI Local** | **Conception cible :** L'onglet `Agents` active un assistant conversationnel pour l'aide à l'écriture de scénarios et de prompts. Route `/v1/chat/completions` sur `:8000` en streaming SSE avec gestion native de l'interruption (`AbortSignal`). | [01](diagrammes/01-perimetre-fonctionnel01.svg), [02](diagrammes/02-composants01.svg), [08](diagrammes/08-sequence-proxy-llm01.svg) |
+| **8. Persistance Documentaire Atomique & Rapatriement 64 Ko** | **Conception cible :** Remplacement de la base SQL lourde par un `JSONDocumentStore` léger avec `asyncio.Lock` et écriture atomique (`.tmp` + `os.replace`). Objectif non implémenté : téléchargement des médias en streaming par chunks de 64 Ko (`MediaFileStore`) vers `outputs/`. | [02](diagrammes/02-composants01.svg), [03](diagrammes/03-deploiement01.svg), [04](diagrammes/04-modele-de-donnees01.svg), [06](diagrammes/06-sequence-generation01.svg) |
 
 ---
 
-## 2. Typologie Officielle des 14 Diagrammes OMG UML 2.5.1 & Couverture Omniforge
+## 2. Typologie des 14 Diagrammes UML & Couverture Omniforge
 
-Le standard international **OMG UML 2.5.1** définit exhaustivement **14 types officiels de diagrammes**, répartis entre diagrammes structurels (statiques) et comportementaux (dynamiques). Conformément aux exigences académiques du **Dr TRAORE (L3 MIAGE)**, le tableau ci-dessous formalise la cartographie complète des 14 types, distinguant rigoureusement les **7 types retenus** (ayant donné lieu à **11 vues concrètes vectorielles**) et les **7 types exclus**, accompagnés de leur justification formelle d'exclusion :
+La cartographie distingue 14 types de diagrammes : sept types retenus produisent onze vues concrètes, et sept types sont exclus lorsque leur apport est déjà couvert. Les types structurels décrivent les entités et leurs liens ; les types comportementaux décrivent les cycles et les interactions.
 
-| N° | Type de Diagramme Officiel (OMG UML 2.5.1) | Catégorie | Statut Omniforge | Justification Formelle de Retenue ou d'Exclusion | Fichiers Livrés |
+| N° | Type de Diagramme UML | Catégorie | Statut Omniforge | Justification Formelle de Retenue ou d'Exclusion | Fichiers Livrés |
 | :-: | :--- | :---: | :---: | :--- | :--- |
 | **1** | **Diagramme de Cas d'Utilisation** (*Use Case*) | Comportement | **RETENU** | Délimite le périmètre fonctionnel du système, les 4 pôles métiers et les relations de dépendance (`«include»`, `«extend»`). | [`01-perimetre-fonctionnel01.svg`](diagrammes/01-perimetre-fonctionnel01.svg) |
 | **2** | **Diagramme de Composants** (*Component*) | Structure | **RETENU** | Modélise l'architecture logicielle modulaire en 4 couches, les interfaces formelles sucette/douille et les connecteurs d'assemblage. | [`02-composants01.svg`](diagrammes/02-composants01.svg) |
@@ -43,7 +45,7 @@ Le standard international **OMG UML 2.5.1** définit exhaustivement **14 types o
 | **8** | **Diagramme d'Objets** (*Object*) | Structure | *Exclu* | Redondant : les instances représentatives sont couvertes exhaustivement par les diagrammes de séquence (06-08) et le modèle de classes à multiplicités strictes (04). | *Non requis (justifié)* |
 | **9** | **Diagramme de Paquetages** (*Package*) | Structure | *Exclu* | Couvert : la modularisation logique est formalisée directement par les sous-systèmes dans le diagramme de composants (02) et l'arborescence du déploiement (03). | *Non requis (justifié)* |
 | **10** | **Diagramme de Structure Composite** (*Composite Structure*) | Structure | *Exclu* | Couvert : les décompositions internes de sous-systèmes, ports et connecteurs d'assemblage lollipop/socket sont déjà modélisés dans le diagramme de composants (02). | *Non requis (justifié)* |
-| **11** | **Diagramme de Profil** (*Profile*) | Structure | *Exclu* | Inapplicable : utilisation exclusive des stéréotypes standards de l'OMG UML 2.5.1 (`«component»`, `«artifact»`, `«device»`, `«executionEnvironment»`, `«use»`), aucun profil personnalisé nécessaire. | *Non requis (justifié)* |
+| **11** | **Diagramme de Profil** (*Profile*) | Structure | *Exclu* | Inapplicable : utilisation exclusive des stéréotypes UML du projet (`«component»`, `«artifact»`, `«device»`, `«executionEnvironment»`, `«use»`), aucun profil personnalisé nécessaire. | *Non requis (justifié)* |
 | **12** | **Diagramme Global d'Interaction** (*Interaction Overview*) | Interaction | *Exclu* | Redondant : l'enchaînement global des interactions est fidèlement capturé par le diagramme d'activités (05) complété par les 3 diagrammes de séquence dédiés (06-08). | *Non requis (justifié)* |
 | **13** | **Diagramme de Communication** (*Communication*) | Interaction | *Exclu* | Redondant avec les diagrammes de séquence (06-08), ces derniers offrant en plus la dimension temporelle explicite et les fragments combinés normés (`loop`, `alt`, `opt`, `par`). | *Non requis (justifié)* |
 | **14** | **Diagramme de Temps** (*Timing*) | Interaction | *Exclu* | Couvert avec une précision supérieure par les 3 machines à états (09-11) associées aux annotations de latence, timeouts réseau et SSE dans les diagrammes de séquence. | *Non requis (justifié)* |
@@ -75,7 +77,7 @@ Le standard international **OMG UML 2.5.1** définit exhaustivement **14 types o
 | N° | Diagramme | Fichier SVG (`01`) | Rôle & Description Technique |
 | :-: | :--- | :--- | :--- |
 | **09** | **États (`SessionPrompt` / Dock Adaptatif)** | [`09-etats-dock-adaptatif01.svg`](diagrammes/09-etats-dock-adaptatif01.svg) | Machine à états hiérarchique de l'entité `SessionPrompt` et du pupitre de saisie : état composite `DockEnEdition` avec ses 6 sous-états (`ModeImageSelectionne`, `ModeVideoSelectionne`, `ModeAudioSelectionne`, `ModeLipSyncSelectionne`, `ModeUpscalingSelectionne`, `Mode3DGenSelectionne`), transitions internes de modification de paramètres/LoRA, état d'inhibition `DockVerrouillePendantGeneration` et bascule vers `VueAgentsActive`. |
-| **10** | **États (`Generation` / Tâche d'Inférence)** | [`10-etats-tache-media01.svg`](diagrammes/10-etats-tache-media01.svg) | Cycle de vie unifié d'une entité `Generation` : `EnAttentePriseEnCharge` (`queued`) $\rightarrow$ `EnTraitementGPU` (`processing`) $\rightarrow$ `RapatriementEnCours` (`downloading`) $\rightarrow$ `SauvegardeEnCours` (`saving`) $\rightarrow$ états terminaux stables persistés `Terminee` (`completed`), `Annulee` (`cancelled`) et `Echouee` (`failed`) sans `FinalState` destructif. |
+| **10** | **États (`Generation` / Tâche d'Inférence)** | [`10-etats-tache-media01.svg`](diagrammes/10-etats-tache-media01.svg) | Cycle de vie unifié d'une entité `Generation` : `EnAttentePriseEnCharge` (`pending`) $\rightarrow$ `EnTraitement` (`running`) $\rightarrow$ états terminaux stables persistés `Terminee` (`completed`), `Annulee` (`cancelled`) et `Echouee` (`failed`) sans `FinalState` destructif. Le rapatriement et la sauvegarde sont des phases internes de `running`, pas des valeurs SSE/JSON supplémentaires. |
 | **11** | **États (`SlotMemoireModele` / Gestion VRAM & LoRA)** | [`11-etats-model-swapper01.svg`](diagrammes/11-etats-model-swapper01.svg) | Gestion dynamique de la mémoire VRAM/HBM GPU/TPU de l'entité `SlotMemoireModele` : `EnVeilleVRAMLibre`, `ChargementEnCours` (poids de base + montage LoRA), `ModeleActif` (avec transition réflexive de montage/démontage d'adaptateurs sans recharger le modèle de base), `EvictionVRAMEnCours` (nettoyage mémoire `del active_pipeline`, `gc.collect()`, `torch.cuda.empty_cache()`) et `EnRecuperationSaturation` (CUDA OOM). |
 
 ---
@@ -96,9 +98,11 @@ Le standard international **OMG UML 2.5.1** définit exhaustivement **14 types o
 
 ---
 
-## 5. Fiches Descriptives Textuelles des Cas d'Utilisation Majeurs (Règle DOC-01)
+## 5. Fiches Descriptives Textuelles des Cas d’Utilisation Cibles (Règle DOC-01)
 
-Conformément au gabarit officiel en 5 sections du **Dr TRAORE** (*Support UML : Diagramme des Cas d'Utilisation*, slides 47-48, 52 ; TD p. 11-13), les cas d'utilisation critiques du système Omniforge sont formalisés ci-après :
+Les fiches ci-dessous définissent les critères futurs ; elles ne sont pas des parcours validés de l’application actuelle. Actuellement, seuls les moteurs `colab` et `local` utilisent le contrat worker commun ; la validation par capacités et le transfert en 64 Ko ne sont pas implémentés.
+
+Les cas d’utilisation critiques d’Omniforge sont décrits en cinq sections : identification, déclencheur, scénario nominal cible, alternatives et exceptions.
 
 ### 5.1. Fiche CU-01 : Générer un média IA
 
@@ -111,7 +115,8 @@ FICHE DESCRIPTIVE DE CAS D'UTILISATION : CU-01
    - Objectif / Intention : Permettre au créateur de contenu de synthétiser un média
      numérique (image, vidéo, audio, lip-sync, upscaling ou objet 3D) à partir
      d'instructions textuelles, d'ingrédients optionnels et d'adaptateurs LoRA,
-     en exécutant l'inférence sur le moteur actif (Colab, ComfyUI Local ou Cloud API).
+     en exécutant l'inférence sur le moteur cible (Colab, ComfyUI Local direct ou Cloud API — ces deux derniers
+     chemins restent à implémenter).
    - Acteur principal : Créateur de contenu
    - Acteurs secondaires : Google Colab, ComfyUI Headless Local :8188, Fournisseurs API Cloud
    - Préconditions :
@@ -129,30 +134,31 @@ FICHE DESCRIPTIVE DE CAS D'UTILISATION : CU-01
    - Le créateur de contenu clique sur le bouton « Générer » du FloatingPromptDock
      ou presse le raccourci clavier Ctrl+Enter.
 
-3. SCÉNARIO NOMINAL (CHEMIN PRINCIPAL DE SUCCÈS)
+3. SCÉNARIO NOMINAL CIBLE (CHEMIN PRINCIPAL DE SUCCÈS)
    1. Le créateur sélectionne l'un des 6 onglets de média et renseigne son prompt.
-   2. Le système vérifie la conformité des ingrédients déposés avec les types MIME
+   2. [CIBLE NON IMPLÉMENTÉE] Le système vérifie la conformité des ingrédients déposés avec les types MIME
       autorisés (ModelCapability.acceptedInputTypes).
    3. Le créateur active optionnellement un adaptateur LoRA compatible en 1 clic.
    4. Le créateur déclenche la génération.
-   5. Le système instancie une tâche (TaskStatus = queued) et compile le contexte
+   5. Le système instancie une tâche (TaskStatus = pending) et compile le contexte
       de marque si un Brand Kit est associé (CU-02).
    6. Le système injecte automatiquement les triggerWords LoRA dans le prompt final.
    7. Le composant WorkerGateway route la charge vers le worker d'inférence sélectionné.
    8. Le worker charge le modèle en VRAM/HBM (si non présent en cache) et réalise l'inférence.
    9. Le système notifie le frontend de la progression en temps réel via le flux SSE.
-   10. Le binaire produit est rapatrié par chunks de 64 Ko par MediaFileStore.
+   10. [CIBLE NON IMPLÉMENTÉE] Le binaire est rapatrié par chunks de 64 Ko.
+       Actuellement, le téléchargement lit le binaire entier en mémoire.
    11. La tâche passe au statut completed et les métadonnées sont écrites de façon atomique.
    12. L'interface déverrouille le Dock et affiche le média dans la MediaGallery.
 
 4. SCÉNARIOS ALTERNATIFS (BRANCHEMENTS)
-   - 7a. Exécution sur ComfyUI Local (:8188) :
+   - 7a. [CIBLE NON IMPLÉMENTÉE] Exécution directe sur ComfyUI Local (:8188) :
      * 7a1. Le backend compile dynamiquement le graphe .api.json correspondant à la
             topologie demandée (t2v, i2v, audio, 3d) et y injecte les nœuds LoraLoader.
      * 7a2. Le backend transmet le prompt au serveur local via POST /prompt.
      * 7a3. Les événements de rendu sont collectés via la WebSocket ws://127.0.0.1:8188/ws
             et convertis en flux SSE vers le navigateur.
-   - 7b. Exécution sur Fournisseur API Cloud :
+   - 7b. [CIBLE NON IMPLÉMENTÉE] Exécution sur Fournisseur API Cloud :
      * 7b1. Le backend transmet la requête signée par clé d'autorisation HTTPS REST.
      * 7b2. Le backend interroge le statut du job distant jusqu'à disponibilité du binaire.
 
@@ -197,7 +203,7 @@ FICHE DESCRIPTIVE DE CAS D'UTILISATION : CU-02
    - Déclenchement conditionnel par extension («extend» [Brand Kit actif]) depuis le cas
      d'utilisation CU-01 « Générer un média IA » dès lors qu'un Brand Kit est activé sur le Dock.
 
-3. SCÉNARIO NOMINAL (CHEMIN PRINCIPAL DE SUCCÈS)
+3. SCÉNARIO NOMINAL CIBLE (CHEMIN PRINCIPAL DE SUCCÈS)
    1. Le système lit de manière atomique l'entité BrandKit correspondante via JSONDocumentStore.
    2. Le système extrait les attributs : couleurs prioritaires, typographies, mot-clé d'ambiance.
    3. Le composant BrandContextCompiler formule une requête de synthèse pour le proxy LLM.
@@ -246,7 +252,7 @@ FICHE DESCRIPTIVE DE CAS D'UTILISATION : CU-03
 2. ÉVÉNEMENT DÉCLENCHEUR
    - Le créateur sélectionne l'onglet « Agents » dans la barre supérieure TopNavBar et saisit un message.
 
-3. SCÉNARIO NOMINAL (CHEMIN PRINCIPAL DE SUCCÈS)
+3. SCÉNARIO NOMINAL CIBLE (CHEMIN PRINCIPAL DE SUCCÈS)
    1. L'utilisateur bascule l'interface sur le mode « Agents ».
    2. Le frontend initialise un composant de dialogue relié à l'endpoint SSE /v1/chat/completions.
    3. Le créateur soumet une requête créative (ex: "Aide-moi à concevoir un teaser cyberpunk pour ma marque").
@@ -271,13 +277,13 @@ FICHE DESCRIPTIVE DE CAS D'UTILISATION : CU-03
 
 ---
 
-## 6. Tableau de Classement Priorité / Risque des Cas d'Utilisation (Règle DOC-04)
+## 6. Tableau de Classement Priorité / Risque des Cas d’Utilisation Cibles (Règle DOC-04)
 
-Conformément à la démarche de modélisation itérative du **Dr TRAORE** (*Support UML : Diagramme des Cas d'Utilisation*, slides 45-46 ; TD p. 11), le croisement méthodique entre la **Priorité Métier** (valeur apportée à l'utilisateur) et le **Risque Technique** (complexité d'intégration, dépendances d'infrastructure, gestion mémoire) permet de définir rigoureusement le périmètre du **Lot 1 (Cœur du Système)**, en harmonie exacte avec la numérotation CU-01 à CU-10 du diagramme 01 :
+Le croisement entre priorité métier et risque technique définit les lots d’implémentation pour les cas CU-01 à CU-10 du diagramme de périmètre.
 
 | Réf. | Cas d'Utilisation Métier | Priorité Métier | Risque Technique | Lot d'Implémentation | Justification Architecturale |
 | :---: | :--- | :---: | :---: | :---: | :--- |
-| **CU-01** | **Générer un média IA** (6 types multimédias) | **Haute** | **Élevé** | **Lot 1 (Prioritaire)** | Fonctionnalité vitale du système. Implique la gestion multi-moteurs (Colab, ComfyUI, API), la compilation dynamique de graphes et le rapatriement streaming 64 Ko. |
+| **CU-01** | **Générer un média IA** (6 types multimédias) | **Haute** | **Élevé** | **Lot 1 (Prioritaire)** | Fonctionnalité vitale du système. Objectifs non implémentés : ComfyUI direct, moteur API, compilation dynamique de graphes et rapatriement streaming 64 Ko. Le contrat actuel reste celui du worker colab/local. |
 | **CU-02** | **Compiler et injecter le contexte de marque** | **Haute** | **Moyen** | **Lot 1 (Prioritaire)** | Élément différenciant d'Omniforge. Résolution sous contrainte des priorités de références visuelles (`P1 > P2 > P3`) et injection déterministe. |
 | **CU-03** | **Dialoguer avec l'assistant IA créatif** | **Haute** | **Faible** | **Lot 1 (Prioritaire)** | Espace conversationnel structurant du mode `[ Agents ]`. Passerelle proxy OpenAI standardisée avec streaming SSE et interruption `AbortSignal`. |
 | **CU-04** | **Superviser la santé VRAM et les workers** | **Haute** | **Élevé** | **Lot 1 (Prioritaire)** | Prévention critique des saturations mémoire GPU (CUDA OOM), détection dynamique VRAM/HBM et coordination des bascules d'état. |
@@ -292,9 +298,9 @@ Conformément à la démarche de modélisation itérative du **Dr TRAORE** (*Sup
 
 ## 7. Tableau des Candidats et Éliminations de Classes (Règle DOC-03)
 
-Conformément au barème d'ingénierie logicielle de Niveau 4 du **Dr TRAORE** (*Support UML : Diagramme de Classes*, Vol. 2 Annexe C p. 206), le tableau ci-dessous explicite le processus de filtrage et d'épuration appliqué aux classes candidates identifiées lors de l'analyse du domaine d'Omniforge :
+Le tableau ci-dessous explique le filtrage des classes candidates du domaine Omniforge et les responsabilités conservées.
 
-| Candidat Analysé | Nature Initiale | Décision d'Ingénierie | Motif Formel d'Élimination ou de Retenue (Règles Traorè / OMG) |
+| Candidat Analysé | Nature Initiale | Décision d'Ingénierie | Motif d’Élimination ou de Retenue dans le Domaine |
 | :--- | :--- | :---: | :--- |
 | **Project** | Entité métier | **RETENU** | Entité racine du domaine représentant l'espace de travail utilisateur, détentrice des générations et des sessions de dialogue. |
 | **Generation** | Entité métier | **RETENU** | Concept central matérialisant une demande d'inférence, son statut, son média type et son résultat. |
@@ -316,7 +322,7 @@ Conformément au barème d'ingénierie logicielle de Niveau 4 du **Dr TRAORE** (
 
 ## 8. Scénarios du Test du Chemin Métier (Règle DOC-06)
 
-Conformément aux exigences méthodologiques de Niveau 4 du **Dr TRAORE** (*Support UML : Diagramme de Classes*, Vol. 2 Annexe C p. 207), le modèle de données métier `04` est soumis à un test formel de connexité et de navigabilité validant que les scénarios fondamentaux du système peuvent être traversés de bout en bout sans aucune rupture sémantique ni duplication de clés étrangères :
+Le contrôle de connexité du modèle métier vérifie que les scénarios fondamentaux traversent les entités sans rupture de parcours ni duplication des clés de persistance.
 
 | Scénario Métier Audité | Chaîne de Navigabilité Objet Traversée (Diagramme `04`) | Justification et Validité Sémantique |
 | :--- | :--- | :--- |
@@ -331,25 +337,25 @@ Conformément aux exigences méthodologiques de Niveau 4 du **Dr TRAORE** (*Supp
 
 ## 9. Règles de Gestion Hors Notation Graphique (Règle DOC-05)
 
-Conformément aux directives du **Dr TRAORE** (*Support UML : Diagramme de Classes*, Vol. 2 Annexe C p. 207 : *« Règles de gestion hors diagramme (nombre atteint, renvoi au bon volume) : 1,0 pt »*), les contraintes métier non modélisables par le strict formalisme visuel d'UML 2.5 sont formalisées et rattachées ci-après :
+Les contraintes métier qui ne figurent pas dans les diagrammes sont détaillées ci-dessous avec leurs vues de référence.
 
 | Réf. | Intitulé de la Règle de Gestion | Énoncé Formel de la Règle & Contraintes d'Intégrité | Diagrammes & Volumes Associés |
 | :---: | :--- | :--- | :--- |
-| **RG-01** | **Invariance de Persistance Atomique** | Toute écriture de document JSON dans `data/` (`generations.json`, `projects.json`, `brand_kits.json`, `models.json`) doit impérativement acquérir un verrou asynchrone exclusif (`asyncio.Lock`), effectuer l'écriture dans un fichier temporaire `.tmp` sur le même point de montage, puis exécuter un remplacement atomique système (`os.replace`) afin de bannir tout risque de corruption en cas de coupure inopinée. | Diagrammes `02`, `04`, `10`  <br>*Support Traoré Vol. 2 p. 195* |
-| **RG-02** | **Priorité Déterministe d'Injection des Références Visuelles** | Lorsque le nombre total de références visuelles transmises dépasse la capacité maximale admise par le modèle (`ModelCapability.maxImageRefs`), le compilateur de contexte applique une préséance stricte : `P1 (Images utilisateur fournies dans le Dock)` **>** `P2 (Images d'ambiance du Brand Kit actif)` **>** `P3 (Logo vectoriel de la marque)`. Les références de niveau inférieur excédentaires sont tronquées avec avertissement dans le journal. | Diagrammes `04`, `05`, `07`  <br>*Support Traoré Vol. 2 p. 198* |
-| **RG-03** | **Plafond Mémoire Strict de l'Hôte Local (FastAPI < 80 Mo)** | Le processus serveur local Python / FastAPI (`:8000`) ne doit sous aucun prétexte instancier de runtime de calcul tensoriel local lourd (interdiction formelle d'importer `torch`, `diffusers` ou `transformers` dans l'orchestrateur). Sa mémoire résidente mesurée via `psutil` doit demeurer strictement inférieure à **80 Mo de RAM**, garantissant l'exécution fluide sur toute machine dépourvue de GPU dédié. | Diagrammes `02`, `03`  <br>*Support Traoré Vol. 6 p. 52* |
-| **RG-04** | **Éviction de VRAM Distante sous Politique LRU Stricte** | Sur le worker d'inférence distant (Google Colab GPU CUDA ou TPU XLA), un modèle déjà présent dans le cache mémoire (`SlotMemoireModele`) n'est évincé que si et seulement si la mémoire physique libre est insuffisante pour charger le modèle requis par la nouvelle tâche. L'éviction libère les poids (`del active_pipeline`), force le ramasse-miettes (`gc.collect()`) et purge le cache mémoire (`torch.cuda.empty_cache()` ou `xm.mark_step()`). | Diagrammes `04`, `11`  <br>*Support Traoré Vol. 5 p. 142* |
-| **RG-05** | **Isolation du Démon ComfyUI et Démarrage Non-Intrusif** | Lorsque le mode d'exécution local est sollicité, le gestionnaire de processus teste en premier lieu la présence d'une instance ComfyUI déjà active sur `127.0.0.1:8188`. Si aucune instance ne répond et que `autoManageProcess = true`, le sous-processus est spawné avec le flag obligatoire `--disable-auto-launch` pour interdire l'ouverture intempestive du navigateur. À l'arrêt d'Omniforge, le sous-processus ainsi créé est proprement arrêté (signal SIGTERM). | Diagrammes `02`, `03`, `06`  <br>*Support Traoré Vol. 6 p. 54* |
-| **RG-06** | **Validation Stricte des Types MIME d'Ingrédients (`acceptedInputTypes`)** | Dès réception d'une requête de génération comportant des ingrédients multimédias, le serveur valide l'adéquation exacte entre les types MIME des fichiers fournis et la liste autorisée par la capacité du modèle (`ModelCapability.acceptedInputTypes`). Tout écart déclenche un rejet immédiat avec le code standardisé **HTTP 422 Unprocessable Entity** sans aucune mobilisation de ressource GPU. | Diagrammes `04`, `05`, `09`  <br>*Support Traoré Vol. 4 p. 187* |
-| **RG-07** | **Rapatriement Streaming en Chunks de 64 Ko et Souveraineté Locale** | Quel que soit le moteur d'exécution (Colab distant ou passerelle API cloud), tout média final produit est intégralement rapatrié vers le poste de travail local par streaming réseau séquentiel par blocs d'au plus **64 Ko**, garantissant qu'aucun binaire volumineux n'est accumulé en mémoire RAM dans le serveur FastAPI avant son écriture disque définitive dans `outputs/`. | Diagrammes `02`, `03`, `06`  <br>*Support Traoré Vol. 6 p. 55* |
+| **RG-01** | **Invariance de Persistance Atomique** | Toute écriture de document JSON dans `data/` (`generations.json`, `projects.json`, `brand_kits.json`, `config.json`, `models.json`) doit impérativement acquérir un verrou asynchrone exclusif (`asyncio.Lock`), effectuer l'écriture dans un fichier temporaire `.tmp` sur le même point de montage, puis exécuter un remplacement atomique système (`os.replace`) afin de bannir tout risque de corruption en cas de coupure inopinée. | Diagrammes `02`, `04`, `10` |
+| **RG-02** | **Priorité Déterministe d'Injection des Références Visuelles** | Lorsque le nombre total de références visuelles transmises dépasse la capacité maximale admise par le modèle (`ModelCapability.maxImageRefs`), le compilateur de contexte applique une préséance stricte : `P1 (Images utilisateur fournies dans le Dock)` **>** `P2 (Images d'ambiance du Brand Kit actif)` **>** `P3 (Logo vectoriel de la marque)`. Les références de niveau inférieur excédentaires sont tronquées avec avertissement dans le journal. | Diagrammes `04`, `05`, `07` |
+| **RG-03** | **Plafond Mémoire Strict de l'Hôte Local (FastAPI < 80 Mo)** | Le processus serveur local Python / FastAPI (`:8000`) ne doit sous aucun prétexte instancier de runtime de calcul tensoriel local lourd (interdiction formelle d'importer `torch`, `diffusers` ou `transformers` dans l'orchestrateur). Sa mémoire résidente mesurée via `psutil` doit demeurer strictement inférieure à **80 Mo de RAM**, garantissant l'exécution fluide sur toute machine dépourvue de GPU dédié. | Diagrammes `02`, `03` |
+| **RG-04** | **Éviction de VRAM Distante sous Politique LRU Stricte** | Sur le worker d'inférence distant (Google Colab GPU CUDA ou TPU XLA), un modèle déjà présent dans le cache mémoire (`SlotMemoireModele`) n'est évincé que si et seulement si la mémoire physique libre est insuffisante pour charger le modèle requis par la nouvelle tâche. L'éviction libère les poids (`del active_pipeline`), force le ramasse-miettes (`gc.collect()`) et purge le cache mémoire (CUDA : `torch.cuda.empty_cache()` ; TPU : terminer les opérations, supprimer les références, `gc.collect()` puis attendre leur achèvement et relire la mémoire — voir `SPECIFICATION01.md` §4.1 ; `xm.mark_step()` ne purge pas le cache). | Diagrammes `04`, `11` |
+| **RG-05** | **Isolation du Démon ComfyUI et Démarrage Non-Intrusif** | Lorsque le mode d'exécution local est sollicité, le gestionnaire de processus teste en premier lieu la présence d'une instance ComfyUI déjà active sur `127.0.0.1:8188`. Si aucune instance ne répond et que `autoManageProcess = true`, le sous-processus est spawné avec le flag obligatoire `--disable-auto-launch` pour interdire l'ouverture intempestive du navigateur. À l'arrêt d'Omniforge, le sous-processus ainsi créé est proprement arrêté (signal SIGTERM). | Diagrammes `02`, `03`, `06` |
+| **RG-06** | **Validation Stricte des Types MIME d'Ingrédients (`acceptedInputTypes`)** | **Validation cible, non implémentée actuellement** (normalisation classe/MIME/extension selon `UI_SPECIFICATION01.md` §6.3). Dès réception d’une requête de génération comportant des ingrédients multimédias, le serveur valide l'adéquation exacte entre les types MIME des fichiers fournis et la liste autorisée par la capacité du modèle (`ModelCapability.acceptedInputTypes`). Tout écart déclenche un rejet immédiat avec le code standardisé **HTTP 422 Unprocessable Entity** sans aucune mobilisation de ressource GPU. | Diagrammes `04`, `05`, `09` |
+| **RG-07** | **Rapatriement Streaming en Chunks de 64 Ko et Souveraineté Locale** | **Prévu, non garanti actuellement** : `WorkerGateway.download_file` lit `resp.content` en entier et `MediaFileStore` reçoit des `bytes`. Lectures HTTP et écritures incrémentales restent à implémenter avant de garantir le budget RAM. Quel que soit le moteur d’exécution cible (Colab distant ou passerelle API cloud), tout média final produit est intégralement rapatrié vers le poste de travail local **à terme** par streaming réseau séquentiel par blocs d’au plus **64 Ko**, garantissant qu'aucun binaire volumineux n'est accumulé en mémoire RAM dans le serveur FastAPI avant son écriture disque définitive dans `outputs/`. | Diagrammes `02`, `03`, `06` |
 
 ---
 
-## 10. Attestation de Conformité Académique et Normative
+## 10. Contrôles de Cohérence du Dossier
 
-L'ensemble de la modélisation logicielle Omniforge v01 contenue dans ce dossier a fait l'objet d'un audit de conformité exhaustif confrontant chaque diagramme et document aux sources officielles :
-1. **Standard OMG UML 2.5.1 (Formal/2017-12-05)** : respect scrupuleux de la métasyntaxe, des relations d'association sans flèches abusives, de la notation lollipop/socket pour les interfaces de composants, et des chemins de communication physiques de déploiement.
-2. **Corpus Pédagogique du Dr TRAORE (L3 MIAGE)** : éradication complète des erreurs de grille (aucun nom au pluriel, aucune classe technique isolée, aucune duplication de clés de persistance, aucun geste IHM modélisé en cas d'utilisation ou action, présence intégrale des 6 livrables documentaires de Niveau 4).
-3. **Règles Internes du Projet Colab AI Studio (`AGENTS.md`)** : conformité visuelle pixel-perfect, zéro emoji Unicode dans le code et les diagrammes, et respect absolu des contraintes d'empreinte mémoire sur machine modeste sans GPU dédié.
+Les contrôles de conception portent sur :
+1. Les associations, multiplicités, interfaces de composants et chemins de communication réseau.
+2. La cohérence des entités métier, l’absence de duplication des clés de persistance et la continuité des scénarios.
+3. Les exigences du projet : fidélité aux maquettes, icônes vectorielles, persistance JSON atomique, isolation du stockage et objectifs mémoire.
 
-Le dossier documentaire et les diagrammes vectoriels associés constituent la référence officielle de conception logicielle d'Omniforge.
+Ces documents définissent la cible Omniforge ; les notes de statut distinguent les exigences à implémenter du contrat disponible. La présence d’un diagramme ne prouve pas l’implémentation ni la validation matérielle de sa cible.

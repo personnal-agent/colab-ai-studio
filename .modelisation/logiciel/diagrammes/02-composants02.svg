@@ -34,7 +34,7 @@
   <text x="90" y="174" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#475569">«component»</text>
   <text x="90" y="193" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#0F172A">ElectronProcessOrchestrator (main.ts)</text>
   <text x="90" y="213" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Superviseur de cycle de vie : spawn(FastAPI :8000) &amp; spawn(Gateway :51491)</text>
-  <text x="90" y="231" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Healthchecks HTTP synchronisés (/health et /api/health)</text>
+  <text x="90" y="231" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Healthchecks HTTP /api/health (FastAPI, Gateway, Auth)</text>
   <text x="90" y="249" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Arrêt propre sécurisé (SIGTERM / Process Kill sans orphelins)</text>
   <text x="90" y="267" font-family="Arial, sans-serif" font-size="11.5" fill="#334155">• Gestion de crash &amp; restart automatique des backends locaux</text>
   <text x="90" y="285" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#166534">• Empreinte mémoire contrôlée : ~60 Mo RAM</text>
@@ -177,7 +177,7 @@
   <text x="85" y="1125" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">TaskOrchestrator &amp; Session Cloud</text>
   <text x="85" y="1145" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• WorkerGateway : routage tri-mode (Colab GPU/TPU · ComfyUI :8188 · API)</text>
   <text x="85" y="1163" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• ColabOrchestrator : tunnel TLS public automatique &amp; allocation ressources</text>
-  <text x="85" y="1181" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Cycle asynchrone des tâches (PENDING, RUNNING, DONE, FAILED)</text>
+  <text x="85" y="1181" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Cycle asynchrone des tâches (pending, running, completed, failed, cancelled)</text>
   <text x="85" y="1199" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">• Diffusion Server-Sent Events /api/tasks/{task_id}/status</text>
 
   <!-- 3.2 ComfyWorkflowCompiler & ModelSwapperLRU -->
@@ -280,14 +280,14 @@
   <line x1="300" y1="975" x2="300" y2="940" stroke="#1E4E5F" stroke-width="2"/>
   <text x="315" y="990" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#1E4E5F">IStudioAPI (REST/SSE :8000)</text>
 
-  <!-- CONNECTEUR 3 : IWorkspaceProtocol (REST :8001 / WS) entre Workbench et NestJS Gateway -->
+  <!-- CONNECTEUR 3 : IWorkspaceProtocol (HTTP/JSON-RPC :51491) entre Workbench et NestJS Gateway -->
   <!-- NestJS Gateway (:51491) FOURNIT IWorkspaceProtocol (Lollipop vers le haut) -->
   <line x1="1380" y1="1030" x2="1380" y2="985" stroke="#475569" stroke-width="2"/>
   <circle cx="1380" cy="985" r="7" fill="#475569" stroke="#475569" stroke-width="2"/>
   <!-- Workbench UI REQUIERT IWorkspaceProtocol (Socket concave vers le bas) -->
   <path d="M 1368 975 A 14 14 0 0 0 1392 975" fill="none" stroke="#5B21B6" stroke-width="2.4"/>
   <line x1="1380" y1="975" x2="1380" y2="940" stroke="#5B21B6" stroke-width="2"/>
-  <text x="1405" y="990" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#4C1D95">IWorkspaceProtocol (REST :8001 / WS :51491)</text>
+  <text x="1405" y="990" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#4C1D95">IWorkspaceProtocol (HTTP/JSON-RPC :51491)</text>
 
   <!-- CONNECTEUR 4 : Commutation Electron Multi-View (Contrôle d'Attachement) -->
   <line x1="840" y1="317" x2="840" y2="360" stroke="#334155" stroke-width="2" marker-end="url(#openArrow)"/>

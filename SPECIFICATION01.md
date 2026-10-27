@@ -1,5 +1,7 @@
 # Spécifications Fonctionnelles & Techniques — Omniforge
 
+> **Statut documentaire — cible à implémenter.** Les documents numérotés décrivent l'évolution Omniforge ; ils ne prouvent pas sa disponibilité. Le code actuel accepte seulement `colab` et `local` via le contrat worker (`/infer`, `/tasks/{task_id}/status`, `/tasks/{task_id}/cancel`, `/files/{path}`). OAuth Colab automatique, TPU/LRU, ComfyUI direct, mode API, catalogue hors-ligne, LoRAs, audio/3D et validation `acceptedInputTypes` restent des objectifs. Voir [SPECIFICATION01.md](SPECIFICATION01.md#4-spécifications-des-3-moteurs-dexécution-colab--local--api) pour les écarts avec l'existant.
+
 ## 1. Vision du Projet
 
 **Omniforge** est un système hybride de création multimédia par intelligence artificielle (image, vidéo UGC et cinématique tous formats réseaux, audio voix/musique/SFX, synchronisation labiale, upscaling et génération 3D) conçu pour fonctionner selon trois modes d'exécution au choix :
@@ -7,13 +9,15 @@
 2. **`Local` (GPU PC)** : exécution locale en arrière-plan via **ComfyUI en mode "Headless API"** (`127.0.0.1:8188`) sans jamais ouvrir ni exposer son interface à nœuds.
 3. **`API` (Clés API externes)** : appels directs aux fournisseurs d'inférence distants via les clés API configurées par l'utilisateur.
 
-Le catalogue de modèles n'est **jamais codé en dur** dans le serveur Python : il est persisté localement dans `data/models.json` (toujours accessible hors-ligne) et l'utilisateur peut librement **ajouter, configurer ou supprimer ses propres modèles** dans l'interface.
+**Cible à implémenter** : le catalogue de modèles n’est **jamais codé en dur** dans le serveur Python : il est persisté localement dans `data/models.json` (toujours accessible hors-ligne) et l'utilisateur peut librement **ajouter, configurer ou supprimer ses propres modèles** dans l'interface.
 
 L'interface expose en barre supérieure un commutateur global **`[ Studio | Agents ]`** :
 - **`Studio`** : l'interface de génération directe par galerie et *Floating Prompt Dock* modulaire.
 - **`Agents`** : le point de bascule vers l'interface dédiée aux agents autonomes (connectée après harmonisation de sa palette de couleurs).
 
 ---
+
+**Contrat cible du catalogue (commun aux trois moteurs)** : `data/models.json` est l'unique catalogue éditable et la source des sélecteurs hors-ligne. Chaque entrée porte un `id` unique et un `engine`. `data/known_models_catalog.json` est une bibliothèque de signatures et de gabarits en lecture seule, jamais une seconde liste affichée. Un scan ajoute ou actualise les entrées Local dans `models.json`, en conservant les choix utilisateur ; un import de workflow y écrit aussi ses bindings et capacités. Ajout, modification et suppression/masquage passent par `JSONDocumentStore` sur ce même document ; un modèle masqué conserve `hidden: true` pour qu’un scan ne le réactive pas. À la fusion par `id`, la valeur persistée de `hidden` a toujours priorité sur les valeurs par défaut du scan ; `hidden: false` est utilisé seulement à la création ou lors d’une réactivation explicite par l’utilisateur. Aucun fichier `custom_models.json` séparé n'est prévu. Ce catalogue local reste à implémenter : actuellement `GET /api/models` interroge le worker et peut retourner 503.
 
 ## 2. Architecture Globale
 
@@ -109,9 +113,13 @@ Affichées uniquement lorsque le modèle sélectionné les déclare dans `capabi
 
 ## 4. Spécifications des 3 Moteurs d'Exécution (`Colab` | `Local` | `API`)
 
-Le backend local FastAPI (< 80 Mo de RAM) route chaque requête vers le moteur actif sélectionné dans `data/config.json` (`executionMode: "colab" | "local" | "api"`).
+**Contrat actuel** : `ExecutionMode` et `WorkerGateway` acceptent uniquement `executionMode: "colab" | "local"`. La configuration `"api"` est rejetée par le schéma ; aucun client fournisseur n'est implémenté. La limite de 80 Mo est un objectif à mesurer, et non une garantie du téléchargement actuel.
+
+**Cible** : ajouter le troisième mode `api` après implémentation de son chemin fournisseur, de ses modèles et de ses tests.
 
 ### 4.1. Moteur `Colab` : Connexion Google OAuth, Orchestration 100 % Backend & Support Natif GPU (CUDA) + TPU (XLA/HBM)
+> **Prévu, indisponible actuellement** : `POST /api/auth/google/login` et `ColabSessionOrchestrator` restent à implémenter. Aujourd’hui, `WorkerGateway` utilise les valeurs `colab.tunnelUrl` et `colab.secret` configurées manuellement. Le secret doit correspondre à celui du worker ; à défaut de `colab.secret`, `get_worker_headers()` utilise la variable du processus `COLAB_STUDIO_SECRET` (sans stocker de valeur réelle dans la documentation). Le champ `secret: null` de l’exemple cible ci-dessous signifie qu’une configuration d’authentification reste nécessaire. Le catalogue local et son CRUD décrits ci-dessous sont également prévus.
+
 Contrairement à une configuration manuelle par URL, le backend local orchestre intégralement la session Google Colab sur **GPU** comme sur **TPU** :
 1. **Connexion au Compte Google & Orchestration Automatique (`ColabSessionOrchestrator`)** :
    - L'utilisateur se connecte à son compte Google via `POST /api/auth/google/login` depuis le popover `[👤]`.
@@ -125,12 +133,16 @@ Contrairement à une configuration manuelle par URL, le backend local orchestre 
      - **Mode GPU (`cuda`)** : interroge `torch.cuda.get_device_properties(0)` (`name`, `total_memory`) et `torch.cuda.mem_get_info()` (`free_bytes`, `total_bytes`).
      - **Mode TPU (`xla`)** : interroge `torch_xla.core.xla_model` (`xm.xla_device()`, `xm.get_memory_info(device)` pour lire `bytes_limit` et `bytes_used` de la mémoire HBM haute bande passante) et exécute les pipelines sur le périphérique XLA (`xm.mark_step()`).
    - Tant que la mémoire libre réelle (VRAM sur GPU ou HBM sur TPU) vérifie `free_mem >= model_required_mem + safety_margin_gb`, le `ModelSwapper` maintient **plusieurs pipelines simultanément en cache** (particulièrement avantageux sur L4 24 Go, A100 40/80 Go et TPU 64/128 Go HBM).
-   - Lorsque la mémoire libre est insuffisante, il évince uniquement le(s) modèle(s) les moins récemment utilisés (**LRU**) : `del pipeline`, `gc.collect()`, suivi de `torch.cuda.empty_cache()` + `torch.cuda.ipc_collect()` sur GPU, ou `xm.mark_step()` + libération des tampons XLA sur TPU.
-3. **Catalogue de Modèles Utilisateur Dynamique (`data/models.json`)** :
-   - Le catalogue est stocké sur le PC local dans `data/models.json` et reste disponible à 100 % hors-ligne (aucune erreur `503` lorsque Colab est déconnecté).
+   - Lorsque la mémoire libre est insuffisante, il évince uniquement le(s) modèle(s) les moins récemment utilisés (**LRU**) : `del pipeline`, `gc.collect()`, suivi de `torch.cuda.empty_cache()` + `torch.cuda.ipc_collect()` sur GPU, sur TPU : finaliser les opérations en vol avec `xm.mark_step(wait=True)`, retirer toutes les références aux pipelines et tenseurs évincés, puis `gc.collect()` et `xm.wait_device_ops()`. `mark_step` marque une étape d'exécution ; ce n'est pas une purge de cache. Relire `xm.get_memory_info(device)` et vérifier la mémoire libre avant tout chargement ; si elle reste insuffisante, poursuivre l'éviction ou refuser le chargement. Cette séquence cible les API de [torch_xla 2.4](https://github.com/pytorch/xla/blob/v2.4.0/torch_xla/core/xla_model.py) et doit être validée sur la version effectivement déployée.
+3. **Catalogue de Modèles Utilisateur Dynamique (`data/models.json`) — cible non implémentée** :
+   - **Cible** : le catalogue sera stocké sur le PC local dans `data/models.json` et reste disponible à 100 % hors-ligne (aucune erreur `503` lorsque Colab est déconnecté).
    - L'utilisateur peut **ajouter ou supprimer** n'importe quel modèle (`POST /api/models`, `DELETE /api/models/{id}`) en spécifiant son `hfRepoId` (Hugging Face), une URL `.safetensors` ou un chemin Google Drive, avec estimation automatique de l'empreinte mémoire (`hf-mem`). Lors de l'inférence (`POST /infer`), le backend transmet la spécification du modèle au worker Colab qui le charge dynamiquement sur le GPU ou le TPU actif.
 
 ### 4.2. Moteur `Local` : Exécution sur PC via ComfyUI "Headless API"
+
+**Contrat Local actuel** : `WorkerGateway` résout `local.workerUrl` (par défaut `http://127.0.0.1:8190`), appelle `POST /infer`, suit `GET /tasks/{task_id}/status`, annule via `POST /tasks/{task_id}/cancel` et télécharge via `GET /files/{path}`. Le backend attend ce protocole worker ; il ne peut pas pointer directement vers le serveur ComfyUI `:8188`.
+
+**Cible des §4.2.1 à §4.2.3** : le gestionnaire de processus et l'adaptateur/compilateur ComfyUI direct restent à implémenter et à tester.
 
 Sur PC, ComfyUI est utilisé exclusivement comme **moteur d'exécution en arrière-plan** pour sa gestion optimisée de la VRAM, sans jamais afficher de graphe de nœuds à l'utilisateur.
 
@@ -145,16 +157,17 @@ Sur PC, ComfyUI est utilisé exclusivement comme **moteur d'exécution en arriè
    - En interrogeant `GET http://127.0.0.1:8188/object_info` et les dossiers de poids de ComfyUI, dès que les fichiers `.safetensors` requis d'un modèle connu sont présents, **le modèle s'active automatiquement** avec l'ensemble de ses `capabilities` et de ses workflows pré-câblés (`T2V`, `I2V`, `First+Last Frame`, `Reference/Ingredients`).
 2. **Modale "Add / Map Model" pour les Modèles et Workflows Custom** :
    - Pour tout nouveau modèle ou workflow personnalisé, l'utilisateur importe un fichier `workflow_api.json` (exporté au format API depuis ComfyUI) dans la modale **Add / Map Model**.
-   - Il renseigne le nom, la catégorie (`Image`, `Video`, `Audio`, `Lip sync`, `Upscaling`, `3D Gen`), la famille de base (`baseModel` pour les LoRAs) et associe les entrées du Dock (`prompt`, `negativePrompt`, `seed`, `width`/`height`, `duration`/`frames`, `startFrame`, `endFrame`, `references`, `outputNode`) aux identifiants de nœuds du JSON. La configuration est enregistrée dans `data/custom_models.json`.
+   - Il renseigne le nom, la catégorie (`Image`, `Video`, `Audio`, `Lip sync`, `Upscaling`, `3D Gen`), la famille de base (`baseModel` pour les LoRAs) et associe les entrées du Dock (`prompt`, `negativePrompt`, `seed`, `width`/`height`, `duration`/`frames`, `startFrame`, `endFrame`, `references`, `outputNode`) aux identifiants de nœuds du JSON. La configuration est enregistrée dans `data/models.json`.
 
 #### 4.2.3. Routage des Workflows ComfyUI derrière le JSON Simple de l'UI (`ComfyWorkflowCompiler`)
-L'interface Web envoie toujours le même JSON simple à `POST /api/generate/media` :
+**Exemple compatible avec `GenerationCreateRequest` actuel** (`type` est le champ reçu ; `mediaType` est le champ persisté) :
 ```json
 {
   "modelId": "wan-2.1",
-  "mediaType": "video",
+  "type": "video",
   "prompt": "Un plan cinématique...",
   "negativePrompt": "flou, basse qualité",
+  "brandKitId": null,
   "parameters": {
     "seed": 428910,
     "aspectRatio": "16:9",
@@ -166,16 +179,15 @@ L'interface Web envoie toujours le même JSON simple à `POST /api/generate/medi
     "endFrame": null,
     "imageRefs": [],
     "videoRefs": [],
-    "audioRefs": [],
-    "meshRef": null,
-    "brandKitId": null
-  },
-  "loras": [
-    { "id": "lora_cinematic_wan21", "weight": 0.8 }
-  ]
+    "audioRefs": []
+  }
 }
 ```
-Le `ComfyWorkflowCompiler` exécute alors 5 opérations transparentes :
+`brandKitId` doit être au premier niveau : l'orchestrateur lit `req.brandKitId`. L'API actuelle ne transmet ni `loras` ni `meshRef` ; ces champs ne doivent pas être envoyés comme s'ils étaient pris en charge.
+
+**Extension cible, non prise en charge par l'API actuelle** : ajouter un champ typé `loras: [{id, weight}]` et `references.meshRef`, les persister et les transmettre jusqu'au compilateur et au worker avant d'activer ces contrôles.
+
+Le futur `ComfyWorkflowCompiler` devra exécuter cinq opérations transparentes :
 1. **Sélection automatique du gabarit de workflow selon les références** :
    - Aucune référence visuelle $\rightarrow$ gabarit `text_to_video.api.json` (ou `text_to_image` / `text_to_audio` / `text_to_3d`).
    - `startFrame` seul $\rightarrow$ gabarit `first_frame_to_video.api.json`.
@@ -190,23 +202,23 @@ Le `ComfyWorkflowCompiler` exécute alors 5 opérations transparentes :
 5. **Exécution, suivi WebSocket $\rightarrow$ SSE et rapatriement** : soumission à `POST /prompt`, conversion temps réel des événements WebSocket `/ws` de ComfyUI en flux SSE `/api/tasks/{task_id}/status`, annulation via `POST /interrupt`, et rapatriement du fichier généré (`GET /view`) vers le dossier local résolu via `MediaFileStore`.
 
 ### 4.3. Moteur `API` : Exécution Directe par Clés API
-Lorsque `executionMode` vaut `"api"`, `WorkerGateway` appelle directement les endpoints HTTP des fournisseurs configurés par l'utilisateur dans `data/config.json` (sans passer par Colab ni ComfyUI), suit l'avancement de la tâche et rapatrie systématiquement le fichier final sur le disque local.
+**Prévu, indisponible actuellement.** Après extension du contrat `ExecutionMode`, lorsque `executionMode` vaudra `"api"`, `WorkerGateway` devra appeler directement les endpoints HTTP des fournisseurs configurés par l'utilisateur dans `data/config.json` (sans passer par Colab ni ComfyUI), suit l'avancement de la tâche et rapatrie systématiquement le fichier final sur le disque local.
 
 ---
 
 ## 5. Architecture de Stockage Local & Base de Données JSON (`data/`)
 
-Toutes les écritures JSON passent exclusivement par `JSONDocumentStore` (`asyncio.Lock` par fichier + écriture `.tmp` + `os.replace`) :
+**Arborescence cible** : les fichiers de catalogue et LoRA et les champs de configuration étendus restent à implémenter. Toutes les écritures JSON passent exclusivement par `JSONDocumentStore` (`asyncio.Lock` par fichier + écriture `.tmp` + `os.replace`) :
 
 ```
 omniforge/
 ├── data/
-│   ├── generations.json           # Journal de toutes les créations (inclut loras[] et 3D/Audio)
+│   ├── generations.json           # Journal actuel ; extension LoRA et 3D/Audio prévue
 │   ├── brand_kits.json            # Profils de marque
 │   ├── projects.json              # Collections et dossiers physiques isolés (storagePath)
 │   ├── config.json                # Mode d'exécution (colab | local | api), chemins ComfyUI, clés API
 │   ├── known_models_catalog.json  # Signatures et bindings des modèles connus pour ComfyUI
-│   ├── custom_models.json         # Modèles et workflows ComfyUI ajoutés via "Add / Map Model"
+│   ├── models.json                # Catalogue éditable unique (tous moteurs, workflows custom inclus)
 │   ├── loras.json                 # Registre des LoRAs (nom, aperçu, baseModel, triggerWord, defaultWeight)
 │   └── assets/                    # Actifs importés + miniatures de LoRAs
 ├── workflows/                     # Gabarits ComfyUI (.api.json) des modèles connus
@@ -214,6 +226,17 @@ omniforge/
     ├── YYYY-MM-DD/                # Partitionnement chronologique hors projet
     └── projects/<id>/             # Partitionnement par projet par défaut (si storagePath est null)
 ```
+
+**Formats de sortie — état actuel** : `TaskOrchestrator` nomme `video` en `.mp4` et tout autre type en `.png`. Ce repli ne garantit pas la prise en charge audio, lip-sync, upscale vidéo ou 3D et peut attribuer une extension/MIME incorrecte. Ne pas les annoncer disponibles avant correction.
+
+**Contrat cible à implémenter avant activation** : le worker doit fournir un format validé, conservé dans la génération ; extension et MIME doivent être dérivés ensemble de ce format. Rejeter tout format absent ou incompatible, sans repli PNG silencieux.
+
+| Média cible | Formats et MIME autorisés |
+| :--- | :--- |
+| Image / upscale image | `.png` → `image/png`, `.jpg` → `image/jpeg` |
+| Vidéo / lip-sync / upscale vidéo | `.mp4` → `video/mp4` |
+| Audio | `.wav` → `audio/wav`, `.mp3` → `audio/mpeg`, `.flac` → `audio/flac` |
+| 3D | `.glb` → `model/gltf-binary`, `.obj` → `model/obj`, `.fbx` → `application/octet-stream`, `.ply` → `application/octet-stream` |
 
 ### 5.1. Schéma d'un LoRA dans `data/loras.json`
 ```json
@@ -233,7 +256,7 @@ omniforge/
 ]
 ```
 
-### 5.2. Schéma d'un Modèle / Workflow dans `data/known_models_catalog.json` et `data/custom_models.json`
+### 5.2. Schéma d'un Modèle / Workflow dans `data/known_models_catalog.json` et `data/models.json`
 ```json
 [
   {
@@ -242,6 +265,7 @@ omniforge/
     "type": "video",
     "baseModel": "wan2.1",
     "engine": "local",
+    "hidden": false,
     "requiredFiles": [
       { "folder": "diffusion_models", "pattern": "*wan2.1*t2v*.safetensors" },
       { "folder": "vae", "pattern": "*wan_2.1_vae*.safetensors" }
@@ -262,7 +286,7 @@ omniforge/
     },
     "topologies": {
       "t2v": {
-        "workflowFile": "workflows/wan21/t2v.api.json",
+        "workflowFile": "workflows/video/text_to_video.api.json",
         "bindings": {
           "prompt": "6.inputs.text",
           "negativePrompt": "7.inputs.text",
@@ -279,7 +303,7 @@ omniforge/
         }
       },
       "i2v_start": {
-        "workflowFile": "workflows/wan21/i2v_start.api.json",
+        "workflowFile": "workflows/video/first_frame_to_video.api.json",
         "bindings": {
           "prompt": "6.inputs.text",
           "negativePrompt": "7.inputs.text",
@@ -297,12 +321,35 @@ omniforge/
 ```
 
 ### 5.3. Schéma de `data/config.json`
+
+**Configuration Local minimale actuelle** :
+```json
+{
+  "executionMode": "local",
+  "local": { "workerUrl": "http://127.0.0.1:8190" }
+}
+```
+
+**Configuration Colab manuelle actuelle** (gabarit sans secret réel) :
+```json
+{
+  "executionMode": "colab",
+  "colab": {
+    "tunnelUrl": "https://worker.example.com",
+    "secret": null
+  }
+}
+```
+`colab.secret` est une chaîne ou `null`. Renseigner la même valeur que celle configurée au démarrage du worker (`COLAB_STUDIO_SECRET`), ou laisser `null` et fournir cette valeur dans la variable `COLAB_STUDIO_SECRET` du processus backend. Le backend privilégie la chaîne non vide du JSON en mode Colab, sinon sa variable de processus ; `null` seul ne fournit aucune authentification. Ne jamais copier une valeur réelle dans les fichiers versionnés.
+
+**Extension cible** (les champs ComfyUI/API ci-dessous ne configurent pas le backend actuel) :
 ```json
 {
   "executionMode": "local",
   "colab": {
     "tunnelUrl": "https://xxxx-xx-xx.ngrok-free.app",
-    "accountEmail": "user@gmail.com",
+    "accountEmail": "user@example.com",
+    "secret": null,
     "lastPing": null
   },
   "local": {
@@ -330,6 +377,10 @@ omniforge/
 ---
 
 ## 6. Endpoints Locaux Principaux (FastAPI)
+
+**État actuel** : `/api/health`, `/api/config/execution-mode` (`colab` ou `local`, garde 409), `/api/models` (worker distant, 503 si indisponible), `/api/models/switch`, `/api/generate/media`, les flux/annulations de tâches et le CRUD existant sont implémentés. `/api/generate/media` valide le schéma Pydantic mais ne vérifie pas `acceptedInputTypes` contre les capacités du modèle ; la réponse 422 pour incompatibilité média reste à implémenter. La sélection LoRA et la génération 3D/audio ne sont pas garanties.
+
+**Catalogue cible des endpoints** : les ajouts ComfyUI, scan/custom, CRUD du catalogue hors-ligne, LoRA, mode API et validation de références décrits ci-dessous sont prévus.
 
 * `GET /api/health` : État du moteur actif (`colab`, `local` ComfyUI Headless ou `api`), latence et VRAM libre.
 * `POST /api/config/execution-mode` : Bascule entre `"colab"`, `"local"` et `"api"` (refus `409 Conflict` si une tâche est en cours).

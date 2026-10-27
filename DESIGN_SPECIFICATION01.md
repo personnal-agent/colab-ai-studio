@@ -1,5 +1,7 @@
 # Spécifications Graphiques & Design System (Tokens) — Omniforge
 
+> **Statut documentaire — cible à implémenter.** Les documents numérotés décrivent l'évolution Omniforge ; ils ne prouvent pas sa disponibilité. Le code actuel accepte seulement `colab` et `local` via le contrat worker (`/infer`, `/tasks/{task_id}/status`, `/tasks/{task_id}/cancel`, `/files/{path}`). OAuth Colab automatique, TPU/LRU, ComfyUI direct, mode API, catalogue hors-ligne, LoRAs, audio/3D et validation `acceptedInputTypes` restent des objectifs. Voir [SPECIFICATION01.md](SPECIFICATION01.md#4-spécifications-des-3-moteurs-dexécution-colab--local--api) pour les écarts avec l'existant.
+
 ---
 
 ## 1. Philosophie Visuelle & Conformité Stricte aux Maquettes (`ui-specifications/`)
@@ -25,7 +27,7 @@ Le Design System d'**Omniforge** est calibré au pixel près sur les 24 captures
 | `surface-canvas` | `#F9FAFB` | `bg-[#F9FAFB]` | Arrière-plan général de la page (`ui-spec-page.jpg`). |
 | `surface-card` | `#FFFFFF` | `bg-white` | Barre de recherche, bannières `Avatars` & `Brand kit`, modales. |
 | `surface-dock-glass` | `rgba(255, 255, 255, 0.90)` | `bg-white/90 backdrop-blur-xl` | Surface translucide dépolie du *Floating Prompt Dock*. |
-| `surface-slot` | `#EFEFEF` | `bg-[#EFEFEF]` | Fentes `Start frame` / `Image refs`, rail des onglets `Image/Video`, et fond des 6 cartes illustratives `Image generated`. |
+| `surface-slot` | `#EFEFEF` | `bg-[#EFEFEF]` | Fentes `Start frame` / `Image refs`, rail des onglets `Image/Video`, et fond des 7 cartes illustratives, dont `Image generated` et `3D generated`. |
 | `surface-slot-hover` | `#E6E6E8` | `hover:bg-[#E6E6E8]` | Survol d'une fente de conditionnement. |
 | `surface-pill-open` | `#EAECEF` | `bg-[#EAECEF]` | Fond d'une pilule de paramètre inférieure lorsque son menu est ouvert (`1K`, `2:3`, `Fast`). |
 | `surface-pill-hover` | `#F3F4F6` | `hover:bg-[#F3F4F6]` | Survol d'une pilule de paramètre inférieure ou d'un item de menu. |
@@ -83,7 +85,7 @@ Chaque icône visible sur les captures `ui-specifications/` doit être implémen
 
 ### 4.1. Cartes Bannières Décoratives d'En-tête (`Avatars` & `Brand kit`)
 - **Grille** : `grid grid-cols-1 md:grid-cols-2 gap-4 mb-5` (affichée sous les onglets `Explore | History`).
-- **Carte** : `h-[132px] rounded-2xl bg-white border border-[#E5E7EB] p-5 flex items-center justify-between overflow-hidden shadow-2xs`.
+- **Carte** : `h-[132px] rounded-2xl bg-white border border-[#E5E7EB] p-5 flex items-center justify-between overflow-hidden shadow-sm`.
 - **Colonne gauche** : titre `text-base font-semibold text-[#111827]`, description `text-xs text-[#6B7280] max-w-[240px] mt-1`, bouton d'action `mt-3 h-8 px-3.5 rounded-full border border-[#E5E7EB] bg-white text-xs font-semibold text-[#111827] hover:bg-[#F9FAFB]`.
 - **Colonne droite** : collage décoratif de 2 à 3 vignettes aux coins arrondis (`rounded-xl object-cover`).
 

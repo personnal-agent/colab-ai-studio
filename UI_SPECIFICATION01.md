@@ -1,6 +1,10 @@
 # Spécification Fonctionnelle & Ergonomique de l'Interface Utilisateur (UI/UX) — Omniforge
 
+> **Statut documentaire — cible à implémenter.** Les documents numérotés décrivent l'évolution Omniforge ; ils ne prouvent pas sa disponibilité. Le code actuel accepte seulement `colab` et `local` via le contrat worker (`/infer`, `/tasks/{task_id}/status`, `/tasks/{task_id}/cancel`, `/files/{path}`). OAuth Colab automatique, TPU/LRU, ComfyUI direct, mode API, catalogue hors-ligne, LoRAs, audio/3D et validation `acceptedInputTypes` restent des objectifs. Voir [SPECIFICATION01.md](SPECIFICATION01.md#4-spécifications-des-3-moteurs-dexécution-colab--local--api) pour les écarts avec l'existant.
+
 ---
+
+**Catalogue cible** : le sélecteur lit uniquement `data/models.json` ; scans Local et imports custom y écrivent via `JSONDocumentStore`. Les signatures de `known_models_catalog.json` servent de gabarits en lecture seule. Voir le contrat détaillé dans [SPECIFICATION01.md](SPECIFICATION01.md).
 
 ## 1. Vision & Principes Ergonomiques Directeurs
 
@@ -11,14 +15,14 @@
   - Au démarrage de l'application (lorsqu'aucune génération personnelle n'existe encore) ou dans la vue `Explore`, l'interface n'affiche **jamais** une page vide ou un cadre en pointillés.
   - Elle présente immédiatement :
     1. Les **2 cartes bannières décoratives d'en-tête** (`Avatars — Keep characters consistent [View all]` et `Brand kit — Add logos, colors, fonts and assets to keep generations on-brand [Create new]`) illustrées par leurs vignettes photographiques/graphiques à droite (`ui-spec_image_model-selector.png`).
-    2. Les **6 cartes illustratives de référence** sur fond `#EFEFEF` (`Image generated`, `Video generated`, `Audio generated`, `Upscaled image [4K]`, `Upscaled video [4K]`, `Lip sync`, comme sur `ui-spec-page.jpg`) accompagnées d'une **galerie de créations décoratives haute esthétique** (portraits éditoriaux, affiches typographiques, visuels produits, scènes 3D, comme sur `ui-spec_image_model-selector.png` et `Brand01.png`).
+    2. Les **7 cartes illustratives de référence** sur fond `#EFEFEF` (`Image generated`, `Video generated`, `Audio generated`, `Upscaled image [4K]`, `Upscaled video [4K]`, `Lip sync`, plus `3D generated` dans la cible Omniforge, comme sur `ui-spec-page.jpg`) accompagnées d'une **galerie de créations décoratives haute esthétique** (portraits éditoriaux, affiches typographiques, visuels produits, scènes 3D, comme sur `ui-spec_image_model-selector.png` et `Brand01.png`).
     3. Les **puces d'inspiration de prompt** (`Surreal Dreamscape`, `Cyberpunk Alleyway`, `Enchanted Forest`) au-dessus du dock (`ui-spec_image_aspect-ratio.png`).
 - **Switch Global `[ Studio | Agents ]`** : Commutateur segmenté sobre en barre supérieure permettant de basculer entre `Studio` et `Agents` (sans sous-écran superflu côté Studio).
 - **Orchestration 100 % Backend des 3 Moteurs (`Colab` | `Local` | `API`)** :
   - **Google Colab (GPU & TPU)** : Connexion directe au **compte Google** (OAuth) depuis le popover `[👤]`. Le backend orchestre **automatiquement** l'allocation du runtime Colab (**GPU** : `T4 16 Go`, `L4 24 Go`, `A100 40/80 Go` ; **TPU** : `TPU v5e`, `TPU v6e`, `TPU v2-8` selon la capacité disponible sur le compte Google AI Pro) et le pont réseau chiffré — **l'utilisateur n'a jamais à lancer `ngrok` ni à copier-coller une URL ou un secret**.
   - **Local (PC)** : Exécution en arrière-plan via **ComfyUI Headless API (`:8188`)** sans jamais exposer le graphe de nœuds.
   - **API** : Exécution via les clés API configurées par l'utilisateur.
-- **Catalogue de Modèles Personnalisable par l'Utilisateur & Toujours Disponible Hors-Ligne** :
+- **Catalogue de Modèles Personnalisable & Disponible Hors-Ligne — cible non implémentée** :
   - La liste des modèles n'est **jamais codée en dur** dans le code Python : elle est stockée dans `data/models.json` sur le PC local, reste consultable même lorsque Colab est déconnecté, et permet à l'utilisateur d'**ajouter ou retirer librement ses propres modèles** (Hugging Face `repo_id` / Safetensors pour Colab, modèles connus auto-détectés ou workflows `.api.json` mappés pour Local, ou endpoints API).
 
 ---
@@ -136,13 +140,13 @@ Lorsque l'application démarre sans génération utilisateur (ou dans l'onglet `
 
 ### 6.1. Puces d'Inspiration de Prompt (Au-dessus des Onglets)
 - Lorsque la zone de prompt est vide et reçoit le focus (comme sur `ui-spec_image_aspect-ratio.png`), une rangée horizontale de puces de suggestions apparaît en haut du dock :
-  - Pilules `h-8 px-3 rounded-full bg-white border border-[#E5E7EB] text-xs font-medium text-[#111827] flex items-center gap-1.5 shadow-2xs` avec l'icône SVG `ListSparkles` (`≡+`) : ex. `Surreal Dreamscape`, `Cyberpunk Alleyway`, `Enchanted Forest`.
+  - Pilules `h-8 px-3 rounded-full bg-white border border-[#E5E7EB] text-xs font-medium text-[#111827] flex items-center gap-1.5 shadow-sm` avec l'icône SVG `ListSparkles` (`≡+`) : ex. `Surreal Dreamscape`, `Cyberpunk Alleyway`, `Enchanted Forest`.
 
 ### 6.2. Rail des 6 Onglets de Catégorie & Bouton `@ Brand Kit`
 - **Rail d'Onglets (`TabsList`)** :
   - Piste gris très doux `bg-[#EFEFEF] p-1 rounded-[14px] inline-flex items-center gap-0.5`.
   - 6 onglets : `Image`, `Video`, `Audio`, `Lip sync`, `Upscaling`, `3D Gen`.
-  - **Onglet actif** : pilule blanche `bg-white text-[#111827] font-semibold shadow-xs rounded-[10px] px-3.5 py-1.5 text-[13px]`.
+  - **Onglet actif** : pilule blanche `bg-white text-[#111827] font-semibold shadow-sm rounded-[10px] px-3.5 py-1.5 text-[13px]`.
   - **Onglet inactif** : `bg-transparent text-[#6B7280] hover:text-[#111827] font-medium px-3.5 py-1.5 text-[13px]`.
 - **Bloc Droit de l'En-tête du Dock** :
   - Conteneur `bg-[#F4F4F5] p-1 rounded-[14px] inline-flex items-center gap-1` accueillant :
@@ -160,7 +164,7 @@ Lorsque l'application démarre sans génération utilisateur (ou dans l'onglet `
   - `Lip sync` : `Face ref` (image/vidéo portrait), `Audio ref` (voix).
   - `Upscaling` : fente média source (image ou vidéo).
   - `3D Gen` : `Image refs` (1 à 4 vues d'un objet), `Mesh ref` (`.glb`, `.obj`, `.fbx` à rigger/animer).
-- **Blocage automatique des fichiers incompatibles (`acceptedInputTypes`)** : tout fichier glissé dont le type MIME n'est pas supporté par le modèle actif affiche un état de refus immédiat et est rejeté.
+- **Blocage automatique des fichiers incompatibles (`acceptedInputTypes`)** : **contrat cible à implémenter** : `acceptedInputTypes` accepte des classes (`image`, `video`, `audio`, `mesh`), des MIME exacts (`image/png`) ou génériques (`image/*`), et des extensions (`.glb`, `.obj`, `.fbx`). Normaliser casse, espaces et extension (point initial), puis comparer MIME et extension à une table partagée de formats connus. Si `File.type` est vide ou générique, résoudre le type par l'extension ; ne pas rejeter un `.glb` valide pour son seul MIME vide. Une classe correspond aux formats connus de cette classe ; un MIME générique ne couvre que son préfixe. Si aucun critère ne correspond, refuser le dépôt avec une explication. Le serveur doit vérifier le type réel et les capacités avant soumission (422 prévu), sans faire confiance au MIME client.
 
 ### 6.4. Rangée Inférieure de Pilules Sans Bordure (*Ghost Parameter Pills*)
 Comme visible sur `ui-spec_video.png`, `ui-spec_image.png` et `ui-spec_image_resolution.png` :
@@ -199,4 +203,4 @@ Comme visible sur `ui-spec_video.png`, `ui-spec_image.png` et `ui-spec_image_res
        - **Pour `Colab`** : saisie de l'identifiant Hugging Face (`hf_repo_id`, ex. `Wan-AI/Wan2.1-T2V-14B-Diffusers`), URL de poids `.safetensors` / Civitai, ou chemin Google Drive, choix de la catégorie et des `capabilities` (avec estimation automatique de la VRAM requise via `hf-mem`).
        - **Pour `Local` (ComfyUI Headless)** : auto-détection immédiate des modèles connus présents dans ComfyUI + onglet **`Add / Map Custom Workflow`** permettant de déposer un fichier `workflow_api.json` et de mapper ses nœuds (`prompt`, `seed`, `dimensions`, `startFrame`, `endFrame`, `references`, `outputNode`).
      - **Action `Remove / Hide` sur chaque modèle** : l'utilisateur peut retirer n'importe quel modèle qu'il n'utilise pas ou réinitialiser les modèles par défaut.
-     - **Disponibilité 100 % Hors-Ligne** : le catalogue est lu depuis `data/models.json` sur le PC local ; même si Colab ou ComfyUI est éteint, l'utilisateur peut parcourir, configurer et modifier sa liste de modèles.
+     - **Disponibilité 100 % Hors-Ligne — cible non implémentée** : le catalogue est lu depuis `data/models.json` sur le PC local ; même si Colab ou ComfyUI est éteint, l'utilisateur peut parcourir, configurer et modifier sa liste de modèles.
