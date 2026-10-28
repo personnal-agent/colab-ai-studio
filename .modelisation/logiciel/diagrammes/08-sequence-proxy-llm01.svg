@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1220" viewBox="0 0 1680 1220">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#2C3E50"/>
+    </marker>
+    <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#2C3E50" stroke-width="1.6"/>
+    </marker>
+    <marker id="abortArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#BA3C2A"/>
+    </marker>
+    <marker id="openAbortArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#BA3C2A" stroke-width="1.6"/>
+    </marker>
+  </defs>
+
+  <!-- Fond général blanc pur -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- Cadre d'interaction de séquence (sd) -->
+  <rect x="25" y="25" width="1630" height="1170" fill="none" stroke="#2C3E50" stroke-width="1.5"/>
+  <path d="M25 25 L920 25 L920 56 L900 82 L25 82 Z" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.5"/>
+  <text x="40" y="48" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#126A78">sd</text>
+  <text x="70" y="48" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#2C3E50">08 · Séquence — Proxy LLM Streaming &amp; Gestion des Slots Mémoire</text>
+  <text x="40" y="70" font-family="Arial, sans-serif" font-size="11.5" font-style="italic" fill="#596875">Cinématique canonique UML 2.5 alignée sur le Domaine 04 · SessionPrompt, ModelSpec, SlotMemoireModele et MoteurInferenceLLM</text>
+
+  <!-- ========================================== -->
+  <!-- LIGNES DE VIE (LIFELINES)                  -->
+  <!-- ========================================== -->
+
+  <!-- 1. c : Créateur de contenu (x = 100) -->
+  <circle cx="100" cy="138" r="9" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+  <line x1="100" y1="147" x2="100" y2="173" stroke="#17212B" stroke-width="2"/>
+  <line x1="84" y1="157" x2="116" y2="157" stroke="#17212B" stroke-width="2"/>
+  <line x1="100" y1="173" x2="86" y2="193" stroke="#17212B" stroke-width="2"/>
+  <line x1="100" y1="173" x2="114" y2="193" stroke="#17212B" stroke-width="2"/>
+  <text x="100" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#17212B">c : Créateur de contenu</text>
+  <line x1="100" y1="218" x2="100" y2="1030" stroke="#7F8C8D" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 2. s : SessionPrompt (x = 380) -->
+  <rect x="290" y="142" width="180" height="46" rx="4" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.8"/>
+  <text x="380" y="162" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C3E50">s : SessionPrompt</text>
+  <text x="380" y="177" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#596875">Classe Métier (Domaine 04)</text>
+  <line x1="380" y1="188" x2="380" y2="1030" stroke="#7F8C8D" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 3. m : ModelSpec (x = 740) -->
+  <rect x="650" y="142" width="180" height="46" rx="4" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.8"/>
+  <text x="740" y="162" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C3E50">m : ModelSpec</text>
+  <text x="740" y="177" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#596875">Spécification Modèle (04)</text>
+  <line x1="740" y1="188" x2="740" y2="1030" stroke="#7F8C8D" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 4. slot : SlotMemoireModele (x = 1110) -->
+  <rect x="1005" y="142" width="210" height="46" rx="4" fill="#EDF5F6" stroke="#2C3E50" stroke-width="1.8"/>
+  <text x="1110" y="162" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#2C3E50">slot : SlotMemoireModele</text>
+  <text x="1110" y="177" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#596875">Gestionnaire VRAM (04)</text>
+  <line x1="1110" y1="188" x2="1110" y2="1030" stroke="#7F8C8D" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- 5. «système externe» :MoteurInferenceLLM (x = 1470) -->
+  <rect x="1355" y="142" width="230" height="46" rx="4" fill="#F0FDF4" stroke="#166534" stroke-width="1.8"/>
+  <text x="1470" y="158" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">«système externe»</text>
+  <text x="1470" y="176" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#14532D">:MoteurInferenceLLM</text>
+  <line x1="1470" y1="188" x2="1470" y2="1030" stroke="#166534" stroke-width="1.2" stroke-dasharray="6 6"/>
+
+  <!-- Barres d'activation -->
+  <rect x="93" y="240" width="14" height="722" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+  <rect x="373" y="240" width="14" height="722" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+  <rect x="733" y="270" width="14" height="30" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+  <rect x="1103" y="348" width="14" height="584" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.4"/>
+  <rect x="1463" y="438" width="14" height="460" fill="#FFFFFF" stroke="#166534" stroke-width="1.4"/>
+
+  <!-- ========================================== -->
+  <!-- PHASE 1 : HANDSHAKE ET ALLOCATION DU SLOT  -->
+  <!-- ========================================== -->
+
+  <!-- Message 1 -->
+  <path d="M107 240 L373 240" fill="none" stroke="#2C3E50" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="240" y="233" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#2C3E50">1: envoyerRequeteConversation(messages)</text>
+
+  <!-- Message 1.1 -->
+  <path d="M387 270 L733 270" fill="none" stroke="#2C3E50" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="560" y="263" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#2C3E50">1.1: verifierEligibiliteMaterielle(vramLibre)</text>
+
+  <path d="M733 300 L387 300" fill="none" stroke="#2C3E50" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <text x="560" y="293" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">1.1.1: specEligible</text>
+
+  <!-- Message 1.2 -->
+  <path d="M387 348 L1103 348" fill="none" stroke="#2C3E50" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="660" y="331" width="180" height="15" fill="#FFFFFF"/>
+  <text x="750" y="342" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#2C3E50">1.2: allouerModele(spec)</text>
+
+  <path d="M1103 378 L387 378" fill="none" stroke="#2C3E50" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="680" y="361" width="140" height="15" fill="#FFFFFF"/>
+  <text x="750" y="372" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#596875">1.2.1: slotAlloue</text>
+
+  <!-- Message 2 -->
+  <path d="M387 414 L1103 414" fill="none" stroke="#2C3E50" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="630" y="397" width="240" height="15" fill="#FFFFFF"/>
+  <text x="750" y="408" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#2C3E50">2: executerCompletionStream(prompt)</text>
+
+  <path d="M1117 438 L1463 438" fill="none" stroke="#166534" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="1290" y="431" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#14532D">2.1: initierStreamTokens(prompt)</text>
+
+  <!-- ========================================================================= -->
+  <!-- PHASE 2 : FRAGMENT COMBINÉ ALT (B-017 : GARDES PURES SANS LIBELLÉ HYBRIDE) -->
+  <!-- ========================================================================= -->
+  <rect x="65" y="465" width="1485" height="525" fill="none" stroke="#126A78" stroke-width="1.8"/>
+  <path d="M65 465 L125 465 L125 487 L113 500 L65 500 Z" fill="#E8F4F5" stroke="#126A78" stroke-width="1.5"/>
+  <text x="86" y="486" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">alt</text>
+
+  <!-- B-017 : Garde 1 pure sans texte descriptif hybride -->
+  <text x="140" y="485" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#126A78">[fluxCompletSansInterruption]</text>
+
+  <rect x="85" y="505" width="1445" height="130" fill="none" stroke="#126A78" stroke-width="1.4"/>
+  <path d="M85 505 L145 505 L145 525 L133 535 L85 535 Z" fill="#F0F9FA" stroke="#126A78" stroke-width="1.2"/>
+  <text x="104" y="523" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#126A78">loop</text>
+  <text x="160" y="522" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">[tant que tokens disponibles]</text>
+
+  <!-- Messages boucle nominale -->
+  <path d="M1463 550 L1117 550" fill="none" stroke="#2C3E50" stroke-width="1.5" marker-end="url(#openArrow)"/>
+  <text x="1290" y="543" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#2C3E50">2.2: emettreDeltaToken(chunk)</text>
+
+  <path d="M1103 580 L387 580" fill="none" stroke="#2C3E50" stroke-width="1.5" marker-end="url(#openArrow)"/>
+  <rect x="675" y="563" width="170" height="15" fill="#FFFFFF"/>
+  <text x="760" y="574" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#2C3E50">2.3: diffuserDeltaSSE(chunk)</text>
+
+  <path d="M373 610 L107 610" fill="none" stroke="#2C3E50" stroke-width="1.5" marker-end="url(#openArrow)"/>
+  <text x="240" y="603" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#2C3E50">2.4: afficherReponse(chunk)</text>
+
+  <!-- Clôture nominale -->
+  <path d="M1463 660 L1117 660" fill="none" stroke="#2C3E50" stroke-width="1.4" marker-end="url(#openArrow)"/>
+  <text x="1290" y="653" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#2C3E50">2.5: cloturerFluxTokens("stop")</text>
+
+  <path d="M1103 690 L387 690" fill="none" stroke="#2C3E50" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <rect x="685" y="673" width="150" height="15" fill="#FFFFFF"/>
+  <text x="760" y="684" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#2C3E50">2.6: notificationFinFlux</text>
+
+  <path d="M373 720 L107 720" fill="none" stroke="#2C3E50" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openArrow)"/>
+  <text x="240" y="713" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#2C3E50">2.7: reponseComplete</text>
+
+  <!-- B-017 : Séparateur d'opérande et Garde 2 PURE [else] (décalée à droite de la barre d'activation x=93..107) -->
+  <line x1="65" y1="750" x2="1550" y2="750" stroke="#BA3C2A" stroke-width="1.6" stroke-dasharray="8 6"/>
+  <rect x="115" y="760" width="55" height="18" fill="#FFFFFF"/>
+  <text x="120" y="774" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#BA3C2A">[else]</text>
+
+  <!-- B-018 : Messages d'interruption nommant les méthodes du Domaine 04 -->
+  <!-- Message 3 -->
+  <path d="M107 800 L373 800" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#abortArrow)"/>
+  <text x="240" y="793" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#BA3C2A">3: interrompreFlux()</text>
+
+  <!-- Message 3.1 -->
+  <path d="M387 835 L1103 835" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#abortArrow)"/>
+  <rect x="690" y="818" width="120" height="15" fill="#FFFFFF"/>
+  <text x="750" y="829" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#BA3C2A">3.1: libererSlot()</text>
+
+  <!-- Message 3.2 -->
+  <path d="M1117 870 L1463 870" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#abortArrow)"/>
+  <text x="1290" y="863" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">3.2: abortInference()</text>
+
+  <path d="M1463 905 L1117 905" fill="none" stroke="#BA3C2A" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openAbortArrow)"/>
+  <text x="1290" y="898" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#BA3C2A">3.2.1: inferenceInterrompue</text>
+
+  <path d="M1103 935 L387 935" fill="none" stroke="#BA3C2A" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openAbortArrow)"/>
+  <rect x="700" y="918" width="100" height="15" fill="#FFFFFF"/>
+  <text x="750" y="929" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#BA3C2A">3.3: slotLibere</text>
+
+  <path d="M373 965 L107 965" fill="none" stroke="#BA3C2A" stroke-width="1.4" stroke-dasharray="6 4" marker-end="url(#openAbortArrow)"/>
+  <text x="240" y="958" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" font-style="italic" fill="#BA3C2A">3.4: fluxInterrompu</text>
+
+  <!-- Cartouche de synthèse d'ingénierie et alignement opérationnel -->
+  <rect x="50" y="1045" width="1580" height="120" rx="5" fill="#F8FAFC" stroke="#BDC3C7" stroke-width="1.2"/>
+  <text x="65" y="1068" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#2C3E50">Spécification UML 2.5.1 &amp; Traçabilité des Échanges Dynamiques :</text>
+  <text x="65" y="1090" font-family="Arial, sans-serif" font-size="11.5" fill="#2C3E50">• Alignement classes métier : Les lignes de vie sont portées par SessionPrompt, ModelSpec et SlotMemoireModele (modèle du domaine 04).</text>
+  <text x="65" y="1112" font-family="Arial, sans-serif" font-size="11.5" fill="#2C3E50">• Opérations logiques du domaine : Méthodes métier typées (envoyerRequeteConversation, allouerModele, libererSlot, abortInference) sans couplage au protocole réseau sous-jacent.</text>
+  <text x="65" y="1134" font-family="Arial, sans-serif" font-size="11.5" fill="#2C3E50">• Gardes alternatives formelles : Encadrement par [fluxCompletSansInterruption] et garde par défaut [else].</text>
+</svg>

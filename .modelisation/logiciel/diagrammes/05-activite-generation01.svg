@@ -1,0 +1,319 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1940" height="1480" viewBox="0 0 1940 1480">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#405364"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0 0 L10 4 L0 8 Z" fill="#166534"/>
+    </marker>
+    <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 0.8 L9 4 L1 7.2" fill="none" stroke="#405364" stroke-width="1.5"/>
+    </marker>
+    <marker id="zigzagArrow" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto">
+      <path d="M0 0 L12 5 L0 10 Z" fill="#BA3C2A"/>
+    </marker>
+  </defs>
+
+  <!-- Arrière-plan -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- En-tête -->
+  <text x="48" y="46" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#17212B">05 · Flux d’activité — Génération média tri-mode &amp; compilation ComfyUI (Omniforge)</text>
+  <text x="48" y="74" font-family="Arial, sans-serif" font-size="14" fill="#596875">Diagramme d'Activité UML 2.5 · Validation acceptedInputTypes, injection LoRA, routage Local ComfyUI Headless / Colab / API et région interruptible</text>
+  <line x1="48" y1="90" x2="1892" y2="90" stroke="#D8E0E5" stroke-width="1.5"/>
+
+  <!-- ===================================================================== -->
+  <!-- PARTITIONS D'ACTIVITÉ (SWIMLANES)                                     -->
+  <!-- ===================================================================== -->
+  <!-- Couloir 1 : Créateur de contenu (Humain) -->
+  <rect x="48" y="115" width="330" height="1290" fill="#FCFDFD" stroke="#C8D3DB" stroke-width="1.2"/>
+  <rect x="48" y="115" width="330" height="50" fill="#EDF5F6" stroke="#126A78" stroke-width="1.4"/>
+  <text x="213" y="146" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">Créateur de contenu (Humain)</text>
+
+  <!-- Couloir 2 : React SPA (Client Omniforge) -->
+  <rect x="378" y="115" width="340" height="1290" fill="#FCFDFD" stroke="#C8D3DB" stroke-width="1.2"/>
+  <rect x="378" y="115" width="340" height="50" fill="#EDF5F6" stroke="#126A78" stroke-width="1.4"/>
+  <text x="548" y="146" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">React SPA (Client Studio)</text>
+
+  <!-- Couloir 3 : FastAPI Backend & ComfyWorkflowCompiler -->
+  <rect x="718" y="115" width="580" height="1290" fill="#FCFDFD" stroke="#C8D3DB" stroke-width="1.2"/>
+  <rect x="718" y="115" width="580" height="50" fill="#EDF5F6" stroke="#126A78" stroke-width="1.4"/>
+  <text x="1008" y="146" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">FastAPI Backend (Orchestrateur &amp; Compilateur)</text>
+
+  <!-- Couloir 4 : Moteurs d'Exécution (ComfyUI Headless / Colab T4 / API) -->
+  <rect x="1298" y="115" width="594" height="1290" fill="#FCFDFD" stroke="#C8D3DB" stroke-width="1.2"/>
+  <rect x="1298" y="115" width="594" height="50" fill="#EDF5F6" stroke="#126A78" stroke-width="1.4"/>
+  <text x="1595" y="146" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#17212B">Moteur d'Exécution (Local ComfyUI :8188 · Colab · API)</text>
+
+  <!-- ===================================================================== -->
+  <!-- FLUX DE CONTRÔLE ET ACTIONS                                           -->
+  <!-- ===================================================================== -->
+
+  <!-- 1. Nœud Initial dans Couloir Créateur -->
+  <circle cx="213" cy="195" r="9" fill="#17212B"/>
+  <path d="M213 204 L213 230" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Action Créateur : Configurer la requête créative (B-002 corrigé) -->
+  <rect x="73" y="230" width="280" height="72" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="213" y="258" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">
+    <tspan x="213" dy="0">Configurer la requête créative</tspan>
+    <tspan x="213" dy="18">(prompt, références, LoRAs &amp; Brand Kit)</tspan>
+  </text>
+
+  <!-- Flux vers React SPA -->
+  <path d="M353 266 L418 266" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Action React SPA : Filtrer fichiers selon acceptedInputTypes et émettre JSON plat -->
+  <rect x="418" y="230" width="260" height="72" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="548" y="256" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+    <tspan x="548" dy="0">Vérifier acceptedInputTypes</tspan>
+    <tspan x="548" dy="18">et envoyer GenerationRequest</tspan>
+  </text>
+
+  <!-- Flux vers FastAPI Backend -->
+  <path d="M678 266 L775 266" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Action FastAPI Backend : Valider Pydantic v2 (types, quotas, baseModel LoRA) -->
+  <rect x="775" y="230" width="465" height="72" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="1007" y="256" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+    <tspan x="1007" dy="0">Valider charge utile (Pydantic v2 : acceptedInputTypes,</tspan>
+    <tspan x="1007" dy="18">compatibilité LoRA baseModel) et initialiser tâche</tspan>
+  </text>
+
+  <!-- Décision 1 : Fichiers & LoRAs conformes ? -->
+  <path d="M1007 302 L1007 332" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <polygon points="1007,332 1031,356 1007,380 983,356" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="1040" y="360" font-family="Arial, sans-serif" font-size="12.5" font-weight="600" fill="#17212B">Entrées conformes ?</text>
+
+  <!-- Branche [invalide] -> Rejet HTTP 422 -->
+  <path d="M983 356 L660 356" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="815" y="340" width="65" height="18" fill="#FFFFFF"/>
+  <text x="847" y="353" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="700" fill="#BA3C2A">[invalide]</text>
+
+  <rect x="435" y="328" width="225" height="56" rx="10" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.8"/>
+  <text x="547" y="352" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#BA3C2A">
+    <tspan x="547" dy="0">Afficher rejet HTTP 422</tspan>
+    <tspan x="547" dy="16">(fichier ou LoRA incompatible)</tspan>
+  </text>
+
+  <!-- B-001 corrigé : Remplacement du FlowFinalNode par un ActivityFinalNode conforme (œil-de-bœuf) -->
+  <path d="M435 356 L404 356" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <circle cx="390" cy="356" r="14" fill="#FFFFFF" stroke="#BA3C2A" stroke-width="2"/>
+  <circle cx="390" cy="356" r="8" fill="#BA3C2A"/>
+
+  <!-- Branche [valide] -> Compilation Brand Kit & Injection triggerWord LoRA -->
+  <path d="M1007 380 L1007 415" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="1020" y="402" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#166534">[valide]</text>
+
+  <rect x="765" y="415" width="485" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="1007" y="443" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+    <tspan x="1007" dy="0">Compiler Brand Kit actif (LLM ou repli déterministe), arbitrer</tspan>
+    <tspan x="1007" dy="18">les références visuelles et injecter les triggerWords LoRA</tspan>
+  </text>
+
+  <!-- Décision 2 : Mode d'exécution (executionMode) ? -->
+  <path d="M1007 483 L1007 518" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <polygon points="1007,518 1033,544 1007,570 981,544" fill="#FFFFFF" stroke="#126A78" stroke-width="2.2"/>
+  <text x="1042" y="538" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#126A78">executionMode ?</text>
+
+  <!-- Sous-branche A : [local] -> ComfyWorkflowCompiler -->
+  <path d="M981 544 L855 544 L855 585" fill="none" stroke="#166534" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <rect x="885" y="528" width="55" height="18" fill="#FFFFFF"/>
+  <text x="912" y="541" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#166534">[local]</text>
+
+  <rect x="735" y="585" width="250" height="84" rx="12" fill="#F0FDF4" stroke="#166534" stroke-width="2"/>
+  <text x="860" y="612" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14532D">
+    <tspan x="860" dy="0">Sélectionner topologie .api.json</tspan>
+    <tspan x="860" dy="17">(t2v/i2v/flf2v/ref2v/audio/3d)</tspan>
+    <tspan x="860" dy="17">et chaîner les nœuds LoraLoader</tspan>
+  </text>
+
+  <!-- Sous-branche B : [colab] -> Délégation Tunnel Colab -->
+  <path d="M1007 570 L1145 570 L1145 585" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="1050" y="555" width="75" height="18" fill="#FFFFFF"/>
+  <text x="1087" y="568" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">[colab | api]</text>
+
+  <rect x="1015" y="585" width="260" height="84" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="1145" y="618" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="500" fill="#17212B">
+    <tspan x="1145" dy="0">Sérialiser payload standard</tspan>
+    <tspan x="1145" dy="18">vers Colab (/infer) ou API Cloud</tspan>
+  </text>
+
+  <!-- Envoi vers le Couloir 4 (Moteurs d'exécution) -->
+  <!-- Depuis [local] vers ComfyUI Headless (:8188) -->
+  <path d="M860 669 L860 700 L1445 700 L1445 725" fill="none" stroke="#166534" stroke-width="2" marker-end="url(#arrowGreen)"/>
+  <rect x="1315" y="725" width="260" height="86" rx="12" fill="#F0FDF4" stroke="#166534" stroke-width="2"/>
+  <text x="1445" y="752" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="600" fill="#14532D">
+    <tspan x="1445" dy="0">ComfyUI Headless (127.0.0.1:8188)</tspan>
+    <tspan x="1445" dy="17">POST /upload/image · POST /prompt</tspan>
+    <tspan x="1445" dy="17">Smart VRAM Offloading du graphe</tspan>
+  </text>
+
+  <!-- Depuis [colab | api] vers Colab ModelSwapper / API -->
+  <path d="M1145 669 L1145 685 L1735 685 L1735 725" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="1600" y="725" width="270" height="86" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="1735" y="752" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="500" fill="#17212B">
+    <tspan x="1735" dy="0">Colab GPU T4 / API Cloud</tspan>
+    <tspan x="1735" dy="17">ModelSwapper (purge si modèle != actif)</tspan>
+    <tspan x="1735" dy="17">&amp; montage LoRA en VRAM</tspan>
+  </text>
+
+  <!-- NŒUD DE FUSION (MergeNode) dans le couloir Moteur d'Exécution -->
+  <path d="M1445 811 L1445 845 L1570 845" fill="none" stroke="#166534" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <path d="M1735 811 L1735 845 L1610 845" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <polygon points="1590,832 1610,845 1590,858 1570,845" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <path d="M1590 858 L1590 895" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- ===================================================================== -->
+  <!-- RÉGION D'ACTIVITÉ INTERRUPTIBLE                                       -->
+  <!-- ===================================================================== -->
+  <rect x="1320" y="878" width="550" height="218" rx="16" fill="none" stroke="#BA3C2A" stroke-width="1.8" stroke-dasharray="6 4"/>
+  <text x="1338" y="896" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">«interruptible activity region»</text>
+
+  <rect x="1360" y="902" width="450" height="62" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="1585" y="927" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#17212B">
+    <tspan x="1585" dy="0">Exécuter l'inférence multimédia asynchrone</tspan>
+    <tspan x="1585" dy="17">et émettre la télémétrie (WebSocket /ws ou SSE)</tspan>
+  </text>
+
+  <!-- B-004 : MergeNode de rebouclage placé juste avant le statut de la tâche -->
+  <path d="M1585 964 L1585 974" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <polygon points="1585,974 1598,984 1585,994 1572,984" fill="#FFFFFF" stroke="#405364" stroke-width="1.8"/>
+
+  <path d="M1585 994 L1585 1016" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="1575" y="1008" text-anchor="end" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#17212B">Statut tâche ?</text>
+
+  <!-- Décision Statut tâche ? (B-003 : 3 branches couvrantes) -->
+  <polygon points="1585,1016 1610,1030 1585,1044 1560,1030" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+
+  <!-- Branche 1 : [en cours / progress] vers Backend puis SPA puis rebouclage -->
+  <path d="M1560 1030 L1240 1030" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="1340" y="1013" width="135" height="20" fill="#FFFFFF"/>
+  <text x="1407" y="1027" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[en cours / progress]</text>
+
+  <rect x="780" y="996" width="460" height="62" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="1010" y="1022" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="500" fill="#17212B">
+    <tspan x="1010" dy="0">Normaliser progression (pont WebSocket ComfyUI → SSE)</tspan>
+    <tspan x="1010" dy="17">et diffuser sur GET /api/tasks/{task_id}/status</tspan>
+  </text>
+
+  <path d="M780 1030 L678 1030" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="418" y="996" width="260" height="62" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="548" y="1022" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="500" fill="#17212B">
+    <tspan x="548" dy="0">Actualiser la progression SSE</tspan>
+    <tspan x="548" dy="17">dans la carte de génération</tspan>
+  </text>
+
+  <!-- B-004 & B-006 : Flux de rebouclage en trait PLEIN vers le MergeNode en amont de Statut tâche ? -->
+  <path d="M548 996 L548 970 L1550 970 L1572 984" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="915" y="960" width="250" height="18" fill="#FFFFFF"/>
+  <text x="1040" y="973" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#126A78">rebouclage de surveillance (SSE continu)</text>
+
+  <!-- B-003 : Branche 2 : [échec / erreur OOM] vers notification d'échec et fin -->
+  <path d="M1610 1030 L1655 1030" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="1612" y="1015" width="40" height="15" fill="#FFFFFF"/>
+  <text x="1632" y="1026" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#BA3C2A">[échec]</text>
+
+  <rect x="1655" y="1006" width="175" height="44" rx="10" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.8"/>
+  <text x="1742" y="1024" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#BA3C2A">
+    <tspan x="1742" dy="0">Notifier l'échec d'inférence</tspan>
+    <tspan x="1742" dy="16">(log OOM / erreur moteur)</tspan>
+  </text>
+  <path d="M1742 1050 L1742 1060" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <circle cx="1742" cy="1070" r="10" fill="#FFFFFF" stroke="#BA3C2A" stroke-width="2"/>
+  <circle cx="1742" cy="1070" r="5" fill="#BA3C2A"/>
+
+  <!-- Demande d'annulation déclenchée par le Créateur pendant l'inférence (B-004 / NEW-09 : AcceptEventAction) -->
+  <path d="M 83 1045 L 343 1045 L 343 1080 L 83 1080 L 105 1062 Z" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.8"/>
+  <text x="220" y="1066" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#BA3C2A">Signal : Demande d'annulation</text>
+  <path d="M 213 1080 L 213 1105" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <rect x="73" y="1105" width="280" height="60" rx="12" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.8"/>
+  <text x="213" y="1131" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#BA3C2A">
+    <tspan x="213" dy="0">Demander l'annulation</tspan>
+    <tspan x="213" dy="17">de la génération en cours</tspan>
+  </text>
+
+  <!-- Branche d'annulation émise vers le Backend (traits pleins B-006) -->
+  <path d="M353 1135 L418 1135" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="418" y="1105" width="260" height="60" rx="12" fill="#FFF2F2" stroke="#BA3C2A" stroke-width="1.8"/>
+  <text x="548" y="1131" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#BA3C2A">
+    <tspan x="548" dy="0">POST /api/tasks/{task_id}/cancel</tspan>
+    <tspan x="548" dy="17">émettre signal d'interruption</tspan>
+  </text>
+
+  <!-- Signal d'annulation vers MergeNode en amont de Stopper graphe (B-005 & B-006 : trait plein) -->
+  <path d="M678 1135 L1596 1135" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="910" y="1122" width="280" height="22" fill="#FFFFFF" stroke="#BA3C2A" stroke-width="0.8"/>
+  <text x="1050" y="1137" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">POST /interrupt (ComfyUI) ou POST /cancel (Colab)</text>
+
+  <!-- Arc d'interruption en zigzag émis depuis la région d'activité interruptible (B-005 : pointe exactement sur le sommet supérieur) -->
+  <path d="M 1810 933 L 1895 933 L 1878 995 L 1895 1060 L 1878 1105 L 1610 1105 L 1610 1123" fill="none" stroke="#BA3C2A" stroke-width="2.2" marker-end="url(#zigzagArrow)"/>
+  <rect x="1835" y="920" width="85" height="18" fill="#FFFFFF"/>
+  <text x="1877" y="933" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#BA3C2A">«interrupting»</text>
+
+  <!-- B-005 : Losange de fusion (MergeNode) en amont de Stopper graphe -->
+  <polygon points="1610,1123 1624,1135 1610,1147 1596,1135" fill="#FFFFFF" stroke="#BA3C2A" stroke-width="2"/>
+  <path d="M1624 1135 L1650 1135" fill="none" stroke="#BA3C2A" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <rect x="1650" y="1105" width="225" height="60" rx="12" fill="#FFF8E8" stroke="#8C6418" stroke-width="2"/>
+  <text x="1762" y="1131" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="600" fill="#17212B">
+    <tspan x="1762" dy="0">Stopper graphe / pipeline</tspan>
+    <tspan x="1762" dy="17">et marquer tâche cancelled</tspan>
+  </text>
+  <path d="M1762 1165 L1762 1188" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <!-- Nœud final d'activité œil-de-bœuf pour la branche d'interruption -->
+  <circle cx="1762" cy="1200" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+  <circle cx="1762" cy="1200" r="8" fill="#17212B"/>
+
+  <!-- ===================================================================== -->
+  <!-- BRANCHE NOMINALE : [complétée] (Y=1235)                               -->
+  <!-- ===================================================================== -->
+  <path d="M1585 1042 L1585 1235" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="1515" y="1145" width="70" height="20" fill="#FFFFFF"/>
+  <text x="1550" y="1159" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#17212B">[complétée]</text>
+
+  <rect x="1350" y="1235" width="260" height="64" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="1480" y="1262" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="500" fill="#17212B">
+    <tspan x="1480" dy="0">Exposer binaire généré</tspan>
+    <tspan x="1480" dy="17">(GET /view ComfyUI, Tunnel ou URL)</tspan>
+  </text>
+
+  <path d="M1350 1267 L1240 1267" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <rect x="780" y="1235" width="460" height="68" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="1010" y="1263" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+    <tspan x="1010" dy="0">Rapatrier via MediaFileStore (chunks 64 Ko) vers outputs/</tspan>
+    <tspan x="1010" dy="18">et persister dans data/generations.json (JSONDocumentStore)</tspan>
+  </text>
+
+  <!-- Nœud d'objet UML (data/generations.json & outputs) -->
+  <rect x="850" y="1328" width="320" height="44" fill="#F4F8FA" stroke="#126A78" stroke-width="1.5"/>
+  <text x="1010" y="1346" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="600" fill="#126A78">data/generations.json &amp; outputs/**</text>
+  <text x="1010" y="1362" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="500" fill="#596875">[TaskStatus: completed | persisted]</text>
+  <path d="M1010 1303 L1010 1328" fill="none" stroke="#126A78" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arrow)"/>
+
+  <path d="M780 1267 L678 1267" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="418" y="1235" width="260" height="64" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="548" y="1262" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+    <tspan x="548" dy="0">Actualiser MediaGallery (6 types)</tspan>
+    <tspan x="548" dy="18">et notifier le créateur</tspan>
+  </text>
+
+  <path d="M418 1267 L353 1267" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <rect x="83" y="1235" width="270" height="64" rx="12" fill="#FFFFFF" stroke="#405364" stroke-width="2"/>
+  <text x="218" y="1262" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="500" fill="#17212B">
+    <tspan x="218" dy="0">Consulter l'artefact généré</tspan>
+    <tspan x="218" dy="18">(Image, Vidéo, Audio, Lip-Sync, 3D)</tspan>
+  </text>
+
+  <path d="M218 1299 L218 1335" fill="none" stroke="#405364" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <circle cx="218" cy="1349" r="14" fill="#FFFFFF" stroke="#17212B" stroke-width="2"/>
+  <circle cx="218" cy="1349" r="8" fill="#17212B"/>
+
+  <!-- Note de bas de page -->
+  <rect x="48" y="1420" width="1844" height="38" rx="4" fill="#F8FAFB" stroke="#C8D3DB" stroke-width="1"/>
+  <text x="64" y="1444" font-family="Arial, sans-serif" font-size="12" fill="#596875">
+    Omniforge (Version 01) · Le mode [local] compile un graphe ComfyUI Headless (.api.json + LoraLoader) sans exposer de nœuds à l'utilisateur ; [colab] et [api] partagent le même contrat SSE et la même persistance locale.
+  </text>
+</svg>

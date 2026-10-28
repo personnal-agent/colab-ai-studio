@@ -1,0 +1,266 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2000" height="1420" viewBox="0 0 2000 1420">
+  <defs>
+    <marker id="openArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#2C3E50" stroke-width="1.5"/>
+    </marker>
+    <marker id="openArrowGreen" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#166534" stroke-width="1.5"/>
+    </marker>
+    <marker id="openArrowAmber" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#8C6418" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <!-- Fond blanc pur -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- En-tête -->
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">02 · Architecture logique des composants — Omniforge</text>
+  <text x="48" y="68" font-family="Arial, sans-serif" font-size="13.5" fill="#52616B">Diagramme de Composants UML 2.5.1 · Connecteurs d'Assemblage Sucette / Douille, Interfaces Normées, Architecture Modulaire</text>
+  <line x1="48" y1="82" x2="1952" y2="82" stroke="#D5DEE5" stroke-width="1.5"/>
+
+  <!-- ===================================================================== -->
+  <!-- SOUS-SYSTÈME 1 : FRONTEND SPA (React 18 / TypeScript 5)               -->
+  <!-- ===================================================================== -->
+  <rect x="48" y="105" width="530" height="1160" rx="8" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="2.2"/>
+  <rect x="48" y="105" width="530" height="38" rx="8" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="313" y="129" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#123C4A">«subsystem» Frontend SPA (React 18 / TypeScript 5)</text>
+  <rect x="75" y="165" width="475" height="95" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="90" y="186" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="90" y="205" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">TopNavBar &amp; AppModeSwitch</text>
+  <text x="90" y="224" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Commutateur segmenté : [ Studio | Agents ]</text>
+  <text x="90" y="242" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Sélecteur Projet, Brand Kit actif et statut Moteur (Colab / Local / API)</text>
+  <rect x="75" y="280" width="475" height="105" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="90" y="301" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="90" y="320" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">MediaGallery (Grille Responsive &amp; Visionneuses)</text>
+  <text x="90" y="339" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• 7 types de cartes : Vidéo, Image, Audio, 3D, Génération, Brouillon, Comparaison</text>
+  <text x="90" y="357" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Lecteur Audio Waveform et Visionneuse 3D interactive (.glb / .obj / .ply)</text>
+  <text x="90" y="374" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Groupement chronologique et filtrage par projet</text>
+  <rect x="75" y="405" width="475" height="185" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="1.8"/>
+  <text x="90" y="426" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">«component»</text>
+  <text x="90" y="445" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">FloatingPromptDock (Dock Adaptatif 6 Catégories)</text>
+  <text x="90" y="465" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">• 6 Onglets : [ Image ] [ Video ] [ Audio ] [ Lip sync ] [ Upscaling ] [ 3D Gen ]</text>
+  <text x="90" y="484" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Zone Prompt unifiée (texte, paroles [verse], tags vocaux) + Slots Ingrédients</text>
+  <text x="90" y="503" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Filtrage strict d'upload par capabilities.acceptedInputTypes (image/video/audio/mesh)</text>
+  <text x="90" y="522" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#166534">• LoraPillControl [LoRA] : filtré par baseModel, toggle 1-clic (0.8), slider replié</text>
+  <text x="90" y="541" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Pilules Audio (SubMode, Voice, VocalMode, Speed) &amp; 3D (Octree, Faces, PBR, Rig)</text>
+  <text x="90" y="560" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Architecture atomique : 1 fichier par contrôle sous components/dock/controls/</text>
+  <rect x="75" y="610" width="475" height="115" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="90" y="631" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="90" y="650" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">Modals &amp; Configuration Wizards</text>
+  <text x="90" y="670" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• BrandKitModal (Palette HEX, typographies, logo, extraction URL)</text>
+  <text x="90" y="688" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• ExecutionEngineModal (Choix Colab / Local ComfyUI :8188 / Clés API)</text>
+  <text x="90" y="706" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• CustomModelMapperModal (Import workflow_api.json &amp; mapping des nœuds)</text>
+  <rect x="75" y="745" width="475" height="105" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="90" y="766" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="90" y="785" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">StudioContext (État Réactif Global)</text>
+  <text x="90" y="805" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• État actif : appMode (studio | agents), executionMode (colab | local | api)</text>
+  <text x="90" y="823" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Catalogue dynamique des modèles, LoRAs compatibles et brouillons par onglet</text>
+  <rect x="75" y="875" width="475" height="115" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="90" y="896" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="90" y="915" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">APIClient &amp; SSESubscriber (services/apiClient.ts)</text>
+  <text x="90" y="935" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Envoi d'un JSON plat unique (GenerationRequest) quel que soit le moteur</text>
+  <text x="90" y="953" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Écoute temps réel GET /api/tasks/{id}/status (EventSource SSE)</text>
+  <!-- Dépendances internes Frontend avec flèches ouvertes (S-011) -->
+  <path d="M550 212 L565 212 L565 770 L550 770" fill="none" stroke="#52616B" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
+  <path d="M550 330 L560 330 L560 780 L550 780" fill="none" stroke="#52616B" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
+  <path d="M550 495 L558 495 L558 795 L550 795" fill="none" stroke="#52616B" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#openArrow)"/>
+  <path d="M312 725 L312 745" fill="none" stroke="#52616B" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#openArrow)"/>
+  <text x="320" y="737" font-family="Arial, sans-serif" font-size="9" fill="#52616B">«use»</text>
+  <path d="M312 850 L312 875" fill="none" stroke="#52616B" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#openArrow)"/>
+  <text x="320" y="865" font-family="Arial, sans-serif" font-size="9" fill="#52616B">«use»</text>
+
+  <!-- ===================================================================== -->
+  <!-- SOUS-SYSTÈME 2 : BACKEND LOCAL (FastAPI / Python 3.10+)               -->
+  <!-- ===================================================================== -->
+  <rect x="670" y="105" width="730" height="1160" rx="8" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="2.2"/>
+  <rect x="670" y="105" width="730" height="38" rx="8" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="1035" y="129" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.5" font-weight="700" fill="#123C4A">«subsystem» Backend Local (FastAPI / Python 3.10+ · &lt; 80 Mo RAM)</text>
+  <rect x="700" y="165" width="670" height="105" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="715" y="186" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component» Couche 2 — API &amp; Contrôleurs Localhost (app/api/)</text>
+  <text x="715" y="206" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">FastAPIRouters (REST, SSE &amp; Proxy OpenAI)</text>
+  <text x="715" y="226" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• /api/generate/media · /api/tasks/{id}/status · /api/tasks/{id}/cancel · /v1/chat/completions</text>
+  <text x="715" y="244" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• /api/models · /api/models/local/scan · /api/models/local/custom · /api/loras · /api/config/execution</text>
+  <text x="715" y="260" font-family="Arial, sans-serif" font-size="11" font-style="italic" fill="#1E4E5F">Validation stricte Pydantic v2 (acceptedInputTypes, baseModel LoRA, quotas)</text>
+  <rect x="700" y="295" width="325" height="145" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="715" y="316" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="715" y="335" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">TaskOrchestrator</text>
+  <text x="715" y="355" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Cycle de vie TaskStatus</text>
+  <text x="715" y="373" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Bus d'événements SSE local</text>
+  <text x="715" y="391" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Injection auto des triggerWords</text>
+  <text x="715" y="409" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Annulation idempotente</text>
+  <rect x="1045" y="295" width="325" height="145" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="1060" y="316" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="1060" y="335" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">BrandContextCompiler &amp; Extractor</text>
+  <text x="1060" y="355" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Synthèse LLM ou repli déterministe</text>
+  <text x="1060" y="373" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Arbitrage P1(user) &gt; P2(kit) &gt; P3(logo)</text>
+  <text x="1060" y="391" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Extraction CSS/HTML (BrandExtractor)</text>
+  <rect x="700" y="470" width="670" height="175" rx="6" fill="#F0FDF4" stroke="#166534" stroke-width="1.8"/>
+  <text x="715" y="491" font-family="Arial, sans-serif" font-size="11" font-weight="700" fill="#166534">«component» Couche 3 — Routage Tri-Mode &amp; Orchestration ComfyUI Headless</text>
+  <text x="715" y="512" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#14532D">WorkerGateway · ComfyWorkflowCompiler · LocalModelRegistry · ComfyProcessManager</text>
+  <text x="715" y="533" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">• WorkerGateway : route chaque tâche vers ColabClient, ComfyLocalClient ou ApiProviderClient</text>
+  <text x="715" y="552" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">• ComfyWorkflowCompiler : sélectionne la topologie .api.json (t2v, i2v_start, flf2v, ref2v, audio, 3d...)</text>
+  <text x="715" y="571" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">  selon les références peuplées, injecte les paramètres et chaîne dynamiquement 1..N nœuds LoraLoader</text>
+  <text x="715" y="590" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">• LocalModelRegistry &amp; LoraRegistry : interroge GET /object_info, croise avec known_models_catalog.json</text>
+  <text x="715" y="609" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">  et custom_models.json, filtre les LoRAs compatibles par baseModel</text>
+  <text x="715" y="628" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">• ComfyProcessManager : attachement hybride sur 127.0.0.1:8188 ou lancement --disable-auto-launch</text>
+  <!-- S-010 : Interface d'assemblage IWorkerGateway (Lollipop / Socket) -->
+  <path d="M860 440 L860 450" fill="none" stroke="#166534" stroke-width="1.8"/>
+  <path d="M852 450 A8 8 0 0 0 868 450" fill="none" stroke="#166534" stroke-width="1.8"/>
+  <circle cx="860" cy="454" r="5" fill="#FFFFFF" stroke="#166534" stroke-width="1.8"/>
+  <path d="M860 459 L860 470" fill="none" stroke="#166534" stroke-width="1.8"/>
+  <text x="895" y="456" font-family="Arial, sans-serif" font-size="9.5" font-weight="700" fill="#166534">IWorkerGateway</text>
+  <!-- Clients d'exécution sortants (Couche 3 bis) -->
+  <rect x="700" y="665" width="215" height="95" rx="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.6"/>
+  <text x="712" y="685" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="712" y="703" font-family="Arial, sans-serif" font-size="12.5" font-weight="700" fill="#17212B">ColabClient &amp; Orchestrator</text>
+  <text x="712" y="721" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">• POST /infer, /cancel, SSE</text>
+  <text x="712" y="737" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">• ColabSessionOrchestrator</text>
+  <text x="712" y="753" font-family="Arial, sans-serif" font-size="10" fill="#1E4E5F">(OAuth2 Google &amp; tunnel auto)</text>
+  <rect x="930" y="665" width="205" height="95" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="1.6"/>
+  <text x="942" y="685" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#166534">«component»</text>
+  <text x="942" y="703" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#14532D">ComfyLocalClient</text>
+  <text x="942" y="722" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• POST /upload/image, /prompt</text>
+  <text x="942" y="742" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Pont WebSocket /ws → SSE</text>
+  <rect x="1150" y="665" width="220" height="95" rx="6" fill="#FFFFFF" stroke="#8C6418" stroke-width="1.6"/>
+  <text x="1162" y="685" font-family="Arial, sans-serif" font-size="10.5" font-weight="600" fill="#8C6418">«component»</text>
+  <text x="1162" y="703" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#17212B">ApiProviderClient</text>
+  <text x="1162" y="722" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Appels HTTPS fournisseurs</text>
+  <text x="1162" y="742" font-family="Arial, sans-serif" font-size="11" fill="#52616B">• Authentification par clé API</text>
+  <!-- S-011 : Liaisons descendantes depuis WorkerGateway vers les 3 clients -->
+  <path d="M807 645 L807 665" fill="none" stroke="#166534" stroke-width="1.5" marker-end="url(#openArrowGreen)"/>
+  <path d="M1032 645 L1032 665" fill="none" stroke="#166534" stroke-width="1.5" marker-end="url(#openArrowGreen)"/>
+  <path d="M1260 645 L1260 665" fill="none" stroke="#8C6418" stroke-width="1.5" marker-end="url(#openArrowAmber)"/>
+  <rect x="700" y="795" width="670" height="175" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="715" y="816" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component» Couche 4 — Persistance Atomique &amp; Système de Fichiers (app/storage/)</text>
+  <text x="715" y="837" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">JSONDocumentStore &amp; MediaFileStore</text>
+  <text x="715" y="858" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• JSONDocumentStore : asyncio.Lock par fichier + écriture atomique (.tmp + os.replace)</text>
+  <text x="715" y="877" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">  Fichiers gérés : generations.json, brand_kits.json, projects.json, config.json,</text>
+  <text x="715" y="896" font-family="Arial, sans-serif" font-size="11.5" font-weight="600" fill="#166534">  known_models_catalog.json, custom_models.json, loras.json + workflows/comfy/*.api.json</text>
+  <text x="715" y="917" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• MediaFileStore : téléchargement streaming par chunks de 64 Ko (depuis Colab, ComfyUI /view ou API)</text>
+  <text x="715" y="936" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">  vers storagePath projet, outputs/projects/&lt;id&gt;/ ou outputs/YYYY-MM-DD/ (.png, .mp4, .wav, .glb...)</text>
+  <rect x="700" y="995" width="670" height="80" rx="6" fill="#F4F8FA" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="1035" y="1019" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#1E4E5F">«component» Stockage Local (Persistance Atomique data/ &amp; outputs/)</text>
+  <text x="1035" y="1040" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.5" fill="#17212B">Persistance documentaire sans SGBD lourd · Mises à jour atomiques thread-safe</text>
+  <text x="1035" y="1059" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#52616B">Artefacts multimédias : Images, Vidéos, Pistes Audio (.wav/.mp3/.flac) et Maillages 3D (.glb/.fbx/.obj/.ply)</text>
+  <!-- S-010 : Interface d'assemblage IJsonStore · IMediaStore (Lollipop / Socket) -->
+  <path d="M1035 970 L1035 977" fill="none" stroke="#1E4E5F" stroke-width="1.8"/>
+  <path d="M1027 977 A8 8 0 0 0 1043 977" fill="none" stroke="#1E4E5F" stroke-width="1.8"/>
+  <circle cx="1035" cy="981" r="5" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <path d="M1035 986 L1035 995" fill="none" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="1080" y="983" font-family="Arial, sans-serif" font-size="9.5" font-weight="700" fill="#1E4E5F">IJsonStore · IMediaStore</text>
+
+  <!-- ===================================================================== -->
+  <!-- SYSTÈMES EXTERNES (DROITE) — STÉRÉOTYPE «externe» (S-012, S-032)     -->
+  <!-- ===================================================================== -->
+  <rect x="1490" y="105" width="470" height="270" rx="8" fill="#FAFBFD" stroke="#1E4E5F" stroke-width="2.2"/>
+  <rect x="1490" y="105" width="470" height="38" rx="8" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="1725" y="129" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#123C4A">«externe» Colab Worker (GPU T4 16 Go &amp; TPU)</text>
+  <rect x="1515" y="160" width="420" height="95" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="1530" y="181" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="1530" y="200" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">ColabInferenceServer &amp; ModelSwapper</text>
+  <text x="1530" y="220" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Allocation exclusive en VRAM : 1 seul pipeline lourd actif</text>
+  <text x="1530" y="238" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Éviction stricte : del pipeline, gc.collect(), empty_cache()</text>
+  <rect x="1515" y="270" width="420" height="90" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="1530" y="291" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#1E4E5F">«component»</text>
+  <text x="1530" y="310" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Pipelines PyTorch / Diffusers (6 Modalités + LLM)</text>
+  <text x="1530" y="330" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Image, Vidéo, Audio, Lip-Sync, Upscale, 3D &amp; Inférence LLM</text>
+
+  <rect x="1490" y="405" width="470" height="295" rx="8" fill="#F0FDF4" stroke="#166534" stroke-width="2.2"/>
+  <rect x="1490" y="405" width="470" height="38" rx="8" fill="#DCFCE7" stroke="#166534" stroke-width="1.5"/>
+  <text x="1725" y="429" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#14532D">«externe» ComfyUI Headless Local (:8188)</text>
+  <rect x="1515" y="460" width="420" height="110" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="1.6"/>
+  <text x="1530" y="481" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">«component»</text>
+  <text x="1530" y="500" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">ComfyUI API Server (Démon Arrière-Plan)</text>
+  <text x="1530" y="520" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• POST /prompt (graphe DAG) &amp; POST /interrupt</text>
+  <text x="1530" y="538" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• WebSocket /ws?clientId=... · GET /object_info</text>
+  <text x="1530" y="556" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• POST /upload/image &amp; GET /view</text>
+  <rect x="1515" y="585" width="420" height="100" rx="6" fill="#FFFFFF" stroke="#166534" stroke-width="1.6"/>
+  <text x="1530" y="606" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#166534">«component»</text>
+  <text x="1530" y="625" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">ComfyUI Smart Memory Manager &amp; Modèles</text>
+  <text x="1530" y="645" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Déchargement VRAM dynamique par sous-graphe</text>
+  <text x="1530" y="663" font-family="Arial, sans-serif" font-size="11.5" fill="#166534">• Aucune fenêtre de nœuds ouverte (--disable-auto-launch)</text>
+
+  <rect x="1490" y="730" width="470" height="150" rx="8" fill="#FFFBEB" stroke="#8C6418" stroke-width="2.2"/>
+  <rect x="1490" y="730" width="470" height="38" rx="8" fill="#FEF3C7" stroke="#8C6418" stroke-width="1.5"/>
+  <text x="1725" y="754" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#8C6418">«externe» Endpoints REST Distants (Cloud API)</text>
+  <rect x="1515" y="785" width="420" height="80" rx="6" fill="#FFFFFF" stroke="#8C6418" stroke-width="1.6"/>
+  <text x="1530" y="806" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#8C6418">«component»</text>
+  <text x="1530" y="825" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Passerelles d'Inférence Média &amp; LLM Cloud</text>
+  <text x="1530" y="845" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Appels HTTPS distants authentifiés par Bearer Token</text>
+
+  <!-- S-032 : Intégration formelle du Site Web Cible -->
+  <rect x="1490" y="910" width="470" height="150" rx="8" fill="#F4F8FA" stroke="#2C3E50" stroke-width="2.2"/>
+  <rect x="1490" y="910" width="470" height="38" rx="8" fill="#E2E8F0" stroke="#2C3E50" stroke-width="1.5"/>
+  <text x="1725" y="934" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="700" fill="#17212B">«externe» Site Web Cible (HTML/CSS)</text>
+  <rect x="1515" y="965" width="420" height="80" rx="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="1.6"/>
+  <text x="1530" y="986" font-family="Arial, sans-serif" font-size="11" font-weight="600" fill="#52616B">«component»</text>
+  <text x="1530" y="1005" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#17212B">Serveur Web Public distant</text>
+  <text x="1530" y="1025" font-family="Arial, sans-serif" font-size="11.5" fill="#52616B">• Pages HTML publiques, feuilles CSS et logos extraits</text>
+
+  <!-- ===================================================================== -->
+  <!-- CONNECTEURS D'ASSEMBLAGE SUCETTE / DOUILLE (LOLLIPOP / SOCKET, S-010)  -->
+  <!-- ===================================================================== -->
+  <!-- 1. IRestStudioAPI : Assembly Connector entre Frontend et Backend -->
+  <path d="M550 915 L605 915 L605 210" fill="none" stroke="#1E4E5F" stroke-width="1.8"/>
+  <path d="M605 210 L644 210" fill="none" stroke="#1E4E5F" stroke-width="1.8"/>
+  <path d="M660 210 L700 210" fill="none" stroke="#1E4E5F" stroke-width="1.8"/>
+  <circle cx="652" cy="210" r="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2"/>
+  <path d="M650 201 A9 9 0 0 0 650 219" fill="none" stroke="#1E4E5F" stroke-width="2"/>
+  <rect x="587" y="186" width="130" height="17" rx="3" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="0.8"/>
+  <text x="652" y="198" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">IRestStudioAPI</text>
+
+  <!-- 2. ISseEventStream : Flux SSE asynchrone temps réel -->
+  <path d="M550 945 L605 945 L605 245" fill="none" stroke="#2C3E50" stroke-width="1.8"/>
+  <path d="M605 245 L644 245" fill="none" stroke="#2C3E50" stroke-width="1.8"/>
+  <path d="M660 245 L700 245" fill="none" stroke="#2C3E50" stroke-width="1.8"/>
+  <circle cx="652" cy="245" r="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="2"/>
+  <path d="M650 236 A9 9 0 0 0 650 254" fill="none" stroke="#2C3E50" stroke-width="2"/>
+  <rect x="587" y="221" width="130" height="17" rx="3" fill="#FFFFFF" stroke="#2C3E50" stroke-width="0.8"/>
+  <text x="652" y="233" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#2C3E50">ISseEventStream</text>
+
+  <!-- 3. IColabTunnelAPI : Déroutement par la gouttière y=774 (ZÉRO TRAVERSÉE) -->
+  <path d="M807 760 L807 774 L1430 774 L1430 215" fill="none" stroke="#1E4E5F" stroke-width="1.8"/>
+  <path d="M1430 215 L1452 215" fill="none" stroke="#1E4E5F" stroke-width="1.8"/>
+  <path d="M1468 215 L1490 215" fill="none" stroke="#1E4E5F" stroke-width="1.8"/>
+  <circle cx="1460" cy="215" r="6" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="2"/>
+  <path d="M1458 206 A9 9 0 0 0 1458 224" fill="none" stroke="#1E4E5F" stroke-width="2"/>
+  <rect x="1395" y="191" width="130" height="17" rx="3" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="0.8"/>
+  <text x="1460" y="203" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#1E4E5F">IColabTunnelAPI</text>
+
+  <!-- 4. IComfyWorkflowAPI : Déroutement par la gouttière y=782 (ZÉRO TRAVERSÉE) -->
+  <path d="M1032 760 L1032 782 L1440 782 L1440 535" fill="none" stroke="#166534" stroke-width="1.8"/>
+  <path d="M1440 535 L1457 535" fill="none" stroke="#166534" stroke-width="1.8"/>
+  <path d="M1473 535 L1490 535" fill="none" stroke="#166534" stroke-width="1.8"/>
+  <circle cx="1465" cy="535" r="6" fill="#FFFFFF" stroke="#166534" stroke-width="2"/>
+  <path d="M1463 526 A9 9 0 0 0 1463 544" fill="none" stroke="#166534" stroke-width="2"/>
+  <rect x="1400" y="511" width="130" height="17" rx="3" fill="#FFFFFF" stroke="#166534" stroke-width="0.8"/>
+  <text x="1465" y="523" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#166534">IComfyWorkflowAPI</text>
+
+  <!-- 5. ICloudInferenceAPI : Assembly Connector API Cloud -->
+  <path d="M1370 715 L1430 715 L1430 805" fill="none" stroke="#8C6418" stroke-width="1.8"/>
+  <path d="M1430 805 L1452 805" fill="none" stroke="#8C6418" stroke-width="1.8"/>
+  <path d="M1468 805 L1490 805" fill="none" stroke="#8C6418" stroke-width="1.8"/>
+  <circle cx="1460" cy="805" r="6" fill="#FFFFFF" stroke="#8C6418" stroke-width="2"/>
+  <path d="M1458 796 A9 9 0 0 0 1458 814" fill="none" stroke="#8C6418" stroke-width="2"/>
+  <rect x="1395" y="781" width="130" height="17" rx="3" fill="#FFFFFF" stroke="#8C6418" stroke-width="0.8"/>
+  <text x="1460" y="793" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#8C6418">ICloudInferenceAPI</text>
+
+  <!-- 6. IWebScraperHTTP : Extraction de l'ADN de marque (S-032) -->
+  <path d="M1370 370 L1445 370 L1445 985" fill="none" stroke="#2C3E50" stroke-width="1.8"/>
+  <path d="M1445 985 L1459 985" fill="none" stroke="#2C3E50" stroke-width="1.8"/>
+  <path d="M1475 985 L1490 985" fill="none" stroke="#2C3E50" stroke-width="1.8"/>
+  <circle cx="1467" cy="985" r="6" fill="#FFFFFF" stroke="#2C3E50" stroke-width="2"/>
+  <path d="M1465 976 A9 9 0 0 0 1465 994" fill="none" stroke="#2C3E50" stroke-width="2"/>
+  <rect x="1402" y="961" width="130" height="17" rx="3" fill="#FFFFFF" stroke="#2C3E50" stroke-width="0.8"/>
+  <text x="1467" y="973" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#2C3E50">IWebScraperHTTP</text>
+
+  <!-- ===================================================================== -->
+  <!-- SPÉCIFICATION D'INGÉNIERIE & RÈGLES D'ASSEMBLAGE DES COMPOSANTS       -->
+  <!-- ===================================================================== -->
+  <rect x="48" y="1290" width="1815" height="95" rx="6" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.4"/>
+  <text x="68" y="1315" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">CONTRATS D'INTERFACE &amp; PRINCIPES D'ARCHITECTURE DES COMPOSANTS :</text>
+  <text x="68" y="1335" font-family="Arial, sans-serif" font-size="11" fill="#334155">1. Interfaces Formelles Sucette / Douille : Toutes les dépendances inter-composants sont contractualisées par des interfaces fournies et requises explicites.</text>
+  <text x="68" y="1353" font-family="Arial, sans-serif" font-size="11" fill="#334155">2. Assemblage Interne &amp; Découplage : Liaisons d'assemblage internes complètes ; routage orthogonal préservant l'isolation stricte des frontières logiques.</text>
+  <text x="68" y="1371" font-family="Arial, sans-serif" font-size="11" fill="#334155">3. Stéréotype «externe» Standard : Tous les sous-systèmes tiers portent le stéréotype normé «externe» avec protocoles sous-jacents typés (HTTP/REST, WebSocket, SSE).</text>
+</svg>

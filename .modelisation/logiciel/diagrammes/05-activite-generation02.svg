@@ -1,0 +1,221 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2200" height="1680" viewBox="0 0 2200 1680">
+  <defs>
+    <marker id="flowArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#1E4E5F" stroke-width="1.6"/>
+    </marker>
+    <marker id="flowArrowGreen" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#166534" stroke-width="1.6"/>
+    </marker>
+    <marker id="flowArrowPurple" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M1 1 L9 4 L1 7" fill="none" stroke="#6B21A8" stroke-width="1.6"/>
+    </marker>
+  </defs>
+
+  <!-- Fond blanc pur -->
+  <rect x="0" y="0" width="100%" height="100%" fill="#FFFFFF"/>
+
+  <!-- En-tête -->
+  <text x="48" y="42" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#17212B">05 · Flux d'activité de génération hybride (v3) — Omniforge &amp; Mini Design</text>
+  <text x="48" y="68" font-family="Arial, sans-serif" font-size="13.5" fill="#52616B">Diagramme d'Activités UML 2.5.1 · 5 Lignes d'Eau, Résolution Complète du Flux LLM, Nœud de Fusion «MergeNode», Validation des Contrats &amp; Ingrédients</text>
+  <line x1="48" y1="82" x2="2152" y2="82" stroke="#D5DEE5" stroke-width="1.5"/>
+
+  <!-- ===================================================================== -->
+  <!-- LES 5 LIGNES D'EAU (PARTITIONS D'ACTIVITÉ)                            -->
+  <!-- ===================================================================== -->
+  <!-- Ligne 1 : Utilisateur & Shell Electron -->
+  <rect x="48" y="105" width="410" height="1540" fill="#FAFBFD" stroke="#D5DEE5" stroke-width="1.5"/>
+  <rect x="48" y="105" width="410" height="40" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="253" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#123C4A">Utilisateur &amp; Shell Electron</text>
+
+  <!-- Ligne 2 : Workbench & Canvas Mini Design -->
+  <rect x="458" y="105" width="430" height="1540" fill="#FFFFFF" stroke="#D5DEE5" stroke-width="1.5"/>
+  <rect x="458" y="105" width="430" height="40" fill="#EDE9FE" stroke="#5B21B6" stroke-width="1.5"/>
+  <text x="673" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#4C1D95">Mini Design Workbench &amp; Canvas</text>
+
+  <!-- Ligne 3 : Gateway NestJS Mini Design -->
+  <rect x="888" y="105" width="430" height="1540" fill="#FAFBFD" stroke="#D5DEE5" stroke-width="1.5"/>
+  <rect x="888" y="105" width="430" height="40" fill="#E2E8F0" stroke="#475569" stroke-width="1.5"/>
+  <text x="1103" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#1E293B">Gateway NestJS (:51491)</text>
+
+  <!-- Ligne 4 : Backend FastAPI Omniforge -->
+  <rect x="1318" y="105" width="430" height="1540" fill="#FFFFFF" stroke="#D5DEE5" stroke-width="1.5"/>
+  <rect x="1318" y="105" width="430" height="40" fill="#EBF3F5" stroke="#1E4E5F" stroke-width="1.5"/>
+  <text x="1533" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#123C4A">Backend FastAPI Omniforge (:8000)</text>
+
+  <!-- Ligne 5 : Moteurs d'Inférence (Colab GPU / ComfyUI) -->
+  <rect x="1748" y="105" width="404" height="1540" fill="#FAFDFB" stroke="#D5DEE5" stroke-width="1.5"/>
+  <rect x="1748" y="105" width="404" height="40" fill="#EBF6EE" stroke="#166534" stroke-width="1.5"/>
+  <text x="1950" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="700" fill="#166534">Moteurs GPU (Colab / ComfyUI :8188)</text>
+
+  <!-- ===================================================================== -->
+  <!-- NŒUDS ET ACTIONS DU FLUX D'ACTIVITÉ                                   -->
+  <!-- ===================================================================== -->
+
+  <!-- Nœud Initial -->
+  <circle cx="253" cy="175" r="14" fill="#123C4A"/>
+
+  <!-- Action 1 : Clic sur [Agents] -->
+  <rect x="100" y="215" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="253" y="237" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Cliquer sur le mode [Agents]</text>
+  <text x="253" y="254" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">TopNavBar : commutation 0ms vers BrowserView 2</text>
+
+  <line x1="253" y1="189" x2="253" y2="215" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+
+  <!-- Action 2 : Affichage Workbench -->
+  <rect x="520" y="295" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.8"/>
+  <text x="673" y="317" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Afficher Workbench &amp; Canevas V3</text>
+  <text x="673" y="334" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">Chargement du workspace actif depuis .hilo/index.sqlite</text>
+
+  <line x1="253" y1="267" x2="253" y2="321" stroke="#1E4E5F" stroke-width="1.6"/>
+  <line x1="253" y1="321" x2="520" y2="321" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrowPurple)"/>
+
+  <!-- Action 3 : Saisie Prompt par l'utilisateur -->
+  <rect x="100" y="375" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="253" y="397" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Saisir un prompt dans le chat Hilo</text>
+  <text x="253" y="414" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">Ex: "Génère un avatar 3D et compose la bannière"</text>
+
+  <line x1="673" y1="347" x2="673" y2="362" stroke="#5B21B6" stroke-width="1.6"/>
+  <line x1="673" y1="362" x2="253" y2="362" stroke="#5B21B6" stroke-width="1.6"/>
+  <line x1="253" y1="362" x2="253" y2="375" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+
+  <!-- Action 4 : Interception Gateway & Sécurité Token -->
+  <rect x="950" y="450" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+  <text x="1103" y="472" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Intercepter requête &amp; Valider Token</text>
+  <text x="1103" y="489" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">TokenValidator vérifie mini-design-local-token</text>
+
+  <line x1="253" y1="427" x2="253" y2="476" stroke="#1E4E5F" stroke-width="1.6"/>
+  <line x1="253" y1="476" x2="950" y2="476" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+
+  <!-- Action 4B : Vérification Contrat & Canvas Discipline -->
+  <rect x="950" y="525" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+  <text x="1103" y="547" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Vérifier Contrat &amp; Discipline Canevas</text>
+  <text x="1103" y="564" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">ContractEngine valide canvas-discipline &amp; anti-loop</text>
+
+  <line x1="1103" y1="502" x2="1103" y2="525" stroke="#475569" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+
+  <!-- Nœud de Décision 1 : Type de Requête (LLM vs Média) -->
+  <polygon points="1103,605 1145,635 1103,665 1061,635" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+  <line x1="1103" y1="577" x2="1103" y2="605" stroke="#475569" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+
+  <!-- ===================================================================== -->
+  <!-- BRANCHE A : PROMPT TEXTE / LLM DIALOGUE                               -->
+  <!-- ===================================================================== -->
+  <!-- Branche 1.1 : [Prompt Texte / Planification LLM] -->
+  <line x1="1061" y1="635" x2="970" y2="635" stroke="#475569" stroke-width="1.6"/>
+  <line x1="970" y1="635" x2="970" y2="705" stroke="#475569" stroke-width="1.6"/>
+  <line x1="970" y1="705" x2="1380" y2="705" stroke="#475569" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+  <text x="990" y="625" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#475569">[Prompt Texte / Dialogue]</text>
+
+  <!-- Action 5A : Proxy OpenAI (/v1/chat/completions) -->
+  <rect x="1380" y="680" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="1533" y="702" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Appeler /v1/chat/completions</text>
+  <text x="1533" y="719" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">OpenAIProxy route vers Colab LLM ou API</text>
+
+  <!-- Action 5A_stream : Streaming Tokens vers Chat Hilo (LEVÉE DU TROU NOIR !) -->
+  <rect x="520" y="750" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.8"/>
+  <text x="673" y="772" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Streaming tokens vers chat Hilo</text>
+  <text x="673" y="789" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">Affichage incrémental SSE dans le volet conversationnel</text>
+
+  <!-- Arête reliant Action 5A vers Action 5A_stream -->
+  <line x1="1533" y1="732" x2="1533" y2="776" stroke="#1E4E5F" stroke-width="1.6"/>
+  <line x1="1533" y1="776" x2="826" y2="776" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrowPurple)"/>
+
+  <!-- ===================================================================== -->
+  <!-- BRANCHE B : GÉNÉRATION MÉDIA 6 PÔLES                                  -->
+  <!-- ===================================================================== -->
+  <!-- Branche 1.2 : [Demande Média 6 Pôles] -->
+  <line x1="1145" y1="635" x2="1245" y2="635" stroke="#475569" stroke-width="1.6"/>
+  <line x1="1245" y1="635" x2="1245" y2="825" stroke="#475569" stroke-width="1.6"/>
+  <line x1="1245" y1="825" x2="1380" y2="825" stroke="#475569" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+  <text x="1165" y="625" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#475569">[Demande Média 6 Pôles]</text>
+
+  <!-- Action 5B_val : Validation des Ingrédients -->
+  <rect x="1380" y="800" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="1533" y="822" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Valider Ingrédients (AcceptedTypes)</text>
+  <text x="1533" y="839" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">Vérifie prompt, init_image, mask selon le pôle</text>
+
+  <!-- Action 5B : Délégation Média POST /api/generate/media -->
+  <rect x="1380" y="875" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="1533" y="897" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Appeler POST /api/generate/media</text>
+  <text x="1533" y="914" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">Traduction du contrat Mini Design en tâche Omniforge</text>
+
+  <line x1="1533" y1="852" x2="1533" y2="875" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+
+  <!-- Nœud de Décision 2 : Moteur d'Exécution GPU (Colab vs ComfyUI) -->
+  <polygon points="1533,950 1575,978 1533,1006 1491,978" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <line x1="1533" y1="927" x2="1533" y2="950" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+
+  <!-- Branche 2.1 : [Colab GPU Actif] -->
+  <line x1="1575" y1="978" x2="1800" y2="978" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrowGreen)"/>
+  <text x="1625" y="968" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#166534">[Colab Actif (Cloud GPU/TPU)]</text>
+
+  <rect x="1800" y="952" width="300" height="52" rx="8" fill="#FFFFFF" stroke="#166534" stroke-width="1.8"/>
+  <text x="1950" y="974" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Inférence Colab GPU T4/A100</text>
+  <text x="1950" y="991" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">ModelSwapper LRU &amp; Pipelines Diffusers</text>
+
+  <!-- Branche 2.2 : [ComfyUI Local :8188] -->
+  <line x1="1533" y1="1006" x2="1533" y2="1052" stroke="#1E4E5F" stroke-width="1.6"/>
+  <line x1="1533" y1="1052" x2="1800" y2="1052" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrowGreen)"/>
+  <text x="1625" y="1042" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#8C6418">[ComfyUI Local :8188]</text>
+
+  <rect x="1800" y="1027" width="300" height="52" rx="8" fill="#FFFFFF" stroke="#8C6418" stroke-width="1.8"/>
+  <text x="1950" y="1049" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Exécuter Workflow ComfyUI :8188</text>
+  <text x="1950" y="1066" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">Graphes compilés &amp; LoRA Loaders en chaîne</text>
+
+  <!-- ===================================================================== -->
+  <!-- NŒUD DE FUSION «MergeNode» DES EXÉCUTIONS GPU    -->
+  <!-- ===================================================================== -->
+  <polygon points="1950,1115 1978,1135 1950,1155 1922,1135" fill="#F8FAFC" stroke="#166534" stroke-width="2"/>
+  <text x="1995" y="1139" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#166534">«MergeNode»</text>
+
+  <!-- Arête Colab -> MergeNode -->
+  <line x1="1950" y1="1004" x2="1950" y2="1115" stroke="#166534" stroke-width="1.6" marker-end="url(#flowArrowGreen)"/>
+
+  <!-- Arête ComfyUI -> MergeNode -->
+  <line x1="1950" y1="1079" x2="1950" y2="1115" stroke="#8C6418" stroke-width="1.6" marker-end="url(#flowArrowGreen)"/>
+
+  <!-- Arête MergeNode -> Action 6 -->
+  <line x1="1922" y1="1135" x2="1686" y2="1135" stroke="#166534" stroke-width="1.6"/>
+  <line x1="1686" y1="1135" x2="1686" y2="1185" stroke="#166534" stroke-width="1.6"/>
+  <line x1="1686" y1="1185" x2="1686" y2="1195" stroke="#166534" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+
+  <!-- Action 6 : Rapatriement Streaming & Écriture Atomique -->
+  <rect x="1380" y="1170" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#1E4E5F" stroke-width="1.8"/>
+  <text x="1533" y="1192" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Rapatrier Binaire (Chunks 64 Ko)</text>
+  <text x="1533" y="1209" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">MediaFileStore64k &amp; Lock atomique dans data/</text>
+
+  <!-- Action 7 : Insertion Atomique dans resource_v3 (SQLite) -->
+  <rect x="950" y="1255" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#475569" stroke-width="1.8"/>
+  <text x="1103" y="1277" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Insérer ressource dans resource_v3</text>
+  <text x="1103" y="1294" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">Transaction SQLite (.hilo/index.sqlite) avec rollback</text>
+
+  <line x1="1533" y1="1222" x2="1533" y2="1281" stroke="#1E4E5F" stroke-width="1.6"/>
+  <line x1="1533" y1="1281" x2="1256" y2="1281" stroke="#1E4E5F" stroke-width="1.6" marker-end="url(#flowArrow)"/>
+
+  <!-- Action 8 : Mise à Jour Canevas V3 (WebGPU/Canvas2D) -->
+  <rect x="520" y="1340" width="306" height="52" rx="8" fill="#FFFFFF" stroke="#5B21B6" stroke-width="1.8"/>
+  <text x="673" y="1362" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="700" fill="#17212B">Créer calque sur le Canevas V3</text>
+  <text x="673" y="1379" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.5" fill="#52616B">Rendu WebGPU immédiat &amp; notification WebSocket</text>
+
+  <line x1="1103" y1="1307" x2="1103" y2="1366" stroke="#475569" stroke-width="1.6"/>
+  <line x1="1103" y1="1366" x2="826" y2="1366" stroke="#475569" stroke-width="1.6" marker-end="url(#flowArrowPurple)"/>
+
+  <!-- ===================================================================== -->
+  <!-- NŒUD DE FUSION TERMINAL ET NŒUD FINAL D'ACTIVITÉ                      -->
+  <!-- ===================================================================== -->
+  <!-- MergeNode avant nœud terminal unissant le flux LLM et le flux Média -->
+  <polygon points="673,1445 700,1465 673,1485 646,1465" fill="#EDE9FE" stroke="#5B21B6" stroke-width="2"/>
+  <text x="715" y="1469" font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#5B21B6">«MergeNode»</text>
+
+  <!-- Arête flux LLM (Action 5A_stream -> MergeNode Terminal) -->
+  <line x1="673" y1="802" x2="673" y2="1445" stroke="#5B21B6" stroke-width="1.6" stroke-dasharray="6,3" marker-end="url(#flowArrowPurple)"/>
+  <text x="683" y="1120" font-family="Arial, sans-serif" font-size="10" fill="#5B21B6">[Fin streaming chat]</text>
+
+  <!-- Arête flux Média (Action 8 -> MergeNode Terminal) -->
+  <line x1="673" y1="1392" x2="673" y2="1445" stroke="#5B21B6" stroke-width="1.6" marker-end="url(#flowArrowPurple)"/>
+
+  <!-- Nœud Final d'Activité (UML 2.5 ActivityFinalNode) -->
+  <circle cx="673" cy="1555" r="15" fill="#FFFFFF" stroke="#4C1D95" stroke-width="2"/>
+  <circle cx="673" cy="1555" r="9" fill="#4C1D95"/>
+  <line x1="673" y1="1485" x2="673" y2="1540" stroke="#5B21B6" stroke-width="1.8" marker-end="url(#flowArrowPurple)"/>
+</svg>
