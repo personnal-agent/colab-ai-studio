@@ -4,6 +4,8 @@ import { MediaGallery, type ActiveTaskState } from './components/gallery/MediaGa
 import { MediaPlayerModal } from './components/gallery/MediaPlayerModal';
 import { TopNavBar } from './components/header/TopNavBar';
 import { FloatingPromptDock } from './components/dock/FloatingPromptDock';
+import { AgentsWorkspaceView } from './components/agents/AgentsWorkspaceView';
+import type { AppMode } from './components/header/AppModeSwitch';
 import { apiClient } from './services/apiClient';
 import type {
   Generation,
@@ -14,6 +16,7 @@ import type {
 } from './types/studio';
 
 export default function App(): React.ReactElement {
+  const [appMode, setAppMode] = useState<AppMode>('Studio');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null);
@@ -130,6 +133,29 @@ export default function App(): React.ReactElement {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.electron) {
+      if (window.electron.getAppMode) {
+        window.electron.getAppMode().then((mode) => {
+          if (mode === 'Studio' || mode === 'Agents') {
+            setAppMode(mode);
+          }
+        }).catch(() => {});
+      }
+
+      if (window.electron.onModeChanged) {
+        const unsub = window.electron.onModeChanged((mode) => {
+          if (mode === 'Studio' || mode === 'Agents') {
+            setAppMode(mode);
+          }
+        });
+        return () => {
+          unsub();
+        };
+      }
+    }
+  }, []);
+
   const handleRemix = (gen: Generation) => {
     setRemixContext(gen);
     setSelectedGeneration(null);
@@ -212,8 +238,11 @@ export default function App(): React.ReactElement {
 
   return (
     <div
-      className="min-h-screen bg-studio-canvas text-gray-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white pb-36"
+      className={`min-h-screen bg-studio-canvas text-gray-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white ${
+        appMode === 'Studio' ? 'pb-36' : 'overflow-hidden'
+      }`}
       data-remix-active={Boolean(remixContext)}
+      data-app-mode={appMode}
     >
       {/* Barre supérieure unifiée */}
       <TopNavBar
@@ -221,96 +250,104 @@ export default function App(): React.ReactElement {
         onToggleFavorites={() => setFavoritesOnly((prev) => !prev)}
         activeProjectId={activeProjectId}
         onSelectProject={setActiveProjectId}
+        appMode={appMode}
+        onAppModeChange={setAppMode}
       />
 
-      {/* Bannière de progression globale temps réel pour tout traitement */}
-      {activeTask && (
-        <aside
-          aria-label="Traitement en cours"
-          data-testid="global-progress-banner"
-          className="sticky top-3 z-40 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mb-2 animate-in fade-in slide-in-from-top-2 duration-200"
-        >
-          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl border border-indigo-200 dark:border-indigo-800 shadow-xl p-4 flex flex-col space-y-2.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center flex-shrink-0">
-                  <Loader2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-spin" />
-                </div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
-                      Traitement en cours
-                    </span>
-                    <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
-                      {activeTask.modelName}
-                    </span>
+      {appMode === 'Agents' ? (
+        <AgentsWorkspaceView />
+      ) : (
+        <>
+          {/* Bannière de progression globale temps réel pour tout traitement */}
+          {activeTask && (
+            <aside
+              aria-label="Traitement en cours"
+              data-testid="global-progress-banner"
+              className="sticky top-3 z-40 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 mb-2 animate-in fade-in slide-in-from-top-2 duration-200"
+            >
+              <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl border border-indigo-200 dark:border-indigo-800 shadow-xl p-4 flex flex-col space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-950/60 flex items-center justify-center flex-shrink-0">
+                      <Loader2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-spin" />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
+                          Traitement en cours
+                        </span>
+                        <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                          {activeTask.modelName}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xl" title={activeTask.prompt}>
+                        {activeTask.prompt}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-xl" title={activeTask.prompt}>
-                    {activeTask.prompt}
-                  </p>
+
+                  <div className="flex items-center space-x-3.5">
+                    <span className="text-base font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
+                      {Math.min(100, Math.max(0, activeTask.event.progress || 0))}%
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCancelActiveTask(activeTask.event.taskId)}
+                      aria-label="Annuler le traitement en cours"
+                      className="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 rounded-lg border border-rose-200 dark:border-rose-800 transition-colors flex items-center space-x-1 shadow-sm"
+                    >
+                      <XCircle className="w-3.5 h-3.5" />
+                      <span>Annuler</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Barre de progression avec shimmer animé */}
+                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2.5 overflow-hidden relative">
+                  <div
+                    className="bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 h-2.5 rounded-full transition-all duration-300 relative overflow-hidden"
+                    style={{ width: `${Math.min(100, Math.max(0, activeTask.event.progress || 0))}%` }}
+                  >
+                    <div className="absolute inset-0 bg-white/30 animate-pulse" />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono">
+                  <span className="truncate max-w-md">{activeTask.event.step || 'Calcul en cours sur GPU...'}</span>
+                  <span>Tâche : {activeTask.event.taskId}</span>
                 </div>
               </div>
+            </aside>
+          )}
 
-              <div className="flex items-center space-x-3.5">
-                <span className="text-base font-mono font-extrabold text-indigo-600 dark:text-indigo-400">
-                  {Math.min(100, Math.max(0, activeTask.event.progress || 0))}%
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleCancelActiveTask(activeTask.event.taskId)}
-                  aria-label="Annuler le traitement en cours"
-                  className="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-400 rounded-lg border border-rose-200 dark:border-rose-800 transition-colors flex items-center space-x-1 shadow-sm"
-                >
-                  <XCircle className="w-3.5 h-3.5" />
-                  <span>Annuler</span>
-                </button>
-              </div>
-            </div>
+          {/* Contenu principal : Galerie & Recherche */}
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <h1 className="sr-only">Colab AI Studio</h1>
+            <MediaGallery
+              favoritesOnly={favoritesOnly}
+              activeProjectId={activeProjectId}
+              onSelectGeneration={setSelectedGeneration}
+              generations={generations}
+              onGenerationsChange={setGenerations}
+              onFavoriteToggled={handleFavoriteToggled}
+              onDeleteGeneration={handleDeleteGeneration}
+              activeTask={activeTask}
+              onTaskCancelled={handleCancelActiveTask}
+            />
+          </main>
 
-            {/* Barre de progression avec shimmer animé */}
-            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2.5 overflow-hidden relative">
-              <div
-                className="bg-gradient-to-r from-indigo-500 via-indigo-600 to-purple-600 h-2.5 rounded-full transition-all duration-300 relative overflow-hidden"
-                style={{ width: `${Math.min(100, Math.max(0, activeTask.event.progress || 0))}%` }}
-              >
-                <div className="absolute inset-0 bg-white/30 animate-pulse" />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] text-gray-400 font-mono">
-              <span className="truncate max-w-md">{activeTask.event.step || 'Calcul en cours sur GPU...'}</span>
-              <span>Tâche : {activeTask.event.taskId}</span>
-            </div>
-          </div>
-        </aside>
+          {/* Floating Prompt Dock modulaire adaptatif */}
+          <FloatingPromptDock
+            models={models}
+            brandKits={brandKits}
+            activeProjectId={activeProjectId}
+            remixContext={remixContext}
+            onClearRemix={() => setRemixContext(null)}
+            onSubmitGeneration={handleSubmitGeneration}
+            onCreateBrandKit={handleCreateBrandKit}
+          />
+        </>
       )}
-
-      {/* Contenu principal : Galerie & Recherche */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <h1 className="sr-only">Colab AI Studio</h1>
-        <MediaGallery
-          favoritesOnly={favoritesOnly}
-          activeProjectId={activeProjectId}
-          onSelectGeneration={setSelectedGeneration}
-          generations={generations}
-          onGenerationsChange={setGenerations}
-          onFavoriteToggled={handleFavoriteToggled}
-          onDeleteGeneration={handleDeleteGeneration}
-          activeTask={activeTask}
-          onTaskCancelled={handleCancelActiveTask}
-        />
-      </main>
-
-      {/* Floating Prompt Dock modulaire adaptatif */}
-      <FloatingPromptDock
-        models={models}
-        brandKits={brandKits}
-        activeProjectId={activeProjectId}
-        remixContext={remixContext}
-        onClearRemix={() => setRemixContext(null)}
-        onSubmitGeneration={handleSubmitGeneration}
-        onCreateBrandKit={handleCreateBrandKit}
-      />
 
       {/* Modale d'inspection grand format */}
       <MediaPlayerModal

@@ -12,6 +12,7 @@ ENV/
 # Node.js & Frontend
 node_modules/
 dist/
+dist-electron/
 coverage/
 package-lock.json
 
