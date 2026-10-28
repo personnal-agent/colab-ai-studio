@@ -88,12 +88,19 @@ class GenerationReferences(DomainBase):
     upscaleSourceType: str | None = None
     upscaleSourceFilename: str | None = None
     brandKitId: str | None = None
+    meshRef: str | None = None
 
     def has_visual_references(self) -> bool:
-        return bool(self.startFrame or self.endFrame or self.imageRefs or self.videoRefs)
+        return bool(
+            self.startFrame
+            or self.endFrame
+            or self.imageRefs
+            or self.videoRefs
+            or self.meshRef
+        )
 
     def clear_references(self) -> None:
-        self.startFrame = self.endFrame = self.upscaleSource = self.brandKitId = None
+        self.startFrame = self.endFrame = self.upscaleSource = self.brandKitId = self.meshRef = None
         self.imageRefs.clear()
         self.videoRefs.clear()
         self.audioRefs.clear()

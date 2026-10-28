@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import shutil
 import uuid
 from pathlib import Path
@@ -14,16 +15,21 @@ from pydantic import BaseModel, Field
 
 from app.api.routes_characters import compile_character_mentions
 from app.api.routes_crud import get_json_store, get_media_store, verify_trusted_origin
+from app.api.routes_models import get_worker_gateway
 from app.config import CHARACTERS_FILE, GENERATIONS_FILE, UPLOADS_DIR
 from app.models.domain import GenerationParameters, GenerationReferences
 from app.services.audio_weaver import extract_dialogues
+from app.services.contract_engine import ContractEngine, get_contract_engine
 from app.services.story_director import (
     StoryDirector,
     calculate_segments_duration,
     parse_explicit_script_segments,
 )
 from app.services.task_orchestrator import GenerationCreateRequest, TaskOrchestrator
+from app.services.worker_gateway import WorkerGateway
 from app.storage.json_store import JSONDocumentStore
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["Génération"])
 
@@ -398,8 +404,24 @@ async def plan_timeline_preview(
 async def generate_media(
     payload: GenerationCreateRequest,
     orchestrator: TaskOrchestrator = Depends(get_task_orchestrator),
+    gateway: WorkerGateway = Depends(get_worker_gateway),
+    contract_engine: ContractEngine = Depends(get_contract_engine),
 ) -> dict[str, Any]:
-    """Déclenche une génération asynchrone d'image ou de vidéo."""
+    """Déclenche une génération asynchrone (image, vidéo, audio, lip-sync, upscale, 3D)."""
+    # 1. Validation stricte des contraintes de contrats d'entrée (acceptedInputTypes)
+    try:
+        models = await gateway.list_models()
+        target_model = next((m for m in models if m.get("id") == payload.modelId), None)
+        if target_model:
+            caps = target_model.get("capabilities", {})
+            valid, err_msg = contract_engine.validate_accepted_input_types(caps, payload.references)
+            if not valid:
+                raise HTTPException(status_code=422, detail=err_msg)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.debug("Vérification des capacités worker non bloquante : %s", e)
+
     try:
         gen = await orchestrator.submit_generation(payload)
         return {
@@ -407,6 +429,8 @@ async def generate_media(
             "generationId": gen.id,
             "status": "pending",
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=500,

@@ -54,6 +54,7 @@ class GenerationCreateRequest(BaseModel):
     projectId: str | None = None
     tags: list[str] = Field(default_factory=list)
     cameraAngleLabel: str | None = None
+    loras: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class TaskOrchestrator:
@@ -325,6 +326,7 @@ class TaskOrchestrator:
                 "type": gen.mediaType,
                 "parameters": gen.parameters.model_dump(),
                 "references": gen.references.model_dump(),
+                "loras": req.loras,
             }
             await self._gateway.infer(task_spec, base_url=target_worker_url)
 
