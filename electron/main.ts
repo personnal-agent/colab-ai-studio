@@ -9,6 +9,11 @@ let activeMode: AppMode = 'Studio';
 const repoRoot = path.resolve(__dirname, '..');
 const orchestrator = new ElectronProcessOrchestrator(repoRoot);
 
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('no-sandbox');
+  app.commandLine.appendSwitch('disable-gpu-sandbox');
+}
+
 async function createWindow(): Promise<void> {
   mainWindow = new BrowserWindow({
     width: 1480,
