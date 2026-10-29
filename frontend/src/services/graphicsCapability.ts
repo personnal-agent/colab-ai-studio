@@ -1,6 +1,6 @@
 /**
  * Graphics capability detection service.
- * Determines if hardware WebGPU is supported or gracefully falls back to Canvas2D (Intel HD Graphics 520 target).
+ * Determines if hardware WebGPU is supported or gracefully falls back to Canvas2D.
  */
 
 export interface GraphicsCapabilityResult {
@@ -44,7 +44,7 @@ export async function detectGraphicsCapability(): Promise<GraphicsCapabilityResu
       return {
         supported: false,
         renderer: 'canvas2d',
-        reason: 'Aucun adaptateur GPU compatible WebGPU détecté (repli Canvas2D Intel HD 520).',
+        reason: 'Aucun adaptateur GPU compatible WebGPU détecté (repli Canvas2D).',
       };
     }
 

@@ -59,7 +59,7 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
       setGpuInfo(
         res.renderer === 'webgpu'
           ? `WebGPU (${res.adapterInfo || 'Hardware'})`
-          : `Canvas2D (${res.reason || 'Intel HD 520'})`
+          : `Canvas2D (${res.reason || 'Mode standard'})`
       );
     });
     return () => {

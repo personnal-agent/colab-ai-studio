@@ -149,7 +149,7 @@ export const Canvas2DFallback: React.FC<Canvas2DFallbackProps> = ({
       />
       <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/75 backdrop-blur-xs text-white rounded text-[10px] font-mono flex items-center space-x-1.5 shadow-sm">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-        <span>Canvas2D Fallback · Intel HD 520 ({fps} FPS)</span>
+        <span>Canvas2D Fallback ({fps} FPS)</span>
       </div>
     </div>
   );
