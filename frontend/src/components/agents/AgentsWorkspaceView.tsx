@@ -20,6 +20,8 @@ import {
   Volume2,
 } from 'lucide-react';
 import type { CanvasAssetLayer } from '../../types/studio';
+import { detectGraphicsCapability } from '../../services/graphicsCapability';
+import { Canvas2DFallback } from '../canvas/Canvas2DFallback';
 
 interface AgentMessage {
   id: string;
@@ -45,7 +47,25 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const [layers, setLayers] = useState<CanvasAssetLayer[]>(() => injectedLayers || []);
   const [isGenerating3D, setIsGenerating3D] = useState(false);
+  const [graphicsMode, setGraphicsMode] = useState<'webgpu' | 'canvas2d'>('webgpu');
+  const [gpuInfo, setGpuInfo] = useState<string>('Détection GPU...');
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    detectGraphicsCapability().then((res) => {
+      if (!isMounted) return;
+      setGraphicsMode(res.renderer);
+      setGpuInfo(
+        res.renderer === 'webgpu'
+          ? `WebGPU (${res.adapterInfo || 'Hardware'})`
+          : `Canvas2D (${res.reason || 'Intel HD 520'})`
+      );
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const [messages, setMessages] = useState<AgentMessage[]>([
     {
@@ -275,6 +295,36 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
         </div>
 
         <div className="flex items-center space-x-3">
+          {/* Badge statut graphique et commutateur WebGPU / Canvas2D */}
+          <div className="flex items-center space-x-1.5">
+            <div
+              data-testid="graphics-mode-badge"
+              className={`flex items-center space-x-1 px-2 py-0.5 rounded text-[10px] font-mono border ${
+                graphicsMode === 'webgpu'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                  : 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
+              }`}
+              title={gpuInfo}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  graphicsMode === 'webgpu' ? 'bg-emerald-500' : 'bg-amber-500'
+                } animate-pulse`}
+              />
+              <span>{graphicsMode === 'webgpu' ? 'WebGPU 60fps' : 'Canvas2D Fallback'}</span>
+            </div>
+
+            <button
+              type="button"
+              data-testid="toggle-renderer-btn"
+              onClick={() => setGraphicsMode((m) => (m === 'webgpu' ? 'canvas2d' : 'webgpu'))}
+              title="Basculer manuellement le moteur de rendu graphique"
+              className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-[10px] font-mono text-gray-600 dark:text-gray-300 transition-colors border border-studio-border"
+            >
+              {graphicsMode === 'webgpu' ? 'Forcer 2D' : 'Mode GPU'}
+            </button>
+          </div>
+
           <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 text-[11px]">
             <Cpu className="w-3.5 h-3.5" />
             <span>Intel i7 (2C/4T)</span>
@@ -458,47 +508,56 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
           <div className="flex-1 relative flex items-center justify-center p-8 overflow-hidden bg-[radial-gradient(#CBD5E1_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:16px_16px]">
             {/* Artboard de travail 16:9 */}
             <div
-              className="w-full max-w-3xl aspect-video bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center text-center p-6 transition-transform relative"
+              className="w-full max-w-3xl aspect-video bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center text-center p-6 transition-transform relative overflow-hidden"
               style={{ transform: `scale(${zoomLevel / 100})` }}
             >
-              {layers.length > 0 ? (
-                <div className="space-y-3 w-full">
-                  <div className="flex items-center justify-center space-x-2 text-indigo-600 dark:text-indigo-400">
-                    <Sparkles className="w-5 h-5 animate-pulse" />
-                    <span className="text-sm font-bold">
-                      {layers.length} Calque(s) actif(s) sur le canevas
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {layers.map((layer) => (
-                      <div
-                        key={layer.id}
-                        data-testid={layer.type === 'mesh_3d' ? 'canvas-3d-layer' : 'canvas-asset-layer'}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-xs font-mono text-indigo-700 dark:text-indigo-300 flex items-center space-x-2 shadow-xs"
-                      >
-                        {layer.type === 'mesh_3d' && <Box className="w-3.5 h-3.5" />}
-                        {layer.type === 'video' && <Film className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />}
-                        {layer.type === 'image' && <ImageIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
-                        {layer.type === 'audio' && <Volume2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
-                        <span className="truncate max-w-[180px]">{layer.name}</span>
-                        <span className="text-[10px] text-gray-400">[{layer.taskId.slice(0, 8)}]</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center mb-3">
-                    <Sliders className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
-                  </div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
-                    CanvasAreaV3 — Espace de Composition Mini Design
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md">
-                    Prêt pour le montage des calques WebGPU, la composition d’animations et l’injection directe des maillages 3D et vidéos Omniforge.
-                  </p>
-                </>
+              {graphicsMode === 'canvas2d' && (
+                <Canvas2DFallback
+                  layers={layers}
+                  zoomLevel={zoomLevel}
+                  className="absolute inset-0 z-0 opacity-85 pointer-events-none"
+                />
               )}
+              <div className="relative z-10 w-full flex flex-col items-center justify-center">
+                {layers.length > 0 ? (
+                  <div className="space-y-3 w-full">
+                    <div className="flex items-center justify-center space-x-2 text-indigo-600 dark:text-indigo-400">
+                      <Sparkles className="w-5 h-5 animate-pulse" />
+                      <span className="text-sm font-bold">
+                        {layers.length} Calque(s) actif(s) sur le canevas
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {layers.map((layer) => (
+                        <div
+                          key={layer.id}
+                          data-testid={layer.type === 'mesh_3d' ? 'canvas-3d-layer' : 'canvas-asset-layer'}
+                          className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-xs font-mono text-indigo-700 dark:text-indigo-300 flex items-center space-x-2 shadow-xs"
+                        >
+                          {layer.type === 'mesh_3d' && <Box className="w-3.5 h-3.5" />}
+                          {layer.type === 'video' && <Film className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />}
+                          {layer.type === 'image' && <ImageIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
+                          {layer.type === 'audio' && <Volume2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                          <span className="truncate max-w-[180px]">{layer.name}</span>
+                          <span className="text-[10px] text-gray-400">[{layer.taskId.slice(0, 8)}]</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center mb-3">
+                      <Sliders className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">
+                      CanvasAreaV3 — Espace de Composition Mini Design
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 max-w-md">
+                      Prêt pour le montage des calques WebGPU, la composition d’animations et l’injection directe des maillages 3D et vidéos Omniforge.
+                    </p>
+                  </>
+                )}
+              </div>
             </div>
           </div>
 
