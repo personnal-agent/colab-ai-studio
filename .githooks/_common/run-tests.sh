@@ -20,8 +20,17 @@ TESTS_FOUND=0
 if find . -type f \( -name 'test_*.py' -o -name '*_test.py' \) -not -path '*/.[!.]*/*' -not -path '*/node_modules/*' -not -path '*/venv/*' -not -path '*/.venv/*' -not -path '*/site-packages/*' -print -quit | grep -q .; then
     TESTS_FOUND=1
     echo -e "${BLUE}  Exécution des tests Python (pytest)...${NC}"
-    if command -v pytest >/dev/null 2>&1; then
-        timeout --foreground $TEST_TIMEOUT pytest -q || {
+    PYTEST_BIN="pytest"
+    if [ -x "/home/instructeur/.venvs/colab-ai-studio/bin/pytest" ]; then
+        PYTEST_BIN="/home/instructeur/.venvs/colab-ai-studio/bin/pytest"
+    elif [ -x ".venv/bin/pytest" ]; then
+        PYTEST_BIN=".venv/bin/pytest"
+    elif [ -n "$VIRTUAL_ENV" ] && [ -x "$VIRTUAL_ENV/bin/pytest" ]; then
+        PYTEST_BIN="$VIRTUAL_ENV/bin/pytest"
+    fi
+
+    if command -v "$PYTEST_BIN" >/dev/null 2>&1 || [ -x "$PYTEST_BIN" ]; then
+        timeout --foreground $TEST_TIMEOUT "$PYTEST_BIN" -q tests/ || {
             echo -e "${RED}❌ Échec de la suite de tests Python.${NC}"
             exit 1
         }
