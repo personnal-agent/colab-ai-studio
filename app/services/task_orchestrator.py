@@ -16,6 +16,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.config import (
+    AGENT_INSTRUCTIONS_FILE,
     BRAND_KITS_FILE,
     CHARACTERS_FILE,
     CONFIG_FILE,
@@ -157,6 +158,37 @@ class TaskOrchestrator:
                 max_image_refs=max_image_refs,
                 llm_config=cfg.compilerLlm,
             )
+
+            # Injection des Directives Agent actives (Module Google Flow Pro)
+            if getattr(req.parameters, "agentEnabled", False):
+                inst_raw = await self._json_store.read_list(AGENT_INSTRUCTIONS_FILE.name)
+                active_ids = getattr(req.parameters, "activeInstructionIds", None)
+                active_inst = [
+                    i
+                    for i in inst_raw
+                    if i.get("isActive", True)
+                    and (not active_ids or i.get("id") in active_ids)
+                ]
+                active_inst.sort(key=lambda x: int(x.get("order", 0)))
+                if active_inst:
+                    directives_lines = [
+                        f"- {i.get('title')}: {i.get('description')}"
+                        for i in active_inst
+                    ]
+                    directives_block = (
+                        f"[Active Agent Directives:\n{chr(10).join(directives_lines)}]"
+                    )
+                    compiled.prompt = f"{directives_block} {compiled.prompt}"
+
+            # Routage Moteur Hybride (Local GPU RTX 5000 Ada vs Cloud API)
+            pref = getattr(req.parameters, "enginePreference", None)
+            if pref == "local":
+                worker_url = getattr(self._gateway, "local_url", "http://127.0.0.1:8190")
+            elif pref == "cloud" and hasattr(self._gateway, "get_colab_worker_url"):
+                with contextlib.suppress(Exception):
+                    c_url = await self._gateway.get_colab_worker_url()
+                    if c_url:
+                        worker_url = c_url
 
             from app.services.story_director import StoryDirector, parse_explicit_script_segments
 

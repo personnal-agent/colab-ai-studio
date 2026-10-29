@@ -2,7 +2,7 @@
  * Client API & SSE pour Colab AI Studio (frontend/src/services/apiClient.ts).
  */
 import type {
-  BrandKit, Character, ExecutionMode, Generation, GenerationSubmitRequest,
+  AgentInstruction, BrandKit, Character, ExecutionMode, Generation, GenerationSubmitRequest,
   GenerationSubmitResponse, HealthResponse, ModelDefinition,
   Project, StudioConfig, TaskStatusEvent, WorkloadEstimate,
 } from '../types/studio';
@@ -99,11 +99,36 @@ export const apiClient = {
     request<{ filePath: string; filename: string; url: string }>('/api/generate/extract-last-frame', {
       method: 'POST', body: JSON.stringify({ generationId }),
     }),
-  listCharacters: () => request<Character[]>('/api/characters'),
-  createCharacter: (char: { name: string; physicalPrompt: string; triggerToken?: string; referenceImagePath?: string | null; voiceStyle?: string }) =>
+  listCharacters: (archetype?: string) =>
+    request<Character[]>(archetype ? `/api/characters?archetype=${encodeURIComponent(archetype)}` : '/api/characters'),
+  getCharacter: (id: string) => request<Character>(`/api/characters/${id}`),
+  createCharacter: (char: Partial<Character> & { name: string; physicalPrompt: string }) =>
     request<Character>('/api/characters', { method: 'POST', body: JSON.stringify(char) }),
+  updateCharacter: (id: string, char: Partial<Character>) =>
+    request<Character>(`/api/characters/${id}`, { method: 'PUT', body: JSON.stringify(char) }),
   deleteCharacter: (id: string) =>
     request<{ deleted: boolean; id: string }>(`/api/characters/${id}`, { method: 'DELETE' }),
+  listAgentInstructions: () => request<AgentInstruction[]>('/api/agent-instructions'),
+  createAgentInstruction: (inst: {
+    title: string;
+    description: string;
+    isActive?: boolean;
+    referenceAssetUrls?: string[];
+  }) => request<AgentInstruction>('/api/agent-instructions', { method: 'POST', body: JSON.stringify(inst) }),
+  updateAgentInstruction: (id: string, inst: Partial<AgentInstruction>) =>
+    request<AgentInstruction>(`/api/agent-instructions/${id}`, { method: 'PUT', body: JSON.stringify(inst) }),
+  toggleAgentInstruction: (id: string, isActive?: boolean) =>
+    request<AgentInstruction>(`/api/agent-instructions/${id}/toggle`, {
+      method: 'PATCH',
+      body: JSON.stringify(isActive !== undefined ? { isActive } : {}),
+    }),
+  reorderAgentInstructions: (instructionIds: string[]) =>
+    request<{ status: string; instructions: AgentInstruction[] }>('/api/agent-instructions/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ instructionIds }),
+    }),
+  deleteAgentInstruction: (id: string) =>
+    request<{ status: string; id: string }>(`/api/agent-instructions/${id}`, { method: 'DELETE' }),
   deleteGeneration: (id: string) =>
     request<{ status: string; id: string }>(`/api/generations/${id}`, { method: 'DELETE' }),
   cancelTask: (taskId: string) =>

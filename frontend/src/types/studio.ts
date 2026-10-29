@@ -33,6 +33,9 @@ export interface GenerationParameters {
   steps?: number | null; guidanceScale?: number | null;
   characterAnchors?: Record<string, CharacterAnchorData> | null;
   scriptPlan?: Record<string, unknown> | null;
+  agentEnabled?: boolean | null;
+  enginePreference?: EnginePreference | null;
+  activeInstructionIds?: string[] | null;
 }
 export interface GenerationReferences {
   startFrame?: string | null; endFrame?: string | null; imageRefs?: string[];
@@ -42,10 +45,44 @@ export interface GenerationReferences {
 export interface BrandKitSnapshot {
   id: string; name: string; overview: string; colors: string[]; logos: string[]; fonts: string[]; guidelines: string[];
 }
+export type CharacterArchetype =
+  | 'The Eccentric'
+  | 'The Professional'
+  | 'The Wildcard'
+  | 'The Familiar'
+  | 'The Wicked'
+  | 'The Fantastical';
+
+export type EnginePreference = 'local' | 'cloud' | 'hybrid';
+
 export interface Character {
-  id: string; name: string; triggerToken: string; physicalPrompt: string;
-  referenceImagePath?: string | null; voiceSamplePath?: string | null; voiceStyle?: string | null;
-  loraName?: string | null; loraStrength?: number; defaultSeed?: number | null; createdAt: string;
+  id: string;
+  name: string;
+  triggerToken: string;
+  physicalPrompt: string;
+  archetype?: CharacterArchetype;
+  visualAnchors?: string[];
+  voiceProfileId?: string | null;
+  voiceSamplePath?: string | null;
+  voiceStyle?: string | null;
+  enginePreference?: EnginePreference;
+  referenceImagePath?: string | null;
+  loraName?: string | null;
+  loraStrength?: number;
+  defaultSeed?: number | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface AgentInstruction {
+  id: string;
+  title: string;
+  description: string;
+  isActive: boolean;
+  referenceAssetUrls: string[];
+  order: number;
+  createdAt: string;
+  updatedAt: string;
 }
 export interface WorkloadEstimate {
   mediaType: string; modelId: string; numSegments: number; totalDurationSec: number;

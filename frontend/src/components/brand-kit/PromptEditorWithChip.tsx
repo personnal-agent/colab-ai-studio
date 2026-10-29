@@ -8,6 +8,7 @@ export interface PromptEditorWithChipProps {
   selectedBrandKit: BrandKit | null;
   onRemoveBrandKit: () => void;
   onOpenBrandKitSelector: () => void;
+  onOpenIngredientsPopover?: () => void;
   placeholder?: string;
   disabled?: boolean;
   onSubmit?: () => void;
@@ -20,6 +21,7 @@ export const PromptEditorWithChip: React.FC<PromptEditorWithChipProps> = ({
   selectedBrandKit,
   onRemoveBrandKit,
   onOpenBrandKitSelector,
+  onOpenIngredientsPopover,
   placeholder = 'Describe what you want to create or type @ to select a brand kit...',
   disabled = false,
   onSubmit,
@@ -60,7 +62,11 @@ export const PromptEditorWithChip: React.FC<PromptEditorWithChipProps> = ({
     );
 
     if (atTyped) {
-      onOpenBrandKitSelector();
+      if (onOpenIngredientsPopover) {
+        onOpenIngredientsPopover();
+      } else {
+        onOpenBrandKitSelector();
+      }
     }
   };
 
@@ -106,6 +112,19 @@ export const PromptEditorWithChip: React.FC<PromptEditorWithChipProps> = ({
               </>
             )}
           </button>
+
+          {onOpenIngredientsPopover && (
+            <button
+              type="button"
+              onClick={onOpenIngredientsPopover}
+              aria-label="@ Ingrédients"
+              title="Insérer des personnages, images, voix ou actifs"
+              className="inline-flex items-center space-x-1 text-xs font-medium text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-colors py-0.5 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <AtSign className="w-3.5 h-3.5" />
+              <span>Ingrédients</span>
+            </button>
+          )}
 
           <button
             type="button"

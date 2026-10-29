@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowUp, Square, Image, Video, Mic, Maximize2, MessageSquare, AlertCircle, Wand2, Sparkles, User, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ArrowUp, Square, Image, Video, Mic, Maximize2, MessageSquare, AlertCircle, Wand2,
+  Sparkles, User, ChevronDown, ChevronUp, Sliders,
+} from 'lucide-react';
 import type {
   ModelDefinition, BrandKit, Generation, GenerationParameters,
   GenerationReferences, GenerationSubmitRequest, WorkloadEstimate,
+  EnginePreference, AgentInstruction,
 } from '../../types/studio';
 import { ConditioningTray } from './conditioning/ConditioningTray';
 import { ParameterRegistry } from './ParameterRegistry';
@@ -12,6 +16,9 @@ import { BrandKitCreateModal } from '../brand-kit/BrandKitCreateModal';
 import { BrandKitInspectorModal } from '../brand-kit/BrandKitInspectorModal';
 import { CharactersModal } from '../characters/CharactersModal';
 import { LlmChatView, type ChatMessage } from './LlmChatView';
+import { EngineSelectorPill } from './EngineSelectorPill';
+import { IngredientsPopover } from './IngredientsPopover';
+import { AgentInstructionsDrawer } from './AgentInstructionsDrawer';
 import { apiClient } from '../../services/apiClient';
 import { getAutoDirectorEnabled, MASTER_DIRECTOR_PROMPT, LLM_PROMPT_PRESETS, type LlmPromptPreset } from './LlmPromptPresets';
 
@@ -46,6 +53,7 @@ const createInitialState = (): ModeState => ({
 export interface FloatingPromptDockProps {
   models: ModelDefinition[];
   brandKits: BrandKit[];
+  generations?: Generation[];
   activeProjectId?: string | null;
   remixContext?: Generation | null;
   onClearRemix?: () => void;
@@ -58,7 +66,7 @@ export interface FloatingPromptDockProps {
 }
 
 export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
-  models, brandKits, activeProjectId, remixContext, onClearRemix,
+  models, brandKits, generations = [], activeProjectId, remixContext, onClearRemix,
   onCreateBrandKit, onSubmitGeneration, onBrandKitCreated, className = '',
 }) => {
   const [activeMode, setActiveMode] = useState<DockMode>('video');
@@ -71,6 +79,13 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
   const [isLlmStreaming, setIsLlmStreaming] = useState(false);
   const llmAbortRef = useRef<AbortController | null>(null);
 
+  // Google Flow Pro States
+  const [agentEnabled, setAgentEnabled] = useState(true);
+  const [enginePreference, setEnginePreference] = useState<EnginePreference>('local');
+  const [isAgentDrawerOpen, setIsAgentDrawerOpen] = useState(false);
+  const [isIngredientsPopoverOpen, setIsIngredientsPopoverOpen] = useState(false);
+  const [agentInstructions, setAgentInstructions] = useState<AgentInstruction[]>([]);
+
   const [isBrandKitPopoverOpen, setIsBrandKitPopoverOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isCharactersModalOpen, setIsCharactersModalOpen] = useState(false);
@@ -78,6 +93,12 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
   const [presetFeedback, setPresetFeedback] = useState<string | null>(null);
   const [estimate, setEstimate] = useState<WorkloadEstimate | null>(null);
   const [isMinimized, setIsMinimized] = useState(false);
+
+  useEffect(() => {
+    if (apiClient.listAgentInstructions) {
+      apiClient.listAgentInstructions().then(setAgentInstructions).catch(() => {});
+    }
+  }, []);
 
   const current = modeStates[activeMode];
 
@@ -291,6 +312,9 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
               upscaleScale: current.upscaleScale,
               upscaleQuality: current.upscaleQuality,
               upscaleFrameRate: current.upscaleFrameRate,
+              agentEnabled,
+              enginePreference,
+              activeInstructionIds: agentInstructions.filter((i) => i.isActive).map((i) => i.id),
             },
             references: resolvedReferences,
             projectId: activeProjectId,
@@ -405,16 +429,59 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
               );
             })}
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5 sm:space-x-2">
+            {/* Agent ON/OFF Switch */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={agentEnabled}
+              aria-label="Basculer Agent"
+              onClick={() => setAgentEnabled(!agentEnabled)}
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 border transition-all ${
+                agentEnabled
+                  ? 'bg-indigo-600 text-white border-indigo-500 shadow-xs'
+                  : 'bg-gray-100 text-gray-500 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Agent {agentEnabled ? 'ON' : 'OFF'}</span>
+            </button>
+
+            {/* Agent Instructions Drawer trigger */}
+            <button
+              type="button"
+              aria-label="Agent Instructions"
+              onClick={() => setIsAgentDrawerOpen(true)}
+              className="text-xs text-gray-600 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400 font-medium py-1 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-1"
+            >
+              <Sliders className="w-3.5 h-3.5 text-indigo-500" />
+              <span className="hidden sm:inline">Instructions</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-indigo-500/10 text-indigo-500 dark:bg-indigo-400/10 dark:text-indigo-300 font-mono">
+                {agentInstructions.filter((i) => i.isActive).length}
+              </span>
+            </button>
+
+            {/* Characters Modal trigger */}
             <button
               type="button"
               aria-label="Personnages"
               onClick={() => setIsCharactersModalOpen(true)}
-              className="text-xs text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 font-medium py-1 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-1"
+              className="text-xs text-gray-600 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400 font-medium py-1 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-1"
             >
               <User className="w-3.5 h-3.5 text-indigo-500" />
-              <span>Personnages</span>
+              <span className="hidden sm:inline">Personnages</span>
             </button>
+
+            {/* Ingrédients Popover trigger */}
+            <button
+              type="button"
+              aria-label="@ Ingrédients"
+              onClick={() => setIsIngredientsPopoverOpen(true)}
+              className="text-xs text-gray-600 hover:text-indigo-600 dark:text-gray-300 dark:hover:text-indigo-400 font-medium py-1 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center space-x-1"
+            >
+              <span>@ Ingrédients</span>
+            </button>
+
             <BrandKitSelectorPopover
               isOpen={isBrandKitPopoverOpen} onOpenChange={setIsBrandKitPopoverOpen}
               brandKits={brandKits} selectedBrandKitId={current.selectedBrandKit?.id}
@@ -552,21 +619,26 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
               if (mediaError) setMediaError(null);
             }}
             selectedBrandKit={current.selectedBrandKit} onRemoveBrandKit={() => updateCurrent({ selectedBrandKit: null })}
-            onOpenBrandKitSelector={() => setIsBrandKitPopoverOpen(true)} onSubmit={handleSubmit}
-            placeholder={activeMode === 'llm' ? 'Ask the LLM anything or generate prompts, copy and code...' : 'Describe what you want to create or @ to mention a brand kit...'}
+            onOpenBrandKitSelector={() => setIsBrandKitPopoverOpen(true)}
+            onOpenIngredientsPopover={() => setIsIngredientsPopoverOpen(true)}
+            onSubmit={handleSubmit}
+            placeholder={activeMode === 'llm' ? 'Ask the LLM anything or generate prompts, copy and code...' : 'Describe what you want to create or @ to mention characters, voices, brand kits...'}
           />
           <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-gray-200/60 dark:border-gray-700/60">
-            <ParameterRegistry
-              mode={activeMode} model={current.model} models={models} onModelChange={(model) => updateCurrent({ model })}
-              parameters={current.parameters} onParametersChange={(params) => updateCurrent({ parameters: { ...current.parameters, ...params } })}
-              batchCount={current.batchCount} onBatchCountChange={(count) => updateCurrent({ batchCount: count })}
-              talkingStyle={current.talkingStyle} onTalkingStyleChange={(style) => updateCurrent({ talkingStyle: style })}
-              upscaleScale={current.upscaleScale} onUpscaleScaleChange={(scale) => updateCurrent({ upscaleScale: scale })}
-              upscaleQuality={current.upscaleQuality} onUpscaleQualityChange={(quality) => updateCurrent({ upscaleQuality: quality })}
-              upscaleFrameRate={current.upscaleFrameRate} onUpscaleFrameRateChange={(fps) => updateCurrent({ upscaleFrameRate: fps })}
-              negativePrompt={current.negativePrompt} onNegativePromptChange={(val) => updateCurrent({ negativePrompt: val })}
-              steps={current.parameters.steps ?? 25} onStepsChange={(steps) => updateCurrent({ parameters: { ...current.parameters, steps } })}
-            />
+            <div className="flex items-center space-x-2 flex-wrap">
+              <EngineSelectorPill value={enginePreference} onChange={setEnginePreference} />
+              <ParameterRegistry
+                mode={activeMode} model={current.model} models={models} onModelChange={(model) => updateCurrent({ model })}
+                parameters={current.parameters} onParametersChange={(params) => updateCurrent({ parameters: { ...current.parameters, ...params } })}
+                batchCount={current.batchCount} onBatchCountChange={(count) => updateCurrent({ batchCount: count })}
+                talkingStyle={current.talkingStyle} onTalkingStyleChange={(style) => updateCurrent({ talkingStyle: style })}
+                upscaleScale={current.upscaleScale} onUpscaleScaleChange={(scale) => updateCurrent({ upscaleScale: scale })}
+                upscaleQuality={current.upscaleQuality} onUpscaleQualityChange={(quality) => updateCurrent({ upscaleQuality: quality })}
+                upscaleFrameRate={current.upscaleFrameRate} onUpscaleFrameRateChange={(fps) => updateCurrent({ upscaleFrameRate: fps })}
+                negativePrompt={current.negativePrompt} onNegativePromptChange={(val) => updateCurrent({ negativePrompt: val })}
+                steps={current.parameters.steps ?? 25} onStepsChange={(steps) => updateCurrent({ parameters: { ...current.parameters, steps } })}
+              />
+            </div>
             <div className="flex items-center space-x-2 flex-shrink-0 ml-2">
               {activeMode === 'llm' && isLlmStreaming ? (
                 <button
@@ -608,6 +680,21 @@ export const FloatingPromptDock: React.FC<FloatingPromptDockProps> = ({
         isOpen={isCharactersModalOpen}
         onClose={() => setIsCharactersModalOpen(false)}
         onSelectCharacterToken={(token) => {
+          const separator = current.prompt.trim() ? ' ' : '';
+          updateCurrent({ prompt: `${current.prompt}${separator}${token} ` });
+        }}
+      />
+      <AgentInstructionsDrawer
+        isOpen={isAgentDrawerOpen}
+        onClose={() => setIsAgentDrawerOpen(false)}
+        onInstructionsChange={setAgentInstructions}
+      />
+      <IngredientsPopover
+        isOpen={isIngredientsPopoverOpen}
+        onClose={() => setIsIngredientsPopoverOpen(false)}
+        brandKits={brandKits}
+        generations={generations}
+        onSelectIngredient={(token) => {
           const separator = current.prompt.trim() ? ' ' : '';
           updateCurrent({ prompt: `${current.prompt}${separator}${token} ` });
         }}

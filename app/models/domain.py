@@ -34,6 +34,18 @@ class ExecutionMode(str, Enum):
     LOCAL = "local"
 
 
+class CharacterArchetype(str, Enum):
+    THE_ECCENTRIC = "The Eccentric"
+    THE_PROFESSIONAL = "The Professional"
+    THE_WILDCARD = "The Wildcard"
+    THE_FAMILIAR = "The Familiar"
+    THE_WICKED = "The Wicked"
+    THE_FANTASTICAL = "The Fantastical"
+
+
+EnginePreference = Literal["local", "cloud", "hybrid"]
+
+
 class DomainBase(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -59,6 +71,9 @@ class GenerationParameters(DomainBase):
     steps: int | None = None
     guidanceScale: float | None = None
     characterAnchors: dict[str, Any] | None = None
+    agentEnabled: bool | None = None
+    enginePreference: EnginePreference | None = None
+    activeInstructionIds: list[str] | None = None
 
     @field_validator("aspectRatio")
     @classmethod
@@ -218,10 +233,26 @@ class Character(DomainBase):
     referenceImagePath: str | None = None
     voiceSamplePath: str | None = None
     voiceStyle: str | None = "feminine_soft"
+    voiceProfileId: str | None = None
+    archetype: CharacterArchetype = CharacterArchetype.THE_FAMILIAR
+    visualAnchors: list[str] = Field(default_factory=list)
+    enginePreference: EnginePreference = "local"
     loraName: str | None = None
     loraStrength: float = 0.85
     defaultSeed: int | None = None
     createdAt: str = Field(default_factory=_utc_now_iso)
+    updatedAt: str = Field(default_factory=_utc_now_iso)
+
+
+class AgentInstruction(DomainBase):
+    id: str
+    title: str
+    description: str
+    isActive: bool = True
+    referenceAssetUrls: list[str] = Field(default_factory=list)
+    order: int = 0
+    createdAt: str = Field(default_factory=_utc_now_iso)
+    updatedAt: str = Field(default_factory=_utc_now_iso)
 
 
 class Generation(DomainBase):

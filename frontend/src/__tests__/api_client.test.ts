@@ -132,6 +132,80 @@ describe('apiClient', () => {
     (global as unknown as { EventSource: unknown }).EventSource = origES;
   });
 
+  it('handles characters CRUD with archetypes and update', async () => {
+    const mockChar = {
+      id: 'char_1',
+      name: 'Elena Vance',
+      physicalPrompt: 'silver hair',
+      archetype: 'The Wildcard',
+      visualAnchors: ['neon jacket'],
+      enginePreference: 'local',
+      createdAt: '2026-10-29T12:00:00Z',
+    };
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => [mockChar] })
+      .mockResolvedValueOnce({ ok: true, json: async () => mockChar })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...mockChar, name: 'Elena V2' }) });
+
+    const filtered = await apiClient.listCharacters('The Wildcard');
+    expect(global.fetch).toHaveBeenCalledWith('/api/characters?archetype=The%20Wildcard', expect.anything());
+    expect(filtered).toHaveLength(1);
+
+    const retrieved = await apiClient.getCharacter('char_1');
+    expect(global.fetch).toHaveBeenCalledWith('/api/characters/char_1', expect.anything());
+    expect(retrieved.name).toBe('Elena Vance');
+
+    const updated = await apiClient.updateCharacter('char_1', { name: 'Elena V2' });
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/characters/char_1',
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ name: 'Elena V2' }) }),
+    );
+    expect(updated.name).toBe('Elena V2');
+  });
+
+  it('handles agent instructions CRUD, toggle, and reorder', async () => {
+    const mockInst = {
+      id: 'inst_1',
+      title: 'Cinematic Lighting',
+      description: 'Use soft volumetric lighting',
+      isActive: true,
+      referenceAssetUrls: [],
+      order: 0,
+      createdAt: '2026-10-29T12:00:00Z',
+      updatedAt: '2026-10-29T12:00:00Z',
+    };
+    global.fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => [mockInst] })
+      .mockResolvedValueOnce({ ok: true, json: async () => mockInst })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...mockInst, isActive: false }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'ok', instructions: [mockInst] }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'deleted', id: 'inst_1' }) });
+
+    const instructions = await apiClient.listAgentInstructions();
+    expect(instructions).toHaveLength(1);
+
+    const created = await apiClient.createAgentInstruction({
+      title: 'Cinematic Lighting',
+      description: 'Use soft volumetric lighting',
+    });
+    expect(created.title).toBe('Cinematic Lighting');
+
+    const toggled = await apiClient.toggleAgentInstruction('inst_1', false);
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/agent-instructions/inst_1/toggle',
+      expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ isActive: false }) }),
+    );
+    expect(toggled.isActive).toBe(false);
+
+    const reordered = await apiClient.reorderAgentInstructions(['inst_1']);
+    expect(reordered.status).toBe('ok');
+
+    const deleted = await apiClient.deleteAgentInstruction('inst_1');
+    expect(deleted.id).toBe('inst_1');
+  });
+
   it('throws API error with response message on failure', async () => {
     global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 400, json: async () => ({ detail: 'Custom error detail' }) });
     await expect(apiClient.getConfig()).rejects.toThrow('Custom error detail');

@@ -19,6 +19,7 @@ BRAND_KITS_FILE: Path = DATA_DIR / "brand_kits.json"
 PROJECTS_FILE: Path = DATA_DIR / "projects.json"
 CONFIG_FILE: Path = DATA_DIR / "config.json"
 CHARACTERS_FILE: Path = DATA_DIR / "characters.json"
+AGENT_INSTRUCTIONS_FILE: Path = DATA_DIR / "agent_instructions.json"
 
 
 def ensure_directories() -> None:

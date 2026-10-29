@@ -185,7 +185,21 @@ def build_chained_segment_prompt(
 
     char_blocks = ""
     if char_profiles:
-        items = [f"- {c['label']}: {c['description']}" for c in char_profiles]
+        items = []
+        for c in char_profiles:
+            lbl = c.get("label") or c.get("name") or "Personnage"
+            desc = c.get("description") or c.get("physicalPrompt") or ""
+            arch = c.get("archetype")
+            anchors = c.get("visualAnchors")
+            line = f"- {lbl}"
+            if arch:
+                line += f" ({arch})"
+            if desc:
+                line += f": {desc}"
+            if anchors and isinstance(anchors, list):
+                line += f" [Anchors: {', '.join(anchors)}]"
+            items.append(line)
+
         continuity_notice = (
             "Strictly maintain exact same faces, hairstyles, skin tones, body build, "
             "and attire across all shots."

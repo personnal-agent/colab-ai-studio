@@ -13,6 +13,7 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.routes_agent_instructions import router as agent_instructions_router
 from app.api.routes_characters import router as characters_router
 from app.api.routes_config import router as config_router
 from app.api.routes_crud import router as crud_router
@@ -90,6 +91,7 @@ async def corrupted_store_exception_handler(
 
 app.include_router(crud_router)
 app.include_router(characters_router)
+app.include_router(agent_instructions_router)
 app.include_router(models_router)
 app.include_router(config_router)
 app.include_router(generation_router)

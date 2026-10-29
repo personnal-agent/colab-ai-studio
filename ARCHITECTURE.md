@@ -123,6 +123,21 @@ colab-ai-studio/
 2. Paramètres universels (tirages `⚏ 1`–`4`, prompt) injectés automatiquement dans tous les groupes.
 3. Contrôles spécifiques montés dynamiquement selon les capacités (`capabilities`) du modèle actif : Mode Ingrédients (Dataset Bible, vidéo précédente), Frame Chaining (First/Last Frame avec règle de subsomption), durée (intervalle continu ou paliers discrets), résolutions et audio natif.
 
+### 3.4. Alignement Architectural Google Flow Pro
+1. **Fiches Personnages & Acteurs récurrents** :
+   - 6 archétypes dramatiques fondamentaux (`The Eccentric`, `The Professional`, `The Wildcard`, `The Familiar`, `The Wicked`, `The Fantastical`).
+   - Gestionnaire d'ancres visuelles multi-angles (`visualAnchors`) injectées automatiquement sous balise `[Visual Anchors for @Nom: ...]`.
+   - Profil vocal persistant (Audio Weaver) et préférence moteur dédiée par acteur.
+2. **Tiroir des Instructions Agentiques (`AgentInstructionsDrawer`)** :
+   - Directives empilables réordonnables (priorité ordonnée) avec bascule individuelle ON/OFF sans altérer le prompt utilisateur.
+   - Injection ordonnée dans le prompt système du TaskOrchestrator dès que le commutateur `Agent [ON/OFF]` de la barre centrale est activé.
+3. **Menu Popover des Ingrédients (`IngredientsPopover`)** :
+   - Déclenché instantanément à la saisie de `@` ou au clic sur le bouton `@ Ingrédients`.
+   - 5 onglets dédiés : *Personnages*, *Images*, *Vidéos*, *Voix*, *Uploads & Brand Kits*.
+   - Recherche en temps réel et injection directe du tag d'actif correspondant dans le prompt.
+4. **Pilule de Sélection de Moteur Hybride (`EngineSelectorPill`)** :
+   - Choix direct entre `⚡ Local (RTX 5000 Ada)` (0s latence, ComfyUI local), `☁️ Cloud API` (serveur distant Colab/RunPod) et `🔀 Hybride` (storyboard et découpage de plans sur LLM Cloud + rendu haute fidélité local).
+
 ---
 
 ## 4. Contraintes Matérielles & Garde-fous d'Exécution

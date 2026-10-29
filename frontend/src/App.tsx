@@ -394,6 +394,7 @@ export default function App(): React.ReactElement {
           <FloatingPromptDock
             models={models}
             brandKits={brandKits}
+            generations={generations}
             activeProjectId={activeProjectId}
             remixContext={remixContext}
             onClearRemix={() => setRemixContext(null)}
