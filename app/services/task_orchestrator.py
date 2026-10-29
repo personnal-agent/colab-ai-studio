@@ -68,7 +68,7 @@ class TaskOrchestrator:
         worker_gateway: WorkerGateway | None = None,
         brand_compiler: BrandContextCompiler | None = None,
         poll_interval: float = 1.0,
-        task_timeout: float = 600.0,
+        task_timeout: float = 1200.0,
     ) -> None:
         self._json_store = json_store or JSONDocumentStore(DATA_DIR)
         self._media_store = media_store or MediaFileStore(OUTPUTS_DIR)
@@ -348,8 +348,8 @@ class TaskOrchestrator:
             if gen.parameters and gen.parameters.scriptPlan:
                 total_segs_planned = int(gen.parameters.scriptPlan.get("num_segments", 1))
 
-            # Timeout dynamique : chaque plan peut prendre jusqu'à 600s sur GPU
-            segment_timeout = max(self._task_timeout, 600.0)
+            # Timeout dynamique par segment (1200s par défaut sur GPU local)
+            segment_timeout = self._task_timeout
             overall_timeout = segment_timeout * max(1, total_segs_planned)
 
             while True:

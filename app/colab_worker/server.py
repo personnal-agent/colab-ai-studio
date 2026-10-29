@@ -772,6 +772,30 @@ def create_worker_app(
                 return found_path
 
             poll_count += 1
+            if (
+                poll_count % 2 == 0
+                and task_id in tasks
+                and tasks[task_id].get("status") == "running"
+            ):
+                cur_prog = tasks[task_id].get("progress", 0)
+                seq_idx = tasks[task_id].get("sequenceIndex")
+                seq_total = tasks[task_id].get("sequenceTotal", 1)
+
+                if seq_total and seq_total > 1 and seq_idx:
+                    seg_floor = int(round((seq_idx - 1) / seq_total * 100))
+                    seg_ceiling = int(round((seq_idx - 0.05) / seq_total * 100))
+                    target_max = max(seg_floor, seg_ceiling)
+                else:
+                    target_max = 90
+
+                if cur_prog < target_max:
+                    tasks[task_id]["progress"] = min(target_max, cur_prog + 1)
+
+                current_step = tasks[task_id].get("step", "")
+                if "Plan " not in current_step:
+                    tasks[task_id]["step"] = (
+                        f"Inférence GPU en cours ({tasks[task_id]['progress']}%)"
+                    )
             await asyncio.sleep(1.5)
 
     async def _execute_comfyui_infer(
