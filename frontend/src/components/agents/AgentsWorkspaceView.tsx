@@ -327,19 +327,19 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
 
           <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 text-[11px]">
             <Cpu className="w-3.5 h-3.5" />
-            <span>Intel i7 (2C/4T)</span>
+            <span>Core i9-13950HX (20C/32T)</span>
           </div>
-          <div className="flex items-center space-x-1 text-gray-500 text-[11px]">
+          <div className="flex items-center space-x-1 text-indigo-600 dark:text-indigo-400 text-[11px]">
             <Database className="w-3.5 h-3.5" />
-            <span>RAM: ~395 Mo</span>
+            <span>64 Go RAM</span>
           </div>
         </div>
       </div>
 
       {/* Corps principal : Volet conversationnel + Canevas infini */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
         {/* Volet conversationnel multi-agents */}
-        <div className="w-96 border-r border-studio-border bg-white dark:bg-gray-900 flex flex-col h-full">
+        <div className="w-96 flex-shrink-0 border-r border-studio-border bg-white dark:bg-gray-900 flex flex-col self-stretch">
           {/* Sélecteur d'agent actif */}
           <div className="p-3 border-b border-studio-border bg-gray-50 dark:bg-gray-800/50">
             <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">
