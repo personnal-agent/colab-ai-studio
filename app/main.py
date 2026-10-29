@@ -22,10 +22,12 @@ from app.api.routes_llm_proxy import router as llm_proxy_router
 from app.api.routes_mcp import router as mcp_router
 from app.api.routes_models import get_worker_gateway
 from app.api.routes_models import router as models_router
+from app.api.routes_sqlite_resources import router as resources_router
 from app.config import DATA_DIR, GENERATIONS_FILE, ensure_directories
 from app.models.domain import TaskStatus
 from app.services.worker_gateway import WorkerGateway
 from app.storage.json_store import CorruptedDocumentStoreError, JSONDocumentStore
+from app.storage.sqlite_repository import get_hilo_sqlite_repo
 
 
 @asynccontextmanager
@@ -44,9 +46,14 @@ async def lifespan(app: FastAPI):
         if modified:
             await store.write_list_unlocked(GENERATIONS_FILE.name, gens)
 
+    with suppress(Exception):
+        await get_hilo_sqlite_repo().initialize()
+
     try:
         yield
     finally:
+        with suppress(Exception):
+            await get_hilo_sqlite_repo().close()
         with suppress(Exception):
             await get_task_orchestrator().aclose()
         with suppress(Exception):
@@ -87,6 +94,7 @@ app.include_router(config_router)
 app.include_router(generation_router)
 app.include_router(llm_proxy_router)
 app.include_router(mcp_router)
+app.include_router(resources_router)
 
 
 @app.get("/api/health", tags=["Diagnostic"])

@@ -33,6 +33,10 @@ data/
 *.webp
 *.sqlite3
 *.db
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.hilo/
 
 # Maquettes et captures de référence d'interface utilisateur (préservées sous Git)
 !ui-specifications/
