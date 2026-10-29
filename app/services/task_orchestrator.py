@@ -37,6 +37,7 @@ from app.models.domain import (
 from app.services.brand_compiler import BrandContextCompiler
 from app.services.worker_gateway import WorkerGateway
 from app.storage.json_store import JSONDocumentStore
+from app.storage.media_file_store_64k import MediaFileStore64k
 from app.storage.media_store import MediaFileStore
 
 logger = logging.getLogger(__name__)
@@ -611,14 +612,37 @@ class TaskOrchestrator:
                         )
                         ext = "mp4" if is_v else "png"
                     filename = f"{gen_id}.{ext}"
-                    dest_file, thumb_file = await self._media_store.save_media(
-                        filename, media_bytes, project=project
-                    )
+                    op_id = f"op_{gen_id}"
+                    if isinstance(self._media_store, MediaFileStore64k):
+                        temp_path, digest, size = await self._media_store.stream_write_temp(
+                            filename, [media_bytes], project=project
+                        )
+                        resource_key = f"{gen.projectId or 'default'}::{gen_id}::primary"
+                        await self._media_store.stage_operation(
+                            operation_id=op_id,
+                            resource_key=resource_key,
+                            temp_path=temp_path,
+                            final_filename=filename,
+                            sha256_digest=digest,
+                            byte_size=size,
+                            project=project,
+                        )
+                        published_str = await self._media_store.publish_no_replace(op_id)
+                        dest_file = Path(published_str)
+                        await self._media_store.commit_operation(op_id)
+                        thumb_file = None
+                    else:
+                        dest_file, thumb_file = await self._media_store.save_media(
+                            filename, media_bytes, project=project
+                        )
 
                     if cancel_evt.is_set():
-                        dest_file.unlink(missing_ok=True)
-                        if thumb_file:
-                            thumb_file.unlink(missing_ok=True)
+                        if isinstance(self._media_store, MediaFileStore64k):
+                            await self._media_store.abort_and_compensate(op_id)
+                        else:
+                            dest_file.unlink(missing_ok=True)
+                            if thumb_file:
+                                thumb_file.unlink(missing_ok=True)
                         await self._update_generation(
                             gen_id,
                             status=TaskStatus.CANCELLED.value,
@@ -639,9 +663,12 @@ class TaskOrchestrator:
                     )
                     # Si l'annulation a gagné entre-temps sous le verrou
                     if saved_gen and saved_gen.status == TaskStatus.CANCELLED:
-                        dest_file.unlink(missing_ok=True)
-                        if thumb_file:
-                            thumb_file.unlink(missing_ok=True)
+                        if isinstance(self._media_store, MediaFileStore64k):
+                            await self._media_store.abort_and_compensate(op_id)
+                        else:
+                            dest_file.unlink(missing_ok=True)
+                            if thumb_file:
+                                thumb_file.unlink(missing_ok=True)
                         break
 
                     await self._emit_event(

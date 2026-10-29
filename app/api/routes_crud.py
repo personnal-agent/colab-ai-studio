@@ -37,13 +37,14 @@ from app.config import (
 from app.models.domain import HEX_COLOR_REGEX, Project, StudioConfig, TaskStatus
 from app.services.brand_extractor import BrandKitExtractor
 from app.storage.json_store import JSONDocumentStore
+from app.storage.media_file_store_64k import MediaFileStore64k
 from app.storage.media_store import MediaFileStore
 
 router = APIRouter(prefix="/api", tags=["CRUD"])
 
 # Instances par défaut (surchargées dans les tests via dependency injection ou app.state)
 _json_store = JSONDocumentStore(DATA_DIR)
-_media_store = MediaFileStore(OUTPUTS_DIR)
+_media_store = MediaFileStore64k(OUTPUTS_DIR, json_store=_json_store)
 _extractor = BrandKitExtractor(ASSETS_DIR)
 
 
