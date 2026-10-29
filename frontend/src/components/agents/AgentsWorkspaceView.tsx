@@ -19,8 +19,15 @@ import {
   Film,
   Image as ImageIcon,
   Volume2,
+  Zap,
 } from 'lucide-react';
-import type { CanvasAssetLayer } from '../../types/studio';
+import type {
+  CanvasAssetLayer,
+  GenerationSubmitRequest,
+  GenerationSubmitResponse,
+  ModelDefinition,
+  TaskStatusEvent,
+} from '../../types/studio';
 import { detectGraphicsCapability } from '../../services/graphicsCapability';
 import { Canvas2DFallback } from '../canvas/Canvas2DFallback';
 import { apiClient } from '../../services/apiClient';
@@ -33,14 +40,116 @@ interface AgentMessage {
   stage?: string;
 }
 
+export interface MediaIntent {
+  type: 'image' | 'video' | 'mesh_3d';
+  modelId: string;
+  modelName: string;
+  prompt: string;
+}
+
+function detectMediaIntent(text: string): MediaIntent | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+
+  if (trimmed.startsWith('/image ') || trimmed.startsWith('/img ')) {
+    const prompt = trimmed.replace(/^\/(?:image|img)\s+/i, '').trim();
+    return { type: 'image', modelId: 'noctq-v4', modelName: 'NoctQ V4 Cinema', prompt };
+  }
+  if (trimmed.startsWith('/video ') || trimmed.startsWith('/vid ')) {
+    const prompt = trimmed.replace(/^\/(?:video|vid)\s+/i, '').trim();
+    return { type: 'video', modelId: 'minimax-h3', modelName: 'MiniMax H3 Video', prompt };
+  }
+  if (trimmed.startsWith('/3d ') || trimmed.startsWith('/mesh ')) {
+    const prompt = trimmed.replace(/^\/(?:3d|mesh)\s+/i, '').trim();
+    return { type: 'mesh_3d', modelId: 'tripo-3d-local', modelName: 'Tripo 3D Local', prompt };
+  }
+
+  const lower = trimmed.toLowerCase();
+
+  // Verbes d'action obligatoires pour éviter les faux positifs conversationnels
+  const hasActionVerb = /\b(g[ée]n[èe]re|g[ée]n[ée]rer|cr[ée]e|cr[ée]er|produis|produire|fais|faire|anime|animer|dessine|dessiner|lance|lancer|tourne|tourner|make|generate|create|render)\b/i.test(lower);
+  if (!hasActionVerb) {
+    return null;
+  }
+
+  const mentionsVideo = /\b(vid[ée]os?|clips?|films?|animations?|court-m[ée]trages?|travellings?)\b/i.test(lower);
+  const mentionsImage = /\b(images?|photos?|illustrations?|visuels?|dessins?|concept-?arts?|tableaux?|portraits?|wallpapers?|fonds?\s+d'[ée]cran)\b/i.test(lower);
+  const mentions3D = /\b(maillages?|mesh(es)?|mod[èe]les?\s+3d|objets?\s+3d)\b/i.test(lower);
+
+  if (mentionsVideo && !mentionsImage) {
+    return {
+      type: 'video',
+      modelId: 'minimax-h3',
+      modelName: 'MiniMax H3 Video',
+      prompt: trimmed,
+    };
+  }
+
+  if (mentionsImage && !mentionsVideo) {
+    return {
+      type: 'image',
+      modelId: 'noctq-v4',
+      modelName: 'NoctQ V4 Cinema',
+      prompt: trimmed,
+    };
+  }
+
+  if (mentionsVideo && mentionsImage) {
+    const imgIndex = lower.search(/\b(images?|photos?|illustrations?)\b/i);
+    const vidIndex = lower.search(/\b(vid[ée]os?|clips?)\b/i);
+    if (imgIndex !== -1 && (vidIndex === -1 || imgIndex < vidIndex)) {
+      return {
+        type: 'image',
+        modelId: 'noctq-v4',
+        modelName: 'NoctQ V4 Cinema',
+        prompt: trimmed,
+      };
+    }
+    return {
+      type: 'video',
+      modelId: 'minimax-h3',
+      modelName: 'MiniMax H3 Video',
+      prompt: trimmed,
+    };
+  }
+
+  if (mentions3D) {
+    return {
+      type: 'mesh_3d',
+      modelId: 'tripo-3d-local',
+      modelName: 'Tripo 3D Local',
+      prompt: trimmed,
+    };
+  }
+
+  return null;
+}
+
+export interface ActiveGpuTask {
+  taskId: string;
+  prompt: string;
+  modelId: string;
+  modelName: string;
+  type: 'image' | 'video' | 'mesh_3d';
+  progress: number;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  step?: string;
+  outputUrl?: string;
+  error?: string;
+}
+
 export interface AgentsWorkspaceViewProps {
   injectedLayers?: CanvasAssetLayer[];
   onLayerInjected?: (layer: CanvasAssetLayer) => void;
+  onSubmitGeneration?: (req: GenerationSubmitRequest) => Promise<GenerationSubmitResponse | void>;
+  models?: ModelDefinition[];
 }
 
 export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
   injectedLayers,
   onLayerInjected,
+  onSubmitGeneration,
+  models,
 }) => {
   const [activeAgent, setActiveAgent] = useState<'leader' | 'planner' | 'coder'>('leader');
   const [isPlaying, setIsPlaying] = useState(false);
@@ -48,6 +157,7 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
   const [chatInput, setChatInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [layers, setLayers] = useState<CanvasAssetLayer[]>(() => injectedLayers || []);
+  const [gpuTasks, setGpuTasks] = useState<ActiveGpuTask[]>([]);
   const [isGenerating3D, setIsGenerating3D] = useState(false);
   const [graphicsMode, setGraphicsMode] = useState<'webgpu' | 'canvas2d'>('webgpu');
   const [gpuInfo, setGpuInfo] = useState<string>('Détection GPU...');
@@ -63,6 +173,15 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
     gpuTooltip: 'Détection GPU en cours...',
   });
   const abortControllerRef = useRef<AbortController | null>(null);
+  const taskSubscriptionsRef = useRef<Map<string, () => void>>(new Map());
+
+  useEffect(() => {
+    const subscriptions = taskSubscriptionsRef.current;
+    return () => {
+      subscriptions.forEach((unsub) => unsub());
+      subscriptions.clear();
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -181,20 +300,167 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
     setIsStreaming(false);
   };
 
+  const executeMediaGeneration = async (intent: MediaIntent) => {
+    let taskId = `task-${Date.now()}`;
+    const targetModelDef = models?.find((m) => m.id === intent.modelId);
+    const modelName = targetModelDef?.name || intent.modelName;
+
+    try {
+      if (onSubmitGeneration) {
+        const res = await onSubmitGeneration({
+          modelId: intent.modelId,
+          prompt: intent.prompt,
+          type: intent.type === 'mesh_3d' ? '3d' : intent.type,
+        });
+        if (res?.taskId || res?.generationId) {
+          taskId = res.taskId || res.generationId || taskId;
+        }
+      } else {
+        const res = await apiClient.submitGeneration({
+          modelId: intent.modelId,
+          prompt: intent.prompt,
+          type: intent.type === 'mesh_3d' ? '3d' : intent.type,
+        });
+        taskId = res.taskId || res.generationId || taskId;
+      }
+
+      const newTask: ActiveGpuTask = {
+        taskId,
+        prompt: intent.prompt,
+        modelId: intent.modelId,
+        modelName,
+        type: intent.type,
+        progress: 0,
+        status: 'pending',
+        step: 'Initialisation inférence sur RTX 5000 Ada...',
+      };
+
+      setGpuTasks((prev) => [...prev, newTask]);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-${Date.now()}`,
+          sender: 'leader',
+          content: `Inférence GPU lancée avec ${modelName} pour "${intent.prompt}".`,
+          timestamp: new Date().toLocaleTimeString(),
+          stage: 'INFERENCE',
+        },
+      ]);
+
+      const unsub = apiClient.subscribeTaskStatus(
+        taskId,
+        (event: TaskStatusEvent) => {
+          setGpuTasks((prev) =>
+            prev.map((t) =>
+              t.taskId === event.taskId
+                ? {
+                    ...t,
+                    status: event.status,
+                    progress: event.progress,
+                    step: event.step,
+                    outputUrl: event.outputUrl,
+                    error: event.error,
+                  }
+                : t
+            )
+          );
+
+          if (event.status === 'completed') {
+            const newLayer: CanvasAssetLayer = {
+              id: `layer-${event.taskId}`,
+              name: `${intent.type.toUpperCase()}: ${intent.prompt.slice(0, 24)}`,
+              type: intent.type,
+              taskId: event.taskId,
+              status: 'ready',
+              fileUrl:
+                event.outputUrl ||
+                (event.generation?.filePath ? `/outputs/${event.generation.filePath}` : undefined),
+              thumbnailUrl:
+                event.thumbnailUrl ||
+                (event.generation?.thumbnailPath ? `/outputs/${event.generation.thumbnailPath}` : undefined),
+            };
+
+            setLayers((prev) => {
+              if (prev.some((l) => l.taskId === event.taskId)) return prev;
+              return [...prev, newLayer];
+            });
+            onLayerInjected?.(newLayer);
+
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: `msg-${Date.now()}`,
+                sender: 'leader',
+                content: `✅ Calque "${newLayer.name}" généré et calqué sur le canevas infini WebGPU.`,
+                timestamp: new Date().toLocaleTimeString(),
+                stage: 'CANVAS_READY',
+              },
+            ]);
+            unsub();
+            taskSubscriptionsRef.current.delete(taskId);
+          } else if (event.status === 'failed' || event.status === 'cancelled') {
+            unsub();
+            taskSubscriptionsRef.current.delete(taskId);
+          }
+        },
+        (err) => {
+          console.error('Erreur souscription tâche GPU:', err);
+          setGpuTasks((prev) =>
+            prev.map((t) =>
+              t.taskId === taskId
+                ? {
+                    ...t,
+                    status: 'failed',
+                    error: 'Erreur de flux SSE ou déconnexion',
+                    step: 'Échec de connexion au flux GPU',
+                  }
+                : t
+            )
+          );
+          unsub();
+          taskSubscriptionsRef.current.delete(taskId);
+        }
+      );
+
+      taskSubscriptionsRef.current.set(taskId, unsub);
+    } catch (err) {
+      console.error('Échec déclenchement inférence GPU:', err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg-${Date.now()}`,
+          sender: 'leader',
+          content: `Erreur lors du lancement de l'inférence avec ${modelName}.`,
+          timestamp: new Date().toLocaleTimeString(),
+          stage: 'ERROR',
+        },
+      ]);
+    }
+  };
+
   const handleSendMessage = async (e: FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim() || isStreaming) return;
+    const trimmed = chatInput.trim();
+    if (!trimmed || isStreaming) return;
 
     const userMsg: AgentMessage = {
       id: `msg-${Date.now()}`,
       sender: 'user',
-      content: chatInput,
+      content: trimmed,
       timestamp: new Date().toLocaleTimeString(),
     };
 
     const targetAgent = activeAgent;
     setMessages((prev) => [...prev, userMsg]);
     setChatInput('');
+
+    const mediaIntent = detectMediaIntent(trimmed);
+    if (mediaIntent) {
+      void executeMediaGeneration(mediaIntent);
+      return;
+    }
+
     setIsStreaming(true);
 
     const agentMsgId = `msg-${Date.now() + 1}`;
@@ -250,9 +516,9 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
           const lines = chunk.split('\n');
 
           for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.startsWith('data: ')) {
-              const dataStr = trimmed.slice(6);
+            const trimmedLine = line.trim();
+            if (trimmedLine.startsWith('data: ')) {
+              const dataStr = trimmedLine.slice(6);
               if (dataStr === '[DONE]') {
                 break;
               }
@@ -436,6 +702,49 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
             </div>
           </div>
 
+          {/* Cartes d'inférence GPU actives */}
+          {gpuTasks.length > 0 && (
+            <div className="p-3 border-b border-studio-border bg-indigo-50/40 dark:bg-indigo-950/20 space-y-2 max-h-48 overflow-y-auto">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center justify-between">
+                <span>Inférences GPU actives</span>
+                <span className="font-mono">
+                  {gpuTasks.filter((t) => t.status === 'running' || t.status === 'pending').length} en cours
+                </span>
+              </div>
+              {gpuTasks.map((task) => (
+                <div
+                  key={task.taskId}
+                  data-testid={`gpu-task-card-${task.taskId}`}
+                  className="p-2.5 rounded-lg bg-white dark:bg-gray-800 border border-indigo-200 dark:border-indigo-800 shadow-xs space-y-1.5 text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center space-x-1">
+                      <Zap className="w-3 h-3 text-amber-500 animate-pulse" />
+                      <span>{task.modelName}</span>
+                    </span>
+                    <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                      {task.status.toUpperCase()} ({task.progress}%)
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-600 dark:text-gray-300 truncate" title={task.prompt}>
+                    {task.prompt}
+                  </p>
+                  <div className="w-full bg-gray-100 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(100, Math.max(0, task.progress))}%` }}
+                    />
+                  </div>
+                  {task.step && (
+                    <div className="text-[10px] font-mono text-gray-400 truncate">
+                      {task.step}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Flux de messages */}
           <div className="flex-1 p-3 overflow-y-auto space-y-3">
             {messages.map((msg) => (
@@ -536,6 +845,43 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
                   <Grid className="w-4 h-4" />
                 </button>
               </div>
+
+              {/* Actions de génération rapide sur le GPU local */}
+              <button
+                type="button"
+                data-testid="quick-generate-image-btn"
+                onClick={() =>
+                  executeMediaGeneration({
+                    type: 'image',
+                    modelId: 'noctq-v4',
+                    modelName: 'NoctQ V4 Cinema',
+                    prompt: 'Composition cinématique haute fidélité NoctQ V4',
+                  })
+                }
+                title="Générer une image cinématique locale avec NoctQ V4"
+                className="flex items-center space-x-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors shadow-xs"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>+ Image NoctQ V4</span>
+              </button>
+
+              <button
+                type="button"
+                data-testid="quick-generate-video-btn"
+                onClick={() =>
+                  executeMediaGeneration({
+                    type: 'video',
+                    modelId: 'minimax-h3',
+                    modelName: 'MiniMax H3 Video',
+                    prompt: 'Séquence vidéo cinématique 1080p MiniMax H3',
+                  })
+                }
+                title="Générer une vidéo cinématique locale avec MiniMax H3"
+                className="flex items-center space-x-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900 transition-colors shadow-xs"
+              >
+                <Film className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                <span>+ Vidéo MiniMax H3</span>
+              </button>
 
               {/* Action Passerelle 6 Pôles : Génération 3D */}
               <button

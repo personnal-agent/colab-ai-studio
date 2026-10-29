@@ -12,6 +12,7 @@ import type {
   ModelDefinition,
   BrandKit,
   GenerationSubmitRequest,
+  GenerationSubmitResponse,
   TaskStatusEvent,
   CanvasAssetLayer,
 } from './types/studio';
@@ -208,7 +209,9 @@ export default function App(): React.ReactElement {
     }
   };
 
-  const handleSubmitGeneration = async (req: GenerationSubmitRequest) => {
+  const handleSubmitGeneration = async (
+    req: GenerationSubmitRequest
+  ): Promise<GenerationSubmitResponse | void> => {
     if (!apiClient.submitGeneration) return;
     try {
       const res = await apiClient.submitGeneration(req);
@@ -217,6 +220,7 @@ export default function App(): React.ReactElement {
       const modelName = modelDef?.name || req.modelId;
 
       subscribeToTask(taskId, req.prompt, modelName, 5);
+      return res;
     } catch (err) {
       console.error('Erreur soumission génération:', err);
       setActiveTask(null);
@@ -302,6 +306,8 @@ export default function App(): React.ReactElement {
           onLayerInjected={(layer) => {
             setCanvasLayers((prev) => (prev.some((l) => l.id === layer.id) ? prev : [...prev, layer]));
           }}
+          onSubmitGeneration={handleSubmitGeneration}
+          models={models}
         />
       ) : (
         <>

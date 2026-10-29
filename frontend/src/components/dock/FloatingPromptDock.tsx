@@ -52,7 +52,7 @@ export interface FloatingPromptDockProps {
   onCreateBrandKit?: (data: {
     source: 'blank' | 'website' | 'files'; name: string; overview?: string; url?: string; files?: File[];
   }) => Promise<BrandKit>;
-  onSubmitGeneration?: (req: GenerationSubmitRequest) => Promise<void>;
+  onSubmitGeneration?: (req: GenerationSubmitRequest) => Promise<unknown>;
   onBrandKitCreated?: (kit: BrandKit) => void;
   className?: string;
 }
