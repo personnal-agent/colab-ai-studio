@@ -100,6 +100,20 @@ export interface WorkerInfo {
   vramTotalMb?: number | null; vramUsedMb?: number | null; error?: string | null;
 }
 
+export interface HostGpuInfo {
+  name: string;
+  shortName: string;
+  vramTotalMb: number;
+  vramUsedMb: number;
+  vramFreeMb: number;
+  vramTotalGb: number;
+  vramUsedGb: number;
+  vramFreeGb: number;
+  temperatureC?: number | null;
+  utilizationPct?: number | null;
+  label: string;
+}
+
 export interface HostSystemInfo {
   cpu?: string;
   cpuRaw?: string;
@@ -107,6 +121,7 @@ export interface HostSystemInfo {
   physicalCores?: number | null;
   ram?: string;
   ramAvailableGb?: number;
+  gpu?: HostGpuInfo | null;
 }
 
 export interface HealthResponse {

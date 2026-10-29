@@ -12,6 +12,7 @@ import {
   Square,
   Database,
   Cpu,
+  Activity,
   Radio,
   Box,
   Sparkles,
@@ -50,9 +51,16 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
   const [isGenerating3D, setIsGenerating3D] = useState(false);
   const [graphicsMode, setGraphicsMode] = useState<'webgpu' | 'canvas2d'>('webgpu');
   const [gpuInfo, setGpuInfo] = useState<string>('Détection GPU...');
-  const [hostSystem, setHostSystem] = useState<{ cpu: string; ram: string }>({
+  const [hostSystem, setHostSystem] = useState<{
+    cpu: string;
+    ram: string;
+    gpu: string;
+    gpuTooltip: string;
+  }>({
     cpu: typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? `CPU (${navigator.hardwareConcurrency}T)` : 'CPU...',
     ram: 'RAM...',
+    gpu: 'GPU...',
+    gpuTooltip: 'Détection GPU en cours...',
   });
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -68,30 +76,45 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
       );
     });
 
-    apiClient
-      .getHealth()
-      .then((health) => {
+    const updateTelemetry = async () => {
+      try {
+        const health = await apiClient.getHealth();
         if (!isMounted) return;
         const host = health?.host;
         const threads = host?.threads || (typeof navigator !== 'undefined' ? navigator.hardwareConcurrency : null) || 32;
         const cpuName = host?.cpu || 'Core i9';
         const ramName = host?.ram || '64 Go RAM';
+        const gpuObj = host?.gpu;
+        const gpuLabel = gpuObj?.label || (gpuObj?.shortName ? `${gpuObj.shortName} · ${gpuObj.vramFreeGb} Go` : (health?.worker?.gpu || 'NVIDIA RTX 5000 Ada'));
+        const gpuTooltip = gpuObj
+          ? `${gpuObj.name} · VRAM: ${gpuObj.vramFreeGb} Go libres / ${gpuObj.vramTotalGb} Go (Util: ${gpuObj.utilizationPct ?? 0}% · Temp: ${gpuObj.temperatureC ?? '--'}°C)`
+          : `GPU Dédié : ${health?.worker?.gpu || 'NVIDIA RTX 5000 Ada'}`;
+
         setHostSystem({
           cpu: `${cpuName} (${threads}T)`,
           ram: ramName,
+          gpu: gpuLabel,
+          gpuTooltip,
         });
-      })
-      .catch(() => {
+      } catch {
         if (!isMounted) return;
         const threads = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency : 32;
-        setHostSystem({
+        setHostSystem((prev) => ({
+          ...prev,
           cpu: `CPU (${threads}T)`,
           ram: '64 Go RAM',
-        });
-      });
+          gpu: prev.gpu === 'GPU...' ? 'RTX 5000 Ada · 15.0 Go' : prev.gpu,
+          gpuTooltip: 'GPU Dédié NVIDIA RTX 5000 Ada Generation (16 Go VRAM)',
+        }));
+      }
+    };
+
+    updateTelemetry();
+    const intervalId = setInterval(updateTelemetry, 5000);
 
     return () => {
       isMounted = false;
+      clearInterval(intervalId);
     };
   }, []);
 
@@ -368,6 +391,14 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
           >
             <Database className="w-3.5 h-3.5" />
             <span>{hostSystem.ram}</span>
+          </div>
+          <div
+            data-testid="telemetry-gpu-chip"
+            className="flex items-center space-x-1 text-amber-600 dark:text-amber-400 text-[11px]"
+            title={hostSystem.gpuTooltip}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>{hostSystem.gpu}</span>
           </div>
         </div>
       </div>

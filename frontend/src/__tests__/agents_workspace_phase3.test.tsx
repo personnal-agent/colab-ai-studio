@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AgentsWorkspaceView } from '../components/agents/AgentsWorkspaceView';
+import { apiClient } from '../services/apiClient';
+import type { HealthResponse } from '../types/studio';
 
 describe('AgentsWorkspaceView Phase 3 Integration', () => {
   beforeEach(() => {
@@ -15,6 +17,47 @@ describe('AgentsWorkspaceView Phase 3 Integration', () => {
     expect(screen.getByText('leader active')).toBeInTheDocument();
     expect(screen.getByText(/CanvasAreaV3/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Injecter maillage 3D/i })).toBeInTheDocument();
+  });
+
+  it('renders dynamic hardware telemetry chips including CPU, RAM, and GPU/VRAM', async () => {
+    const mockHealth: HealthResponse = {
+      status: 'healthy',
+      executionMode: 'local',
+      worker: { reachable: true },
+      host: {
+        cpu: 'Intel Core i9-13950HX',
+        threads: 32,
+        ram: '63.6 Go',
+        gpu: {
+          name: 'NVIDIA RTX 5000 Ada Generation Laptop GPU',
+          shortName: 'RTX 5000 Ada',
+          vramTotalMb: 15352,
+          vramUsedMb: 300,
+          vramFreeMb: 15052,
+          vramTotalGb: 15.0,
+          vramUsedGb: 0.3,
+          vramFreeGb: 14.7,
+          temperatureC: 52,
+          utilizationPct: 1,
+          label: 'RTX 5000 Ada · 14.7 Go VRAM',
+        },
+      },
+    };
+
+    vi.spyOn(apiClient, 'getHealth').mockResolvedValue(mockHealth);
+
+    render(<AgentsWorkspaceView />);
+
+    await waitFor(() => {
+      const cpuChip = screen.getByTestId('telemetry-cpu-chip');
+      const ramChip = screen.getByTestId('telemetry-ram-chip');
+      const gpuChip = screen.getByTestId('telemetry-gpu-chip');
+
+      expect(cpuChip).toHaveTextContent(/Intel Core i9-13950HX/i);
+      expect(ramChip).toHaveTextContent(/63.6 Go/i);
+      expect(gpuChip).toHaveTextContent(/RTX 5000 Ada · 14.7 Go VRAM/i);
+      expect(gpuChip).toHaveAttribute('title', expect.stringContaining('14.7 Go libres'));
+    });
   });
 
   it('switches between active agents (leader, planner, coder)', () => {

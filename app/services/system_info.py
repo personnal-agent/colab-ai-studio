@@ -1,4 +1,4 @@
-"""Service de sonde des métriques matérielles réelles de l'hôte (CPU, Threads, RAM)."""
+"""Service de sonde des métriques matérielles réelles de l'hôte (CPU, Threads, RAM, GPU/VRAM)."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import logging
 import os
 import platform
 import subprocess
+import time
 from contextlib import suppress
 from typing import Any
 
@@ -14,6 +15,9 @@ import psutil
 logger = logging.getLogger(__name__)
 
 _STATIC_CACHE: dict[str, Any] | None = None
+_GPU_CACHE: dict[str, Any] | None = None
+_GPU_CACHE_TIMESTAMP: float = 0.0
+_GPU_CACHE_TTL_SECONDS: float = 2.0
 
 
 def _probe_cpu_model() -> tuple[str, str]:
@@ -65,6 +69,73 @@ def _probe_host_ram() -> str:
     return "64 Go"
 
 
+def _probe_gpu_metrics(bypass_cache: bool = False) -> dict[str, Any] | None:
+    """Interroge nvidia-smi pour les métriques GPU & VRAM temps réel (avec cache court)."""
+    global _GPU_CACHE, _GPU_CACHE_TIMESTAMP
+    now = time.time()
+    if (
+        not bypass_cache
+        and _GPU_CACHE is not None
+        and (now - _GPU_CACHE_TIMESTAMP) < _GPU_CACHE_TTL_SECONDS
+    ):
+        return _GPU_CACHE
+
+    try:
+        out = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,memory.total,memory.used,memory.free,temperature.gpu,utilization.gpu",
+                "--format=csv,noheader,nounits",
+            ],
+            timeout=1.0,
+            stderr=subprocess.DEVNULL,
+        ).decode("utf-8", errors="ignore").strip()
+
+        lines = [line.strip() for line in out.splitlines() if line.strip()]
+        if not lines:
+            return None
+
+        parts = [p.strip() for p in lines[0].split(",")]
+        if len(parts) >= 6:
+            name = parts[0]
+            total_mb = int(parts[1])
+            used_mb = int(parts[2])
+            free_mb = int(parts[3])
+            temp_c = int(parts[4])
+            util_pct = int(parts[5])
+
+            short_name = (
+                name.replace("NVIDIA ", "")
+                .replace(" Generation", "")
+                .replace(" Laptop GPU", "")
+                .strip()
+            )
+            total_gb = round(total_mb / 1024, 1)
+            free_gb = round(free_mb / 1024, 1)
+            used_gb = round(used_mb / 1024, 1)
+
+            metrics = {
+                "name": name,
+                "shortName": short_name,
+                "vramTotalMb": total_mb,
+                "vramUsedMb": used_mb,
+                "vramFreeMb": free_mb,
+                "vramTotalGb": total_gb,
+                "vramUsedGb": used_gb,
+                "vramFreeGb": free_gb,
+                "temperatureC": temp_c,
+                "utilizationPct": util_pct,
+                "label": f"{short_name} · {free_gb} Go VRAM",
+            }
+            _GPU_CACHE = metrics
+            _GPU_CACHE_TIMESTAMP = now
+            return metrics
+    except (subprocess.SubprocessError, OSError, ValueError) as err:
+        logger.debug("Échec de la sonde GPU via nvidia-smi: %s", err)
+
+    return None
+
+
 def get_host_system_metrics() -> dict[str, Any]:
     """Retourne les métriques matérielles actuelles de la machine avec cache statique."""
     global _STATIC_CACHE
@@ -89,7 +160,11 @@ def get_host_system_metrics() -> dict[str, Any]:
     with suppress(Exception):
         available_gb = round(psutil.virtual_memory().available / (1024**3), 1)
 
+    gpu_metrics = _probe_gpu_metrics()
+
     return {
         **_STATIC_CACHE,
         "ramAvailableGb": available_gb,
+        "gpu": gpu_metrics,
     }
+
