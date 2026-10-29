@@ -12,10 +12,11 @@ export interface MediaPlayerModalProps {
   onUpscale?: (generation: Generation) => void;
   onFavoriteToggled?: (generation: Generation) => void;
   onDelete?: (generation: Generation) => void;
+  onInjectToCanvas?: (generation: Generation) => void;
 }
 
 export const MediaPlayerModal: React.FC<MediaPlayerModalProps> = ({
-  generation, isOpen, onClose, onRemix, onUpscale, onFavoriteToggled, onDelete,
+  generation, isOpen, onClose, onRemix, onUpscale, onFavoriteToggled, onDelete, onInjectToCanvas,
 }) => {
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedPath, setCopiedPath] = useState(false);
@@ -298,6 +299,22 @@ export const MediaPlayerModal: React.FC<MediaPlayerModalProps> = ({
                 <Camera className="w-3.5 h-3.5 text-indigo-600" />
                 <span>{angleFeedback || '🎥 Générer Matrice 4 Angles Caméra'}</span>
               </button>
+
+              {/* Action Passerelle Omniforge v3 : Injecter dans le Canevas Agents */}
+              {onInjectToCanvas && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onInjectToCanvas(generation);
+                    onClose();
+                  }}
+                  aria-label="Injecter dans le canevas"
+                  className="w-full h-9 rounded-full border border-indigo-200 bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-xs"
+                >
+                  <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>🎨 Injecter dans le Canevas Agents</span>
+                </button>
+              )}
 
               {!confirmDelete ? (
                 <button

@@ -6,17 +6,19 @@ import { TopNavBar } from './components/header/TopNavBar';
 import { FloatingPromptDock } from './components/dock/FloatingPromptDock';
 import { AgentsWorkspaceView } from './components/agents/AgentsWorkspaceView';
 import type { AppMode } from './components/header/AppModeSwitch';
-import { apiClient } from './services/apiClient';
+import { apiClient, getMediaFileUrl } from './services/apiClient';
 import type {
   Generation,
   ModelDefinition,
   BrandKit,
   GenerationSubmitRequest,
   TaskStatusEvent,
+  CanvasAssetLayer,
 } from './types/studio';
 
 export default function App(): React.ReactElement {
   const [appMode, setAppMode] = useState<AppMode>('Studio');
+  const [canvasLayers, setCanvasLayers] = useState<CanvasAssetLayer[]>([]);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [selectedGeneration, setSelectedGeneration] = useState<Generation | null>(null);
@@ -236,6 +238,46 @@ export default function App(): React.ReactElement {
     }
   };
 
+  const handleInjectToCanvas = useCallback((generation: Generation) => {
+    const is3D =
+      generation.mediaType === '3d' ||
+      generation.mediaType === 'mesh_3d' ||
+      Boolean(
+        generation.parameters?.characterAnchors &&
+          Object.keys(generation.parameters.characterAnchors).length > 0
+      );
+    const isVideo = generation.mediaType === 'video' || generation.mediaType === 'lip_sync';
+    const isAudio = generation.mediaType === 'audio';
+    const layerType: 'mesh_3d' | 'video' | 'image' | 'audio' = is3D
+      ? 'mesh_3d'
+      : isVideo
+      ? 'video'
+      : isAudio
+      ? 'audio'
+      : 'image';
+
+    const newLayer: CanvasAssetLayer = {
+      id: `layer-${generation.id}`,
+      name: generation.prompt ? generation.prompt.slice(0, 32) : `Média ${generation.mediaType}`,
+      type: layerType,
+      taskId: generation.id,
+      fileUrl: getMediaFileUrl(generation),
+      status: 'ready',
+    };
+
+    setCanvasLayers((prev) => {
+      if (prev.some((l) => l.id === newLayer.id)) return prev;
+      return [...prev, newLayer];
+    });
+
+    setAppMode('Agents');
+
+    window.dispatchEvent(
+      new CustomEvent('omniforge:inject-canvas-asset', { detail: newLayer })
+    );
+    window.electron?.switchMode('Agents').catch(() => {});
+  }, []);
+
   return (
     <div
       className={`min-h-screen bg-studio-canvas text-gray-900 flex flex-col font-sans selection:bg-indigo-500 selection:text-white ${
@@ -255,7 +297,12 @@ export default function App(): React.ReactElement {
       />
 
       {appMode === 'Agents' ? (
-        <AgentsWorkspaceView />
+        <AgentsWorkspaceView
+          injectedLayers={canvasLayers}
+          onLayerInjected={(layer) => {
+            setCanvasLayers((prev) => (prev.some((l) => l.id === layer.id) ? prev : [...prev, layer]));
+          }}
+        />
       ) : (
         <>
           {/* Bannière de progression globale temps réel pour tout traitement */}
@@ -331,6 +378,7 @@ export default function App(): React.ReactElement {
               onGenerationsChange={setGenerations}
               onFavoriteToggled={handleFavoriteToggled}
               onDeleteGeneration={handleDeleteGeneration}
+              onInjectToCanvas={handleInjectToCanvas}
               activeTask={activeTask}
               onTaskCancelled={handleCancelActiveTask}
             />
@@ -358,6 +406,7 @@ export default function App(): React.ReactElement {
         onUpscale={handleUpscale}
         onFavoriteToggled={handleFavoriteToggled}
         onDelete={handleDeleteGeneration}
+        onInjectToCanvas={handleInjectToCanvas}
       />
     </div>
   );

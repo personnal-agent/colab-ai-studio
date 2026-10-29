@@ -18,11 +18,13 @@ export interface MediaGalleryProps {
   onGenerationsChange?: (updater: (prev: Generation[]) => Generation[]) => void;
   onFavoriteToggled?: (updated: Generation) => void;
   onDeleteGeneration?: (generation: Generation) => void;
+  onInjectToCanvas?: (generation: Generation) => void;
 }
 
 export const MediaGallery: React.FC<MediaGalleryProps> = ({
   favoritesOnly, activeProjectId, onSelectGeneration, activeTask, onTaskCancelled,
   generations: propGenerations, onGenerationsChange, onFavoriteToggled, onDeleteGeneration,
+  onInjectToCanvas,
 }) => {
   const [localGenerations, setLocalGenerations] = useState<Generation[]>([]);
   const generations = propGenerations !== undefined ? propGenerations : localGenerations;
@@ -136,7 +138,14 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
               <TaskProgressCard event={activeTask.event} prompt={activeTask.prompt} modelName={activeTask.modelName} onCancelled={(id) => onTaskCancelled?.(id)} />
             )}
             {filteredGenerations.map((gen) => (
-              <MediaCard key={gen.id} generation={gen} onSelect={onSelectGeneration} onFavoriteToggled={handleLocalFavorite} onDelete={handleLocalDelete} />
+              <MediaCard
+                key={gen.id}
+                generation={gen}
+                onSelect={onSelectGeneration}
+                onFavoriteToggled={handleLocalFavorite}
+                onDelete={handleLocalDelete}
+                onInjectToCanvas={onInjectToCanvas}
+              />
             ))}
           </div>
         )}

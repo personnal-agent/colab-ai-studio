@@ -6,6 +6,16 @@ export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cance
 export type ExecutionMode = 'colab' | 'local';
 export type MediaType = 'image' | 'video' | 'audio' | 'upscale' | 'lip_sync' | 'text';
 
+export interface CanvasAssetLayer {
+  id: string;
+  name: string;
+  type: 'mesh_3d' | 'video' | 'image' | 'audio';
+  taskId: string;
+  fileUrl?: string;
+  thumbnailUrl?: string;
+  status: 'pending' | 'ready';
+}
+
 export interface CharacterAnchorData {
   url?: string;
   label?: string;

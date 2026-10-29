@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Film, Mic, Sparkles, Star, Trash2, Volume2, AlertTriangle } from 'lucide-react';
+import { Film, Layers, Mic, Sparkles, Star, Trash2, Volume2, AlertTriangle } from 'lucide-react';
 import { apiClient, getMediaFileUrl, getMediaThumbnailUrl } from '../../services/apiClient';
 import type { Generation } from '../../types/studio';
 
@@ -8,9 +8,16 @@ export interface MediaCardProps {
   onSelect: (generation: Generation) => void;
   onFavoriteToggled?: (generation: Generation) => void;
   onDelete?: (generation: Generation) => void;
+  onInjectToCanvas?: (generation: Generation) => void;
 }
 
-export const MediaCard: React.FC<MediaCardProps> = ({ generation, onSelect, onFavoriteToggled, onDelete }) => {
+export const MediaCard: React.FC<MediaCardProps> = ({
+  generation,
+  onSelect,
+  onFavoriteToggled,
+  onDelete,
+  onInjectToCanvas,
+}) => {
   const [isFavorite, setIsFavorite] = useState(generation.isFavorite);
   const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -129,6 +136,21 @@ export const MediaCard: React.FC<MediaCardProps> = ({ generation, onSelect, onFa
           >
             <Star className={`w-3.5 h-3.5 ${isFavorite ? 'fill-amber-400 text-amber-400' : 'text-gray-400 hover:text-amber-400'}`} />
           </button>
+          {onInjectToCanvas && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onInjectToCanvas(generation);
+              }}
+              onKeyDown={(e) => { e.stopPropagation(); }}
+              aria-label="Injecter dans le canevas"
+              title="Injecter dans le canevas"
+              className="w-7 h-7 rounded-full bg-white/80 hover:bg-indigo-50 hover:text-indigo-600 text-gray-500 backdrop-blur-sm flex items-center justify-center transition-colors shadow-sm opacity-0 group-hover:opacity-100 focus:opacity-100"
+            >
+              <Layers className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button
             type="button"
             onClick={handleDelete}

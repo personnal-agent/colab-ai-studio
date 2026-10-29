@@ -1,4 +1,4 @@
-import { useState, useRef, type FC, type FormEvent } from 'react';
+import { useState, useRef, useEffect, type FC, type FormEvent } from 'react';
 import {
   Layers,
   Move,
@@ -10,15 +10,16 @@ import {
   Sliders,
   Send,
   Square,
-  Terminal,
   Database,
   Cpu,
   Radio,
-  Clock,
-  ChevronRight,
   Box,
   Sparkles,
+  Film,
+  Image as ImageIcon,
+  Volume2,
 } from 'lucide-react';
+import type { CanvasAssetLayer } from '../../types/studio';
 
 interface AgentMessage {
   id: string;
@@ -28,20 +29,21 @@ interface AgentMessage {
   stage?: string;
 }
 
-interface Canvas3DLayer {
-  id: string;
-  name: string;
-  taskId: string;
-  status: 'pending' | 'ready';
+export interface AgentsWorkspaceViewProps {
+  injectedLayers?: CanvasAssetLayer[];
+  onLayerInjected?: (layer: CanvasAssetLayer) => void;
 }
 
-export const AgentsWorkspaceView: FC = () => {
+export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
+  injectedLayers,
+  onLayerInjected,
+}) => {
   const [activeAgent, setActiveAgent] = useState<'leader' | 'planner' | 'coder'>('leader');
   const [isPlaying, setIsPlaying] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [chatInput, setChatInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [layers3D, setLayers3D] = useState<Canvas3DLayer[]>([]);
+  const [layers, setLayers] = useState<CanvasAssetLayer[]>(() => injectedLayers || []);
   const [isGenerating3D, setIsGenerating3D] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -62,6 +64,44 @@ export const AgentsWorkspaceView: FC = () => {
     },
   ]);
 
+  useEffect(() => {
+    if (injectedLayers && injectedLayers.length > 0) {
+      setLayers((prev) => {
+        const existingIds = new Set(prev.map((l) => l.id));
+        const toAdd = injectedLayers.filter((l) => !existingIds.has(l.id));
+        return toAdd.length > 0 ? [...prev, ...toAdd] : prev;
+      });
+    }
+  }, [injectedLayers]);
+
+  useEffect(() => {
+    const handleCustomInjection = (e: Event) => {
+      const customEvt = e as CustomEvent<CanvasAssetLayer>;
+      if (customEvt.detail) {
+        const newLayer = customEvt.detail;
+        setLayers((prev) => {
+          if (prev.some((l) => l.id === newLayer.id)) return prev;
+          return [...prev, newLayer];
+        });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `msg-${Date.now()}`,
+            sender: 'leader',
+            content: `Média "${newLayer.name}" (${newLayer.type}) injecté avec succès sur le canevas infini WebGPU.`,
+            timestamp: new Date().toLocaleTimeString(),
+            stage: 'CANVAS_INJECT',
+          },
+        ]);
+        onLayerInjected?.(newLayer);
+      }
+    };
+    window.addEventListener('omniforge:inject-canvas-asset', handleCustomInjection);
+    return () => {
+      window.removeEventListener('omniforge:inject-canvas-asset', handleCustomInjection);
+    };
+  }, [onLayerInjected]);
+
   const handleStopStreaming = () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -74,122 +114,109 @@ export const AgentsWorkspaceView: FC = () => {
     e.preventDefault();
     if (!chatInput.trim() || isStreaming) return;
 
-    const userText = chatInput.trim();
     const userMsg: AgentMessage = {
       id: `msg-${Date.now()}`,
       sender: 'user',
-      content: userText,
+      content: chatInput,
       timestamp: new Date().toLocaleTimeString(),
     };
 
-    const assistantMsgId = `msg-${Date.now() + 1}`;
-    const initialAssistantMsg: AgentMessage = {
-      id: assistantMsgId,
-      sender: activeAgent,
-      content: '',
-      timestamp: new Date().toLocaleTimeString(),
-      stage: 'STREAMING',
-    };
-
-    setMessages((prev) => [...prev, userMsg, initialAssistantMsg]);
+    const targetAgent = activeAgent;
+    setMessages((prev) => [...prev, userMsg]);
     setChatInput('');
     setIsStreaming(true);
+
+    const agentMsgId = `msg-${Date.now() + 1}`;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: agentMsgId,
+        sender: targetAgent,
+        content: '',
+        timestamp: new Date().toLocaleTimeString(),
+        stage: 'STREAMING',
+      },
+    ]);
 
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
     try {
-      const response = await fetch('/v1/chat/completions', {
+      const res = await fetch('/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'hilo-agent',
-          stream: true,
-          messages: [
-            ...messages.map((m) => ({
-              role: m.sender === 'user' ? 'user' : 'assistant',
-              content: m.content,
-            })),
-            { role: 'user', content: userText },
-          ],
-        }),
+        headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
+        body: JSON.stringify({
+          model: 'qwen-2.5-coder-32b',
+          messages: [
+            {
+              role: 'system',
+              content: `Vous êtes l'agent Hilo ${targetAgent}. Vous pilotez le canevas infini WebGPU et l'orchestration des plans.`,
+            },
+            { role: 'user', content: userMsg.content },
+          ],
+          stream: true,
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP ${response.status}`);
+      if (!res.ok) {
+        throw new Error(`Erreur proxy LLM: ${res.status}`);
       }
 
-      if (!response.body) {
-        throw new Error('Réponse vide du proxy LLM');
-      }
+      if (res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let reading = true;
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      let reading = true;
-      while (reading) {
-        const { done, value } = await reader.read();
-        if (done) {
-          reading = false;
-          break;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || !trimmed.startsWith('data:')) continue;
-          const dataStr = trimmed.slice(5).trim();
-          if (dataStr === '[DONE]') {
+        while (reading) {
+          const { done, value } = await reader.read();
+          if (done) {
+            reading = false;
             break;
           }
 
-          try {
-            const parsed = JSON.parse(dataStr);
-            const delta = parsed.choices?.[0]?.delta?.content || '';
-            if (delta) {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantMsgId
-                    ? { ...m, content: m.content + delta }
-                    : m
-                )
-              );
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('data: ')) {
+              const dataStr = trimmed.slice(6);
+              if (dataStr === '[DONE]') {
+                break;
+              }
+              try {
+                const parsed = JSON.parse(dataStr);
+                const delta = parsed.choices?.[0]?.delta?.content || '';
+                if (delta) {
+                  setMessages((prev) =>
+                    prev.map((m) =>
+                      m.id === agentMsgId ? { ...m, content: m.content + delta } : m
+                    )
+                  );
+                }
+              } catch {
+                // Ignore partial JSON chunks in SSE stream
+              }
             }
-          } catch {
-            // Segment partiel ignoré
           }
         }
       }
-
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantMsgId ? { ...m, stage: 'EXECUTING' } : m
-        )
-      );
     } catch (err: unknown) {
-      if ((err as Error)?.name !== 'AbortError') {
-        const errMsg = (err as Error)?.message || 'Erreur inconnue';
+      if (err instanceof Error && err.name === 'AbortError') {
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === assistantMsgId
-              ? {
-                  ...m,
-                  content:
-                    m.content ||
-                    `[Repli Hilo Local] Instruction prise en compte : "${userText}". Contrat de discipline validé.`,
-                  stage: 'STANDBY',
-                }
+            m.id === agentMsgId ? { ...m, content: m.content + ' [Génération interrompue]' } : m
+          )
+        );
+      } else {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === agentMsgId
+              ? { ...m, content: 'Erreur lors de la communication avec l’agent local.' }
               : m
           )
         );
-        console.warn('Flux SSE LLM interrompu :', errMsg);
       }
     } finally {
       setIsStreaming(false);
@@ -200,44 +227,30 @@ export const AgentsWorkspaceView: FC = () => {
   const handleGenerate3DMesh = async () => {
     setIsGenerating3D(true);
     try {
-      const resp = await fetch('/api/generate/media', {
+      const res = await fetch('/api/generate/media', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: `Maillage 3D procédural Hilo [${activeAgent}]`,
           type: '3d',
-          modelId: 'mesh-3d-model',
-          parameters: { seed: 42 },
-          references: {},
+          prompt: '3D mesh layer generated from agents canvas',
+          capabilities: { acceptedInputTypes: ['prompt'] },
         }),
       });
 
-      if (!resp.ok) {
-        throw new Error(`HTTP ${resp.status}`);
-      }
-
-      const data = await resp.json();
-      const newLayer: Canvas3DLayer = {
-        id: `mesh-${Date.now()}`,
-        name: `Calque 3D #${layers3D.length + 1}`,
-        taskId: data.taskId || data.generationId || 'gen-3d-local',
-        status: 'ready',
-      };
-      setLayers3D((prev) => [...prev, newLayer]);
-    } catch (err) {
-      console.warn('Génération 3D en mode dégradé local :', err);
-      // Repli interactif direct sur canevas
-      setLayers3D((prev) => [
-        ...prev,
-        {
+      if (res.ok) {
+        const data = await res.json();
+        const newLayer: CanvasAssetLayer = {
           id: `mesh-${Date.now()}`,
-          name: `Calque 3D #${layers3D.length + 1} (Local)`,
-          taskId: 'task-local-3d',
+          name: `Calque 3D #${layers.filter((l) => l.type === 'mesh_3d').length + 1}`,
+          type: 'mesh_3d',
+          taskId: data.taskId || `task-mesh-${Date.now()}`,
           status: 'ready',
-        },
-      ]);
+        };
+        setLayers((prev) => [...prev, newLayer]);
+        onLayerInjected?.(newLayer);
+      }
+    } catch (err) {
+      console.error('Failed to generate 3D mesh:', err);
     } finally {
       setIsGenerating3D(false);
     }
@@ -246,99 +259,107 @@ export const AgentsWorkspaceView: FC = () => {
   return (
     <div
       data-testid="agents-workspace-view"
-      className="flex-1 flex flex-col h-[calc(100vh-4rem)] bg-[#F8F9FA] dark:bg-gray-950 overflow-hidden select-none"
+      className="flex-1 flex flex-col h-[calc(100vh-4rem)] bg-studio-canvas text-gray-900 dark:text-gray-100 overflow-hidden"
     >
-      {/* Barre d'état de topologie et services */}
-      <div className="h-10 px-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between text-xs font-mono">
+      {/* Barre supérieure d'état d'orchestration Hilo */}
+      <div className="h-10 px-4 border-b border-studio-border bg-white dark:bg-gray-900 flex items-center justify-between text-xs">
         <div className="flex items-center space-x-3">
-          <span className="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-            <Radio className="w-3 h-3 text-emerald-600 dark:text-emerald-400 animate-pulse" />
-            <span>Gateway :51491</span>
+          <span className="flex items-center space-x-1.5 font-bold tracking-wide text-indigo-600 dark:text-indigo-400">
+            <Radio className="w-3.5 h-3.5 animate-pulse" />
+            <span>Hilo Swarm Dialogue</span>
           </span>
-
-          <span className="flex items-center space-x-1.5 px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
-            <Cpu className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-            <span>FastAPI Inférence :8000</span>
-          </span>
-
-          <span className="hidden md:flex items-center space-x-1.5 px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300">
-            <Database className="w-3 h-3 text-gray-500" />
-            <span>SQLite (.hilo/index.sqlite)</span>
+          <span className="text-gray-300 dark:text-gray-700">|</span>
+          <span className="text-gray-500 font-mono text-[11px]">
+            FastAPI: :8000 · NestJS Gateway: :51491 · SQLite WAL
           </span>
         </div>
 
-        {/* Sélecteur d'agent actif Hilo */}
-        <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg">
-          {(['leader', 'planner', 'coder'] as const).map((agent) => (
-            <button
-              key={agent}
-              type="button"
-              onClick={() => setActiveAgent(agent)}
-              className={`px-2.5 py-0.5 rounded text-[11px] font-semibold capitalize transition-colors ${
-                activeAgent === agent
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-xs'
-                  : 'text-gray-500 hover:text-gray-800 dark:text-gray-400'
-              }`}
-            >
-              {agent}
-            </button>
-          ))}
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 text-[11px]">
+            <Cpu className="w-3.5 h-3.5" />
+            <span>Intel i7 (2C/4T)</span>
+          </div>
+          <div className="flex items-center space-x-1 text-gray-500 text-[11px]">
+            <Database className="w-3.5 h-3.5" />
+            <span>RAM: ~395 Mo</span>
+          </div>
         </div>
       </div>
 
-      {/* Zone Principale : Split Hilo Chat (gauche) & Canevas WebGPU (centre/droite) */}
+      {/* Corps principal : Volet conversationnel + Canevas infini */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Volet Latéral Gauche : Dialogue Multi-Agents Hilo */}
-        <aside
-          aria-label="Hilo Multi-Agents Dialogue"
-          className="w-80 lg:w-96 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col"
-        >
-          <div className="p-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Terminal className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-              <h2 className="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-gray-200">
-                Hilo Swarm Dialogue
-              </h2>
+        {/* Volet conversationnel multi-agents */}
+        <div className="w-96 border-r border-studio-border bg-white dark:bg-gray-900 flex flex-col h-full">
+          {/* Sélecteur d'agent actif */}
+          <div className="p-3 border-b border-studio-border bg-gray-50 dark:bg-gray-800/50">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-2">
+              Agents Hilo Autonomes
             </div>
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300 uppercase">
-              {activeAgent} active
-            </span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {(['leader', 'planner', 'coder'] as const).map((agent) => (
+                <button
+                  key={agent}
+                  type="button"
+                  onClick={() => setActiveAgent(agent)}
+                  className={`px-2 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${
+                    activeAgent === agent
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-studio-border'
+                  }`}
+                >
+                  {agent}
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 text-[11px] text-gray-500 flex items-center justify-between">
+              <span>Rôle actif :</span>
+              <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                {activeAgent} active
+              </span>
+            </div>
           </div>
 
           {/* Flux de messages */}
-          <div className="flex-1 p-3 overflow-y-auto space-y-3 font-sans text-xs">
+          <div className="flex-1 p-3 overflow-y-auto space-y-3">
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`p-2.5 rounded-xl border ${
-                  msg.sender === 'user'
-                    ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-100 dark:border-indigo-900/60 ml-4'
-                    : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 mr-4'
+                className={`flex flex-col ${
+                  msg.sender === 'user' ? 'items-end' : 'items-start'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1 text-[10px] text-gray-400">
-                  <span className="font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300">
-                    {msg.sender}
-                  </span>
-                  <span>{msg.timestamp}</span>
+                <div className="flex items-center space-x-1.5 mb-1 text-[10px] text-gray-400">
+                  <span className="font-semibold uppercase tracking-wider">{msg.sender}</span>
+                  <span>·</span>
+                  <span className="font-mono">{msg.timestamp}</span>
+                  {msg.stage && (
+                    <span className="px-1.5 py-0.2 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-mono text-[9px]">
+                      {msg.stage}
+                    </span>
+                  )}
                 </div>
-                <p className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
-                  {msg.content || (isStreaming ? 'Génération en cours...' : '')}
-                </p>
-                {msg.stage && (
-                  <div className="mt-1.5 flex items-center space-x-1 text-[10px] font-mono text-indigo-600 dark:text-indigo-400">
-                    <ChevronRight className="w-2.5 h-2.5" />
-                    <span>Contrat : {msg.stage}</span>
-                  </div>
-                )}
+                <div
+                  className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
+                    msg.sender === 'user'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-studio-border'
+                  }`}
+                >
+                  {msg.content || (
+                    <span className="inline-flex items-center space-x-1 text-gray-400 italic">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                      <span>Génération de la réponse...</span>
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
 
-          {/* Formulaire d'envoi & Bouton Stop */}
+          {/* Saisie de message et commande LLM streaming */}
           <form
             onSubmit={handleSendMessage}
-            className="p-3 border-t border-gray-100 dark:border-gray-800 flex items-center space-x-2 bg-gray-50 dark:bg-gray-900/50"
+            className="p-3 border-t border-studio-border bg-gray-50 dark:bg-gray-800/30 flex items-center space-x-2"
           >
             <input
               type="text"
@@ -346,36 +367,36 @@ export const AgentsWorkspaceView: FC = () => {
               onChange={(e) => setChatInput(e.target.value)}
               placeholder={`Demander à ${activeAgent}...`}
               disabled={isStreaming}
-              className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
+              className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-white dark:bg-gray-900 border border-studio-border focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-50"
             />
             {isStreaming ? (
               <button
                 type="button"
                 onClick={handleStopStreaming}
-                aria-label="Arrêter la génération"
-                className="p-1.5 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors shadow-xs"
+                aria-label="Arrêter la réponse"
+                className="p-1.5 rounded-lg bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-xs"
               >
-                <Square className="w-3.5 h-3.5 fill-current" />
+                <Square className="w-4 h-4 fill-white" />
               </button>
             ) : (
               <button
                 type="submit"
                 disabled={!chatInput.trim()}
                 aria-label="Envoyer instruction agent"
-                className="p-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-xs"
+                className="p-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-40 transition-colors shadow-xs"
               >
-                <Send className="w-3.5 h-3.5" />
+                <Send className="w-4 h-4" />
               </button>
             )}
           </form>
-        </aside>
+        </div>
 
-        {/* Zone Centrale : CanvasAreaV3 (WebGPU / Canevas Infini) */}
-        <main className="flex-1 flex flex-col relative bg-[#F1F3F5] dark:bg-gray-950 overflow-hidden">
+        {/* Espace central : Canevas infini WebGPU */}
+        <div className="flex-1 flex flex-col bg-studio-canvas relative overflow-hidden">
           {/* Barre d'outils du canevas */}
-          <div className="h-10 px-4 bg-white/90 dark:bg-gray-900/90 backdrop-blur border-b border-gray-200 dark:border-gray-800 flex items-center justify-between z-10">
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1">
+          <div className="h-10 px-4 border-b border-studio-border bg-white/70 dark:bg-gray-900/70 backdrop-blur-xs flex items-center justify-between z-10">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-800 p-0.5 rounded-lg">
                 <button
                   type="button"
                   title="Déplacer"
@@ -440,23 +461,26 @@ export const AgentsWorkspaceView: FC = () => {
               className="w-full max-w-3xl aspect-video bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center text-center p-6 transition-transform relative"
               style={{ transform: `scale(${zoomLevel / 100})` }}
             >
-              {layers3D.length > 0 ? (
+              {layers.length > 0 ? (
                 <div className="space-y-3 w-full">
                   <div className="flex items-center justify-center space-x-2 text-indigo-600 dark:text-indigo-400">
                     <Sparkles className="w-5 h-5 animate-pulse" />
                     <span className="text-sm font-bold">
-                      {layers3D.length} Maillage(s) 3D actif(s) sur le canevas
+                      {layers.length} Calque(s) actif(s) sur le canevas
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2 justify-center">
-                    {layers3D.map((layer) => (
+                    {layers.map((layer) => (
                       <div
                         key={layer.id}
-                        data-testid="canvas-3d-layer"
-                        className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-xs font-mono text-indigo-700 dark:text-indigo-300 flex items-center space-x-2"
+                        data-testid={layer.type === 'mesh_3d' ? 'canvas-3d-layer' : 'canvas-asset-layer'}
+                        className="px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-xs font-mono text-indigo-700 dark:text-indigo-300 flex items-center space-x-2 shadow-xs"
                       >
-                        <Box className="w-3.5 h-3.5" />
-                        <span>{layer.name}</span>
+                        {layer.type === 'mesh_3d' && <Box className="w-3.5 h-3.5" />}
+                        {layer.type === 'video' && <Film className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />}
+                        {layer.type === 'image' && <ImageIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
+                        {layer.type === 'audio' && <Volume2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                        <span className="truncate max-w-[180px]">{layer.name}</span>
                         <span className="text-[10px] text-gray-400">[{layer.taskId.slice(0, 8)}]</span>
                       </div>
                     ))}
@@ -478,43 +502,39 @@ export const AgentsWorkspaceView: FC = () => {
             </div>
           </div>
 
-          {/* Volet Inférieur : Timeline Video Editor */}
-          <div className="h-28 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 flex flex-col z-10">
-            {/* Contrôles de lecture */}
-            <div className="h-8 px-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs">
+          {/* Séquenceur temporel en bas du canevas */}
+          <div className="h-28 border-t border-studio-border bg-white dark:bg-gray-900 flex flex-col z-10">
+            <div className="h-8 px-4 border-b border-studio-border flex items-center justify-between text-xs bg-gray-50/50 dark:bg-gray-800/30">
               <div className="flex items-center space-x-2">
                 <button
                   type="button"
                   onClick={() => setIsPlaying(!isPlaying)}
-                  aria-label={isPlaying ? 'Pause' : 'Lecture'}
-                  className="p-1 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
                 >
                   {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                 </button>
-                <div className="flex items-center space-x-1 font-mono text-[11px] text-gray-500">
-                  <Clock className="w-3 h-3" />
-                  <span>00:00:00:00</span>
-                  <span>/</span>
-                  <span>00:00:05:00</span>
-                </div>
+                <span className="font-mono text-[11px] text-gray-500">00:00:00 / 00:00:10</span>
               </div>
-
-              <div className="text-[11px] font-mono text-gray-400">
-                <span>30.00 fps</span>
+              <div className="flex items-center space-x-2 text-[11px] text-gray-500 font-mono">
+                <span>30 FPS</span>
+                <span>·</span>
+                <span>1920x1080</span>
               </div>
             </div>
 
-            {/* Pistes de la timeline */}
-            <div className="flex-1 p-2 space-y-1.5 overflow-hidden">
-              <div className="h-6 bg-indigo-50/60 dark:bg-indigo-950/40 rounded border border-indigo-200 dark:border-indigo-800/60 flex items-center px-3 text-[10px] font-mono text-indigo-700 dark:text-indigo-300">
-                Piste 1 : Inférence Multimodale (Omniforge Video)
+            {/* Pistes de montage vidéo / 3D */}
+            <div className="flex-1 p-2 space-y-1.5 overflow-x-auto bg-gray-50/30 dark:bg-gray-950/30">
+              <div className="h-6 rounded bg-indigo-100/50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 flex items-center px-2 text-[10px] font-mono text-indigo-700 dark:text-indigo-300">
+                <span className="font-bold mr-2">Piste 1 (3D / Vidéo)</span>
+                <span className="text-gray-400">Plan_01_Cinematic_Establish.mp4</span>
               </div>
-              <div className="h-6 bg-purple-50/60 dark:bg-purple-950/40 rounded border border-purple-200 dark:border-purple-800/60 flex items-center px-3 text-[10px] font-mono text-purple-700 dark:text-purple-300">
-                Piste 2 : Audio / Synthèse Vocale & SFX
+              <div className="h-6 rounded bg-purple-100/50 dark:bg-purple-950/50 border border-purple-200 dark:border-purple-800 flex items-center px-2 text-[10px] font-mono text-purple-700 dark:text-purple-300">
+                <span className="font-bold mr-2">Piste 2 (FX / Shaders)</span>
+                <span className="text-gray-400">Volumetric_Lighting_Pass.fx</span>
               </div>
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );
