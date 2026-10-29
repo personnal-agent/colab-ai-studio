@@ -14,7 +14,7 @@ from app.colab_worker.server import create_worker_app
 
 swapper = ModelSwapper(idle_timeout_seconds=300.0)
 today_str = datetime.now().strftime("%Y-%m-%d")
-storage_dir = REPO_ROOT / "outputs" / today_str
+storage_dir = REPO_ROOT / "data" / "worker_staging" / today_str
 storage_dir.mkdir(parents=True, exist_ok=True)
 
 app = create_worker_app(

@@ -148,7 +148,36 @@ async def test_publish_no_replace_collision_rejection(stores):
     assert final_file.read_bytes() == data_existing
     # Le temporaire reste conservé pour analyse ou reprise
     assert Path(temp_path).is_file()
-    Path(temp_path).unlink()
+
+
+@pytest.mark.asyncio
+async def test_publish_no_replace_identical_digest_idempotent(stores):
+    store64k, outputs_dir, _ = stores
+    data_content = b"Identical Content for Idempotency Test"
+
+    dest_dir = store64k.resolve_destination_dir(None)
+    final_file = dest_dir / "idempotent_target.png"
+    final_file.write_bytes(data_content)
+
+    temp_path, digest, size = await store64k.stream_write_temp(
+        "idempotent_target.png", [data_content]
+    )
+
+    op_id = "op-idempotent-test"
+    await store64k.stage_operation(
+        operation_id=op_id,
+        resource_key="key-idempotent",
+        temp_path=temp_path,
+        final_filename="idempotent_target.png",
+        sha256_digest=digest,
+        byte_size=size,
+    )
+
+    published = await store64k.publish_no_replace(op_id)
+    assert published == str(final_file)
+    assert final_file.is_file()
+    assert not Path(temp_path).exists()
+    final_file.unlink(missing_ok=True)
 
 
 @pytest.mark.asyncio

@@ -178,6 +178,15 @@ class MediaFileStore64k(MediaFileStore):
                 try:
                     os.link(temp_path, final_path)
                 except FileExistsError as err:
+                    if final_path.is_file():
+                        hasher_exist = hashlib.sha256()
+                        with open(final_path, "rb") as f_ex:
+                            while chunk_ex := f_ex.read(self.chunk_size):
+                                hasher_exist.update(chunk_ex)
+                        if hasher_exist.hexdigest() == expected_digest:
+                            with contextlib.suppress(OSError):
+                                temp_path.unlink()
+                            return str(final_path)
                     raise DestinationCollisionError(
                         f"Collision no-replace : la destination '{final_path}' existe déjà"
                     ) from err

@@ -1018,63 +1018,108 @@ def create_worker_app(
         # -----------------------------------------------------------
         # Cas 2 : Génération Standard Simple (1 seul clip ou Image)
         # -----------------------------------------------------------
+        def _resolve_image_source(raw_src: str | None) -> Path | None:
+            if not raw_src or not isinstance(raw_src, str) or raw_src.startswith("blob:"):
+                return None
+            clean_src = raw_src.strip()
+            candidates = [clean_src]
+            if "/api/uploads/" in clean_src:
+                candidates.append(clean_src.split("/api/uploads/")[1])
+            if "/api/generations/" in clean_src:
+                candidates.append(clean_src.split("/api/generations/")[1].split("/")[0])
+                candidates.append(clean_src.split("/api/generations/")[-1])
+
+            for cand in candidates:
+                p = Path(cand).resolve()
+                if p.is_file():
+                    return p
+                fname = Path(cand).name
+                search_roots = [
+                    Path("/mnt/c/wamp64/www/colab-ai-studio/data/uploads"),
+                    output_dir,
+                    Path("/home/instructeur/ComfyUI/input"),
+                    Path("/home/instructeur/ComfyUI/output"),
+                ]
+                for root in search_roots:
+                    f_cand = root / fname
+                    if f_cand.is_file():
+                        return f_cand
+                with contextlib.suppress(Exception):
+                    matches = list(
+                        Path("/mnt/c/wamp64/www/colab-ai-studio/outputs").rglob(fname)
+                    )
+                    if matches and matches[0].is_file():
+                        return matches[0]
+            return None
+
         if is_video_task and "noctq" not in mid:
-            wf_path = Path("/home/instructeur/ComfyUI/_setup/MiniMax_H3_T2V_Heretic_api.json")
-            graph = await asyncio.to_thread(_load_workflow_graph, wf_path)
-            if "140:131" in graph:
-                graph["140:131"]["inputs"]["prompt"] = payload.prompt
-            if "140:129" in graph:
-                graph["140:129"]["inputs"]["noise_seed"] = base_seed
-            if "140:139" in graph:
-                graph["140:139"]["inputs"]["value"] = True
-            if "140:133" in graph:
-                dur_raw = str(payload.parameters.get("duration", "5s")).replace("s", "")
-                try:
-                    graph["140:133"]["inputs"]["value"] = float(dur_raw)
-                except ValueError:
-                    graph["140:133"]["inputs"]["value"] = 5.0
-            if "115" in graph:
-                graph["115"]["inputs"]["aspect_ratio"] = ratio_str
-            if "92" in graph:
-                graph["92"]["inputs"]["filename_prefix"] = f"video/task_{task_id}"
-            prefix = f"video/task_{task_id}"
+            user_img_refs = payload.references.get("imageRefs") or []
+            start_frame_ref = payload.references.get("startFrame") or (
+                user_img_refs[0] if user_img_refs else None
+            )
+            staged_i2v_img = None
+            if start_frame_ref:
+                p_i2v = _resolve_image_source(start_frame_ref)
+                if p_i2v and p_i2v.is_file():
+                    comfy_input_dir = Path("/home/instructeur/ComfyUI/input")
+                    await asyncio.to_thread(comfy_input_dir.mkdir, parents=True, exist_ok=True)
+                    staged_i2v_img = f"i2v_in_{task_id}_{p_i2v.name}"
+                    dest_i2v = comfy_input_dir / staged_i2v_img
+                    await asyncio.to_thread(shutil.copy2, p_i2v, dest_i2v)
+                    logger.info(
+                        "Image de référence I2V injectée dans ComfyUI : %s -> %s",
+                        p_i2v,
+                        dest_i2v,
+                    )
+                else:
+                    logger.warning(
+                        "Référence image I2V MiniMax H3 non résolue sur disque : %s (repli T2V)",
+                        start_frame_ref,
+                    )
+
+            dur_raw = str(payload.parameters.get("duration", "5s")).replace("s", "")
+            try:
+                dur_val = float(dur_raw)
+            except ValueError:
+                dur_val = 5.0
+
+            if staged_i2v_img:
+                wf_path = Path("/home/instructeur/ComfyUI/_setup/MiniMax_H3_I2V_Heretic_api.json")
+                graph = await asyncio.to_thread(_load_workflow_graph, wf_path)
+                if "105:104" in graph:
+                    graph["105:104"]["inputs"]["prompt"] = payload.prompt
+                if "114" in graph:
+                    graph["114"]["inputs"]["image"] = staged_i2v_img
+                if "105:111" in graph:
+                    graph["105:111"]["inputs"]["value"] = dur_val
+                if "105:126" in graph:
+                    graph["105:126"]["inputs"]["value"] = True
+                if "105:15" in graph:
+                    graph["105:15"]["inputs"]["noise_seed"] = base_seed
+                if "115" in graph:
+                    graph["115"]["inputs"]["aspect_ratio"] = ratio_str
+                if "92" in graph:
+                    graph["92"]["inputs"]["filename_prefix"] = f"video/task_{task_id}"
+                prefix = f"video/task_{task_id}"
+            else:
+                wf_path = Path("/home/instructeur/ComfyUI/_setup/MiniMax_H3_T2V_Heretic_api.json")
+                graph = await asyncio.to_thread(_load_workflow_graph, wf_path)
+                if "140:131" in graph:
+                    graph["140:131"]["inputs"]["prompt"] = payload.prompt
+                if "140:129" in graph:
+                    graph["140:129"]["inputs"]["noise_seed"] = base_seed
+                if "140:139" in graph:
+                    graph["140:139"]["inputs"]["value"] = True
+                if "140:133" in graph:
+                    graph["140:133"]["inputs"]["value"] = dur_val
+                if "115" in graph:
+                    graph["115"]["inputs"]["aspect_ratio"] = ratio_str
+                if "92" in graph:
+                    graph["92"]["inputs"]["filename_prefix"] = f"video/task_{task_id}"
+                prefix = f"video/task_{task_id}"
         else:
             img_refs = payload.references.get("imageRefs") or []
             src_ref = img_refs[0] if img_refs else payload.references.get("startFrame")
-
-            def _resolve_image_source(raw_src: str | None) -> Path | None:
-                if not raw_src or not isinstance(raw_src, str) or raw_src.startswith("blob:"):
-                    return None
-                clean_src = raw_src.strip()
-                candidates = [clean_src]
-                if "/api/uploads/" in clean_src:
-                    candidates.append(clean_src.split("/api/uploads/")[1])
-                if "/api/generations/" in clean_src:
-                    candidates.append(clean_src.split("/api/generations/")[1].split("/")[0])
-                    candidates.append(clean_src.split("/api/generations/")[-1])
-
-                for cand in candidates:
-                    p = Path(cand).resolve()
-                    if p.is_file():
-                        return p
-                    fname = Path(cand).name
-                    search_roots = [
-                        Path("/mnt/c/wamp64/www/colab-ai-studio/data/uploads"),
-                        output_dir,
-                        Path("/home/instructeur/ComfyUI/input"),
-                        Path("/home/instructeur/ComfyUI/output"),
-                    ]
-                    for root in search_roots:
-                        f_cand = root / fname
-                        if f_cand.is_file():
-                            return f_cand
-                    with contextlib.suppress(Exception):
-                        matches = list(
-                            Path("/mnt/c/wamp64/www/colab-ai-studio/outputs").rglob(fname)
-                        )
-                        if matches and matches[0].is_file():
-                            return matches[0]
-                return None
 
             staged_img_name = None
             p_ref = _resolve_image_source(src_ref) if src_ref else None
@@ -1156,7 +1201,10 @@ def create_worker_app(
             with contextlib.suppress(Exception):
                 from app.services.audio_weaver import weave_audio_into_video_segment
 
-                await weave_audio_into_video_segment(file_path, payload.prompt, duration_sec=5.0)
+                video_dur = dur_val if "dur_val" in locals() else 5.0
+                await weave_audio_into_video_segment(
+                    file_path, payload.prompt, duration_sec=video_dur
+                )
         tasks[task_id]["progress"] = 100
 
     async def _execute_upscale_infer(
