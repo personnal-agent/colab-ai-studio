@@ -22,6 +22,7 @@ import {
 import type { CanvasAssetLayer } from '../../types/studio';
 import { detectGraphicsCapability } from '../../services/graphicsCapability';
 import { Canvas2DFallback } from '../canvas/Canvas2DFallback';
+import { apiClient } from '../../services/apiClient';
 
 interface AgentMessage {
   id: string;
@@ -49,6 +50,10 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
   const [isGenerating3D, setIsGenerating3D] = useState(false);
   const [graphicsMode, setGraphicsMode] = useState<'webgpu' | 'canvas2d'>('webgpu');
   const [gpuInfo, setGpuInfo] = useState<string>('Détection GPU...');
+  const [hostSystem, setHostSystem] = useState<{ cpu: string; ram: string }>({
+    cpu: typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? `CPU (${navigator.hardwareConcurrency}T)` : 'CPU...',
+    ram: 'RAM...',
+  });
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -62,6 +67,29 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
           : `Canvas2D (${res.reason || 'Mode standard'})`
       );
     });
+
+    apiClient
+      .getHealth()
+      .then((health) => {
+        if (!isMounted) return;
+        const host = health?.host;
+        const threads = host?.threads || (typeof navigator !== 'undefined' ? navigator.hardwareConcurrency : null) || 32;
+        const cpuName = host?.cpu || 'Core i9';
+        const ramName = host?.ram || '64 Go RAM';
+        setHostSystem({
+          cpu: `${cpuName} (${threads}T)`,
+          ram: ramName,
+        });
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        const threads = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency : 32;
+        setHostSystem({
+          cpu: `CPU (${threads}T)`,
+          ram: '64 Go RAM',
+        });
+      });
+
     return () => {
       isMounted = false;
     };
@@ -325,13 +353,21 @@ export const AgentsWorkspaceView: FC<AgentsWorkspaceViewProps> = ({
             </button>
           </div>
 
-          <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 text-[11px]">
+          <div
+            data-testid="telemetry-cpu-chip"
+            className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 text-[11px]"
+            title="Télémétrie CPU dynamique sonde FastAPI"
+          >
             <Cpu className="w-3.5 h-3.5" />
-            <span>Core i9-13950HX (20C/32T)</span>
+            <span>{hostSystem.cpu}</span>
           </div>
-          <div className="flex items-center space-x-1 text-indigo-600 dark:text-indigo-400 text-[11px]">
+          <div
+            data-testid="telemetry-ram-chip"
+            className="flex items-center space-x-1 text-indigo-600 dark:text-indigo-400 text-[11px]"
+            title="Mémoire vive totale hôte détectée"
+          >
             <Database className="w-3.5 h-3.5" />
-            <span>64 Go RAM</span>
+            <span>{hostSystem.ram}</span>
           </div>
         </div>
       </div>

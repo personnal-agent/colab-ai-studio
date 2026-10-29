@@ -100,10 +100,21 @@ export interface WorkerInfo {
   vramTotalMb?: number | null; vramUsedMb?: number | null; error?: string | null;
 }
 
+export interface HostSystemInfo {
+  cpu?: string;
+  cpuRaw?: string;
+  threads?: number;
+  physicalCores?: number | null;
+  ram?: string;
+  ramAvailableGb?: number;
+}
+
 export interface HealthResponse {
   status: string;
-  storage: { path?: string; dataDirectory?: string; writable?: boolean; reachable?: boolean; availableBytes?: number };
-  executionMode: ExecutionMode; worker: WorkerInfo;
+  storage?: { path?: string; dataDirectory?: string; writable?: boolean; reachable?: boolean; availableBytes?: number };
+  executionMode: ExecutionMode;
+  worker: WorkerInfo;
+  host?: HostSystemInfo;
 }
 
 export interface ModelCapabilities {

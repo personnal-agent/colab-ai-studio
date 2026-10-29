@@ -25,6 +25,7 @@ from app.api.routes_models import router as models_router
 from app.api.routes_sqlite_resources import router as resources_router
 from app.config import DATA_DIR, GENERATIONS_FILE, ensure_directories
 from app.models.domain import TaskStatus
+from app.services.system_info import get_host_system_metrics
 from app.services.worker_gateway import WorkerGateway
 from app.storage.json_store import CorruptedDocumentStoreError, JSONDocumentStore
 from app.storage.sqlite_repository import get_hilo_sqlite_repo
@@ -106,5 +107,6 @@ async def health_check(
         "status": "healthy",
         "service": "Colab AI Studio Local Backend",
         "version": "1.0.0",
+        "host": get_host_system_metrics(),
         **worker_health,
     }
